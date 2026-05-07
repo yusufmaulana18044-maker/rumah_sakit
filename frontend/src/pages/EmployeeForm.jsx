@@ -1,0 +1,310 @@
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { ArrowLeft, Save, User } from "lucide-react";
+import dummyEmployees from "../data/dummyEmployees";
+import { workUnits, positions } from "../data/dummyEmployees";
+
+export default function EmployeeForm() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const isEdit = !!id;
+
+  const [formData, setFormData] = useState({
+    nip: "",
+    full_name: "",
+    birthplace: "",
+    birth_date: "",
+    gender: "L",
+    address: "",
+    phone: "",
+    email: "",
+    position: "",
+    work_unit: "",
+    join_date: "",
+    status: "aktif"
+  });
+
+  useEffect(() => {
+    if (isEdit) {
+      const employee = dummyEmployees.find(e => e.id === parseInt(id));
+      if (employee) {
+        setFormData({
+          nip: employee.nip,
+          full_name: employee.full_name,
+          birthplace: employee.birthplace || "",
+          birth_date: employee.birth_date || "",
+          gender: employee.gender || "L",
+          address: employee.address || "",
+          phone: employee.phone || "",
+          email: employee.email || "",
+          position: employee.position,
+          work_unit: employee.work_unit,
+          join_date: employee.join_date || "",
+          status: employee.status || "aktif"
+        });
+      }
+    }
+  }, [isEdit, id]);
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    if (isEdit) {
+      // Simulasi update (nanti ganti dengan Supabase)
+      alert("Data pegawai berhasil diupdate!");
+    } else {
+      // Simulasi tambah (nanti ganti dengan Supabase)
+      alert("Pegawai baru berhasil ditambahkan!");
+    }
+    
+    navigate("/employees");
+  };
+
+  return (
+    <div className="p-6 max-w-4xl mx-auto">
+      {/* Tombol Kembali */}
+      <button
+        onClick={() => navigate("/employees")}
+        className="flex items-center gap-2 text-gray-600 hover:text-teal-600 mb-4 transition"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Kembali
+      </button>
+
+      <div className="bg-white rounded-xl shadow overflow-hidden">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-teal-600 to-blue-600 px-6 py-4">
+          <div className="flex items-center gap-3">
+            <User className="w-6 h-6 text-white" />
+            <h1 className="text-xl font-bold text-white">
+              {isEdit ? "Edit Data Pegawai" : "Tambah Pegawai Baru"}
+            </h1>
+          </div>
+          <p className="text-teal-100 text-sm mt-1">
+            {isEdit ? "Perbarui informasi pegawai" : "Isi formulir untuk menambahkan pegawai baru"}
+          </p>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* NIP */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                NIP <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="nip"
+                value={formData.nip}
+                onChange={handleChange}
+                required
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-teal-400 focus:outline-none"
+                placeholder="Contoh: 198001012001001"
+              />
+            </div>
+
+            {/* Nama Lengkap */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Nama Lengkap <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="full_name"
+                value={formData.full_name}
+                onChange={handleChange}
+                required
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-teal-400 focus:outline-none"
+                placeholder="Contoh: dr. Ahmad Wijaya"
+              />
+            </div>
+
+            {/* Tempat Lahir */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Tempat Lahir
+              </label>
+              <input
+                type="text"
+                name="birthplace"
+                value={formData.birthplace}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-teal-400 focus:outline-none"
+                placeholder="Contoh: Ponorogo"
+              />
+            </div>
+
+            {/* Tanggal Lahir */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Tanggal Lahir
+              </label>
+              <input
+                type="date"
+                name="birth_date"
+                value={formData.birth_date}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-teal-400 focus:outline-none"
+              />
+            </div>
+
+            {/* Jenis Kelamin */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Jenis Kelamin
+              </label>
+              <select
+                name="gender"
+                value={formData.gender}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-teal-400 focus:outline-none"
+              >
+                <option value="L">Laki-laki</option>
+                <option value="P">Perempuan</option>
+              </select>
+            </div>
+
+            {/* No. Telepon */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                No. Telepon
+              </label>
+              <input
+                type="tel"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-teal-400 focus:outline-none"
+                placeholder="Contoh: 081234567890"
+              />
+            </div>
+
+            {/* Email */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Email
+              </label>
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-teal-400 focus:outline-none"
+                placeholder="Contoh: nama@rsudharjono.com"
+              />
+            </div>
+
+            {/* Jabatan */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Jabatan <span className="text-red-500">*</span>
+              </label>
+              <select
+                name="position"
+                value={formData.position}
+                onChange={handleChange}
+                required
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-teal-400 focus:outline-none"
+              >
+                <option value="">-- Pilih Jabatan --</option>
+                {positions.map((pos) => (
+                  <option key={pos} value={pos}>{pos}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Unit Kerja */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Unit Kerja <span className="text-red-500">*</span>
+              </label>
+              <select
+                name="work_unit"
+                value={formData.work_unit}
+                onChange={handleChange}
+                required
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-teal-400 focus:outline-none"
+              >
+                <option value="">-- Pilih Unit --</option>
+                {workUnits.map((unit) => (
+                  <option key={unit} value={unit}>{unit}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Alamat */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Alamat
+              </label>
+              <textarea
+                name="address"
+                value={formData.address}
+                onChange={handleChange}
+                rows="2"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-teal-400 focus:outline-none"
+                placeholder="Alamat lengkap pegawai"
+              />
+            </div>
+
+            {/* Tanggal Bergabung */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Tanggal Bergabung
+              </label>
+              <input
+                type="date"
+                name="join_date"
+                value={formData.join_date}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-teal-400 focus:outline-none"
+              />
+            </div>
+
+            {/* Status */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Status
+              </label>
+              <select
+                name="status"
+                value={formData.status}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-teal-400 focus:outline-none"
+              >
+                <option value="aktif">Aktif</option>
+                <option value="cuti">Cuti</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Tombol Submit */}
+          <div className="flex gap-3 mt-8 pt-4 border-t">
+            <button
+              type="button"
+              onClick={() => navigate("/employees")}
+              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"
+            >
+              Batal
+            </button>
+            <button
+              type="submit"
+              className="px-6 py-2 bg-gradient-to-r from-teal-600 to-blue-600 text-white rounded-lg hover:from-teal-700 hover:to-blue-700 transition flex items-center gap-2"
+            >
+              <Save className="w-4 h-4" />
+              {isEdit ? "Simpan Perubahan" : "Simpan Pegawai"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
