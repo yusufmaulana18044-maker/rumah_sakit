@@ -14,6 +14,10 @@ import EmployeeForm from "./pages/EmployeeForm";
 import Test from "./pages/test";
 import SimpleLogin from "./pages/simple-login";
 
+// 📦 IMPORT HALAMAN PROFILE & SETTINGS
+import Profile from "./pages/profile";
+import SettingsPage from "./pages/settings";
+
 function App() {
   return (
     <BrowserRouter>
@@ -33,6 +37,11 @@ function App() {
         <Route path="/employees/new" element={<Layout><EmployeeForm /></Layout>} />
         <Route path="/employees/:id" element={<Layout><EmployeeDetail /></Layout>} />
         <Route path="/employees/:id/edit" element={<Layout><EmployeeForm /></Layout>} />
+        
+        {/* 🆕 ROUTE BARU UNTUK PROFILE & SETTINGS */}
+        <Route path="/profile" element={<Layout><Profile /></Layout>} />
+        <Route path="/settings" element={<Layout><SettingsPage /></Layout>} />
+        
         <Route path="/test" element={<Test />} />
       </Routes>
     </BrowserRouter>
