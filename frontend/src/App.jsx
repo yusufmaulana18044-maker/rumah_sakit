@@ -28,7 +28,7 @@ function App() {
         <Route path="/simple-login" element={<SimpleLogin />} />
         
         {/* Route dengan Layout (dashboard & admin) */}
-        <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
+       <Route path="/dashboard" element={<Layout title="Dashboard Utama"><Dashboard /></Layout>} />
         <Route path="/user" element={<Layout><User /></Layout>} />
         <Route path="/admin" element={<Layout><Admin /></Layout>} />
         
