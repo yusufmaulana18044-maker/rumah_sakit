@@ -1,37 +1,90 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Settings, Bell, Lock, Eye, Sun, Moon, Monitor, Volume2, Save, X } from "lucide-react";
 import Layout from "./layout";
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState({
-    // Notifikasi
     emailNotifications: true,
     pushNotifications: true,
     smsNotifications: false,
     notificationFrequency: "realtime",
-    
-    // Keamanan
     twoFactorAuth: false,
     sessionTimeout: "30",
     autoLogout: true,
-    
-    // Tampilan
     theme: "light",
     fontSize: "medium",
     colorScheme: "teal",
-    
-    // Privasi
     profileVisibility: "public",
     showActivityStatus: true,
     allowDataSharing: false,
-    
-    // Suara & Audio
     enableSoundNotification: true,
     enableVibration: true,
   });
 
   const [hasChanges, setHasChanges] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+
+  // Fungsi untuk menerapkan tema
+  const applyTheme = (theme) => {
+    const root = document.documentElement;
+    if (theme === "dark") {
+      root.classList.add("dark");
+    } else {
+      root.classList.remove("dark");
+    }
+    localStorage.setItem("theme", theme);
+  };
+
+  // ✅ Fungsi untuk menerapkan ukuran font
+  const applyFontSize = (size) => {
+    const root = document.documentElement;
+    const sizes = {
+      small: "14px",
+      medium: "16px",
+      large: "18px"
+    };
+    root.style.fontSize = sizes[size] || "16px";
+    localStorage.setItem("fontSize", size);
+  };
+
+  // ✅ Fungsi untuk menerapkan skema warna
+  const applyColorScheme = (color) => {
+    const root = document.documentElement;
+    // Hapus semua class warna sebelumnya
+    root.classList.remove("color-teal", "color-blue", "color-purple");
+    // Tambahkan class warna baru
+    root.classList.add(`color-${color}`);
+    localStorage.setItem("colorScheme", color);
+  };
+
+  // Load tema, font size, dan skema warna saat pertama kali
+  useEffect(() => {
+    const savedSettings = localStorage.getItem("appSettings");
+    if (savedSettings) {
+      const parsed = JSON.parse(savedSettings);
+      setSettings(parsed);
+      if (parsed.theme) {
+        applyTheme(parsed.theme);
+      }
+      if (parsed.fontSize) {
+        applyFontSize(parsed.fontSize);
+      }
+      if (parsed.colorScheme) {
+        applyColorScheme(parsed.colorScheme);
+      }
+    } else {
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      applyTheme(prefersDark ? "dark" : "light");
+      applyFontSize("medium");
+      applyColorScheme("teal");
+      setSettings(prev => ({ 
+        ...prev, 
+        theme: prefersDark ? "dark" : "light",
+        fontSize: "medium",
+        colorScheme: "teal"
+      }));
+    }
+  }, []);
 
   const handleToggle = (key) => {
     setSettings(prev => ({
@@ -46,10 +99,35 @@ export default function SettingsPage() {
       ...prev,
       [key]: value
     }));
+    
+    if (key === "theme") {
+      applyTheme(value);
+    }
+    
+    if (key === "fontSize") {
+      applyFontSize(value);
+    }
+
+    if (key === "colorScheme") {
+      applyColorScheme(value);
+    }
+    
     setHasChanges(true);
   };
 
   const handleSaveSettings = () => {
+    if (settings.theme) {
+      applyTheme(settings.theme);
+    }
+    
+    if (settings.fontSize) {
+      applyFontSize(settings.fontSize);
+    }
+
+    if (settings.colorScheme) {
+      applyColorScheme(settings.colorScheme);
+    }
+    
     localStorage.setItem("appSettings", JSON.stringify(settings));
     setHasChanges(false);
     setSuccessMessage("Pengaturan berhasil disimpan!");

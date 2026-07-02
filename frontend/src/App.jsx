@@ -11,7 +11,7 @@ import Layout from "./pages/layout";
 import EmployeeList from "./pages/EmployeeList";
 import EmployeeDetail from "./pages/EmployeeDetail";
 import EmployeeForm from "./pages/EmployeeForm";
-import Test from "./pages/test";
+
 import SimpleLogin from "./pages/simple-login";
 
 // 📦 IMPORT HALAMAN PROFILE & SETTINGS
@@ -28,7 +28,7 @@ function App() {
         <Route path="/simple-login" element={<SimpleLogin />} />
         
         {/* Route dengan Layout (dashboard & admin) */}
-       <Route path="/dashboard" element={<Layout title="Dashboard Utama"><Dashboard /></Layout>} />
+        <Route path="/dashboard" element={<Layout title="Dashboard Utama"><Dashboard /></Layout>} />
         <Route path="/user" element={<Layout><User /></Layout>} />
         <Route path="/admin" element={<Layout><Admin /></Layout>} />
         
@@ -42,7 +42,7 @@ function App() {
         <Route path="/profile" element={<Layout><Profile /></Layout>} />
         <Route path="/settings" element={<Layout><SettingsPage /></Layout>} />
         
-        <Route path="/test" element={<Test />} />
+        {/* Route /test dihapus karena file tidak ada */}
       </Routes>
     </BrowserRouter>
   );

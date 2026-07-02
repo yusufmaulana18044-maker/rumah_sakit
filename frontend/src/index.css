@@ -1,3 +1,419 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ===== DARK MODE ===== */
+.dark {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-card: #1e293b;
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --border-color: #334155;
+}
+
+/* Background */
+.dark body {
+  background-color: #0f172a !important;
+  color: #e2e8f0 !important;
+}
+
+.dark .bg-white {
+  background-color: #1e293b !important;
+}
+
+.dark .bg-gray-50 {
+  background-color: #0f172a !important;
+}
+
+.dark .bg-gray-100 {
+  background-color: #1e293b !important;
+}
+
+/* Text */
+.dark .text-gray-800 {
+  color: #e2e8f0 !important;
+}
+
+.dark .text-gray-700 {
+  color: #cbd5e1 !important;
+}
+
+.dark .text-gray-600 {
+  color: #94a3b8 !important;
+}
+
+.dark .text-gray-500 {
+  color: #64748b !important;
+}
+
+/* Border */
+.dark .border-gray-200 {
+  border-color: #334155 !important;
+}
+
+.dark .border-gray-300 {
+  border-color: #475569 !important;
+}
+
+.dark .border-t {
+  border-color: #334155 !important;
+}
+
+/* Input & Select */
+.dark input,
+.dark select,
+.dark textarea {
+  background-color: #0f172a !important;
+  color: #e2e8f0 !important;
+  border-color: #475569 !important;
+}
+
+.dark input:focus,
+.dark select:focus,
+.dark textarea:focus {
+  border-color: #14b8a6 !important;
+  outline: none !important;
+}
+
+.dark input::placeholder {
+  color: #64748b !important;
+}
+
+/* Shadow */
+.dark .shadow-sm {
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.5) !important;
+}
+
+.dark .shadow-md {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5) !important;
+}
+
+.dark .shadow-lg {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Hover */
+.dark .hover\:bg-gray-50:hover {
+  background-color: #1e293b !important;
+}
+
+.dark .hover\:bg-gray-100:hover {
+  background-color: #334155 !important;
+}
+
+.dark .hover\:bg-gray-700:hover {
+  background-color: #334155 !important;
+}
+
+/* Sidebar */
+.dark .bg-gradient-to-b {
+  background-image: linear-gradient(to bottom, #0f172a, #1e293b) !important;
+}
+
+.dark .bg-gray-900 {
+  background-color: #0f172a !important;
+}
+
+.dark .bg-gray-800 {
+  background-color: #1e293b !important;
+}
+
+.dark .border-gray-700 {
+  border-color: #334155 !important;
+}
+
+/* Card */
+.dark .bg-gradient-to-br {
+  background-image: linear-gradient(to bottom right, #0f172a, #1e293b) !important;
+}
+
+/* Dropdown */
+.dark .bg-white.rounded-lg.shadow-xl {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+}
+
+/* Toggle Switch */
+.dark .bg-gray-300 {
+  background-color: #475569 !important;
+}
+
+/* Button Batal */
+.dark .bg-gray-300 {
+  background-color: #475569 !important;
+  color: #e2e8f0 !important;
+}
+
+.dark .bg-gray-300:hover {
+  background-color: #64748b !important;
+}
+
+/* Info Box */
+.dark .bg-blue-50 {
+  background-color: #1e293b !important;
+}
+
+.dark .text-blue-800 {
+  color: #93c5fd !important;
+}
+
+.dark .border-blue-500 {
+  border-color: #3b82f6 !important;
+}
+
+/* Success Message */
+.dark .bg-green-50 {
+  background-color: #064e3b !important;
+}
+
+.dark .text-green-700 {
+  color: #6ee7b7 !important;
+}
+
+.dark .border-green-300 {
+  border-color: #065f46 !important;
+}
+
+/* Layout Background */
+.dark .bg-gradient-to-br.from-gray-50 {
+  background-image: linear-gradient(to bottom right, #0f172a, #1e293b) !important;
+}
+
+.dark .from-gray-50 {
+  --tw-gradient-from: #0f172a !important;
+}
+
+.dark .to-gray-100 {
+  --tw-gradient-to: #1e293b !important;
+}
+
+/* Header */
+.dark .bg-white.shadow-sm {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+}
+
+.dark .border-b {
+  border-color: #334155 !important;
+}
+
+/* User menu */
+.dark .hover\:bg-gray-50:hover {
+  background-color: #334155 !important;
+}
+
+.dark .text-gray-700 {
+  color: #cbd5e1 !important;
+}
+
+.dark .text-gray-800 {
+  color: #e2e8f0 !important;
+}
+
+/* Link di sidebar */
+.dark .text-gray-200 {
+  color: #cbd5e1 !important;
+}
+
+.dark .hover\:bg-gray-700:hover {
+  background-color: #334155 !important;
+}
+
+/* Gradient teal di dark mode tetap */
+.dark .bg-gradient-to-r.from-teal-600 {
+  background-image: linear-gradient(to right, #0d9488, #0f766e) !important;
+}
+
+/* Setting Card */
+.dark .border-l-4.border-teal-500 {
+  border-color: #14b8a6 !important;
+}
+
+.dark .bg-teal-100 {
+  background-color: #134e4a !important;
+}
+
+.dark .text-teal-600 {
+  color: #5eead4 !important;
+}
+
+.dark .bg-teal-50 {
+  background-color: #134e4a !important;
+}
+
+.dark .border-teal-600 {
+  border-color: #14b8a6 !important;
+}
+
+.dark .text-teal-100 {
+  color: #ccfbf1 !important;
+}
+
+/* Select option di dark */
+.dark select option {
+  background-color: #1e293b !important;
+  color: #e2e8f0 !important;
+}
+
+/* Scrollbar dark */
+.dark ::-webkit-scrollbar {
+  width: 8px;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* ===== SKEMA WARNA ===== */
+/* Teal (default) */
+.color-teal .bg-teal-500 {
+  background-color: #14b8a6 !important;
+}
+.color-teal .bg-teal-600 {
+  background-color: #0d9488 !important;
+}
+.color-teal .border-teal-500 {
+  border-color: #14b8a6 !important;
+}
+.color-teal .from-teal-500 {
+  --tw-gradient-from: #14b8a6 !important;
+}
+.color-teal .to-teal-600 {
+  --tw-gradient-to: #0d9488 !important;
+}
+
+/* Blue */
+.color-blue .bg-teal-500 {
+  background-color: #3b82f6 !important;
+}
+.color-blue .bg-teal-600 {
+  background-color: #2563eb !important;
+}
+.color-blue .border-teal-500 {
+  border-color: #3b82f6 !important;
+}
+.color-blue .from-teal-500 {
+  --tw-gradient-from: #3b82f6 !important;
+}
+.color-blue .to-teal-600 {
+  --tw-gradient-to: #2563eb !important;
+}
+.color-blue .bg-teal-100 {
+  background-color: #dbeafe !important;
+}
+.color-blue .text-teal-600 {
+  color: #2563eb !important;
+}
+.color-blue .bg-teal-50 {
+  background-color: #eff6ff !important;
+}
+.color-blue .border-teal-600 {
+  border-color: #2563eb !important;
+}
+
+/* Purple */
+.color-purple .bg-teal-500 {
+  background-color: #8b5cf6 !important;
+}
+.color-purple .bg-teal-600 {
+  background-color: #7c3aed !important;
+}
+.color-purple .border-teal-500 {
+  border-color: #8b5cf6 !important;
+}
+.color-purple .from-teal-500 {
+  --tw-gradient-from: #8b5cf6 !important;
+}
+.color-purple .to-teal-600 {
+  --tw-gradient-to: #7c3aed !important;
+}
+.color-purple .bg-teal-100 {
+  background-color: #ede9fe !important;
+}
+.color-purple .text-teal-600 {
+  color: #7c3aed !important;
+}
+.color-purple .bg-teal-50 {
+  background-color: #f5f3ff !important;
+}
+.color-purple .border-teal-600 {
+  border-color: #7c3aed !important;
+}
+
+/* ===== SKEMA WARNA - OVERRIDE SEMUA KOMPONEN ===== */
+/* Warna Primary */
+.bg-teal-500 {
+  background-color: var(--color-primary) !important;
+}
+.bg-teal-600 {
+  background-color: var(--color-primary-dark) !important;
+}
+.border-teal-500 {
+  border-color: var(--color-primary-border) !important;
+}
+.border-teal-600 {
+  border-color: var(--color-primary-dark) !important;
+}
+.from-teal-500 {
+  --tw-gradient-from: var(--color-primary) !important;
+}
+.to-teal-600 {
+  --tw-gradient-to: var(--color-primary-dark) !important;
+}
+.bg-teal-100 {
+  background-color: var(--color-primary-light) !important;
+}
+.text-teal-600 {
+  color: var(--color-primary-dark) !important;
+}
+.bg-teal-50 {
+  background-color: var(--color-primary-bg) !important;
+}
+.text-teal-100 {
+  color: var(--color-primary-light) !important;
+}
+.hover\:bg-teal-700:hover {
+  background-color: var(--color-primary-dark) !important;
+}
+.hover\:bg-teal-50:hover {
+  background-color: var(--color-primary-bg) !important;
+}
+.hover\:border-teal-300:hover {
+  border-color: var(--color-primary) !important;
+}
+.border-teal-600 {
+  border-color: var(--color-primary-dark) !important;
+}
+.focus\:border-teal-500:focus {
+  border-color: var(--color-primary) !important;
+}
+
+/* Gradient khusus untuk header */
+.bg-gradient-to-r.from-teal-500.to-teal-600 {
+  background-image: linear-gradient(to right, var(--color-primary), var(--color-primary-dark)) !important;
+}
+
+/* Toggle Switch active */
+button.w-12.h-6.rounded-full.transition-colors.bg-teal-600 {
+  background-color: var(--color-primary) !important;
+}
+
+/* Sidebar menu active */
+.bg-gradient-to-r.from-teal-600.to-teal-700 {
+  background-image: linear-gradient(to right, var(--color-primary), var(--color-primary-dark)) !important;
+}
+
+/* Profile circle */
+.bg-gradient-to-r.from-teal-500.to-blue-500 {
+  background-image: linear-gradient(to right, var(--color-primary), var(--color-primary-dark)) !important;
+}
