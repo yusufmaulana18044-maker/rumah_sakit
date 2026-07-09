@@ -1,5 +1,5 @@
 import React from "react";
-import { LogOut, Menu, X, Users, Ticket, Settings, User, ChevronDown } from "lucide-react";
+import { LogOut, Menu, X, Users, Settings, User, ChevronDown } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 
@@ -68,7 +68,7 @@ const Layout = ({ children, title = "Dashboard" }) => {
               </Link>
             </li>
 
-            {/* 🆕 MENU BARU: Data Pegawai (hanya untuk admin) */}
+            {/* Menu Data Pegawai (hanya untuk admin) */}
             {role === "admin" && (
               <li>
                 <Link

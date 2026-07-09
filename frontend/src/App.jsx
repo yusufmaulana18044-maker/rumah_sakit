@@ -9,6 +9,11 @@ import Layout from "./pages/layout";
 import EmployeeList from "./pages/EmployeeList";
 import EmployeeDetail from "./pages/EmployeeDetail";
 import EmployeeForm from "./pages/EmployeeForm";
+<<<<<<< HEAD
+=======
+
+import SimpleLogin from "./pages/simple-login";
+>>>>>>> fbf0fe958898519d36a95a228535fc3f9ebf5cd8
 
 // 📦 IMPORT HALAMAN PROFILE & SETTINGS
 import Profile from "./pages/profile";
@@ -22,8 +27,15 @@ function App() {
         <Route path="/" element={<Login />} />
         <Route path="/register" element={<Register />} />
         
+<<<<<<< HEAD
         {/* Route dengan Layout */}
         <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
+=======
+        {/* Route dengan Layout (dashboard & admin) */}
+        <Route path="/dashboard" element={<Layout title="Dashboard Utama"><Dashboard /></Layout>} />
+        <Route path="/user" element={<Layout><User /></Layout>} />
+        <Route path="/admin" element={<Layout><Admin /></Layout>} />
+>>>>>>> fbf0fe958898519d36a95a228535fc3f9ebf5cd8
         
         {/* ROUTE UNTUK PEGAWAI & DOKUMEN */}
         <Route path="/employees" element={<Layout><EmployeeList /></Layout>} />
@@ -34,6 +46,11 @@ function App() {
         {/* ROUTE UNTUK PROFILE & SETTINGS */}
         <Route path="/profile" element={<Layout><Profile /></Layout>} />
         <Route path="/settings" element={<Layout><SettingsPage /></Layout>} />
+<<<<<<< HEAD
+=======
+        
+        {/* Route /test dihapus karena file tidak ada */}
+>>>>>>> fbf0fe958898519d36a95a228535fc3f9ebf5cd8
       </Routes>
     </BrowserRouter>
   );
