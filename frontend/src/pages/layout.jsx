@@ -85,21 +85,6 @@ const Layout = ({ children, title = "Dashboard" }) => {
               </li>
             )}
 
-            {/* Menu Tiket */}
-            <li>
-              <Link
-                to="/user"
-                className={`flex items-center gap-4 px-4 py-3 rounded-lg transition ${
-                  isActive("/user")
-                    ? "bg-gradient-to-r from-teal-600 to-teal-700 text-white shadow-md"
-                    : "text-gray-200 hover:bg-gray-700"
-                }`}
-              >
-                <Ticket className="w-5 h-5" />
-                {sidebarOpen && <span className="font-medium">Tiket Saya</span>}
-              </Link>
-            </li>
-
             {/* Divider */}
             {sidebarOpen && <li className="py-2"><div className="border-t border-gray-700"></div></li>}
 
