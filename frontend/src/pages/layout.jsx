@@ -1,7 +1,26 @@
+// src/components/Layout.jsx (atau src/pages/layout.jsx)
 import React from "react";
-import { LogOut, Menu, X, Users, Settings, User, ChevronDown } from "lucide-react";
+import { LogOut, Menu, X, Users, Settings, User, ChevronDown, FileText } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
+
+// 14 Kategori Dokumen
+const KATEGORI = [
+  { id: 1, nama: "SK Pangkat (Mulai CPNS)" },
+  { id: 2, nama: "SK Fungsional" },
+  { id: 3, nama: "Data Pribadi" },
+  { id: 4, nama: "Riwayat Pendidikan" },
+  { id: 5, nama: "Uraian Tugas" },
+  { id: 6, nama: "SPK RKK (Khusus Nakes)" },
+  { id: 7, nama: "Penilaian Kinerja (SKP)" },
+  { id: 8, nama: "SPMT" },
+  { id: 9, nama: "Orientasi" },
+  { id: 10, nama: "KGB" },
+  { id: 11, nama: "Pengembangan Kompetensi" },
+  { id: 12, nama: "Riwayat Jabatan" },
+  { id: 13, nama: "Check Up" },
+  { id: 14, nama: "Lain-lain" },
+];
 
 const Layout = ({ children, title = "Dashboard" }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -33,57 +52,93 @@ const Layout = ({ children, title = "Dashboard" }) => {
     }
   };
 
-  // Fungsi untuk cek link aktif
   const isActive = (path) => location.pathname === path;
+  const isKategoriActive = (id) => location.pathname === `/kategori/${id}`;
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Sidebar */}
       <aside
         className={`${
-          sidebarOpen ? "w-64" : "w-20"
-        } bg-gradient-to-b from-gray-900 to-gray-800 text-white flex flex-col transition-all duration-300 shadow-lg`}
+          sidebarOpen ? "w-72" : "w-20"
+        } bg-gradient-to-b from-gray-900 to-gray-800 text-white flex flex-col transition-all duration-300 shadow-lg overflow-y-auto`}
       >
         {/* Logo */}
         <div className="p-6 flex items-center gap-3 border-b border-gray-700 hover:bg-gray-800 transition cursor-pointer">
           <div className="text-3xl">🏥</div>
-          {sidebarOpen && <h1 className="text-lg font-bold bg-gradient-to-r from-teal-400 to-blue-400 bg-clip-text text-transparent">RS Hardjono</h1>}
+          {sidebarOpen && <h1 className="text-lg font-bold bg-gradient-to-r from-teal-400 to-blue-400 bg-clip-text text-transparent">RSUD Dr. Harjono</h1>}
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-3 py-6 overflow-y-auto">
-          <ul className="space-y-2">
+        <nav className="flex-1 px-3 py-4 overflow-y-auto">
+          <ul className="space-y-1">
             {/* Menu Dashboard */}
             <li>
               <Link
                 to="/dashboard"
-                className={`flex items-center gap-4 px-4 py-3 rounded-lg transition ${
+                className={`flex items-center gap-4 px-4 py-2.5 rounded-lg transition ${
                   isActive("/dashboard")
                     ? "bg-gradient-to-r from-teal-600 to-teal-700 text-white shadow-md"
                     : "text-gray-200 hover:bg-gray-700"
                 }`}
               >
                 <span>📊</span>
-                {sidebarOpen && <span className="font-medium">Dashboard</span>}
+                {sidebarOpen && <span className="font-medium text-sm">Dashboard</span>}
               </Link>
             </li>
 
-            {/* Menu Data Pegawai (hanya untuk admin) */}
+            {/* Menu Data Pegawai */}
             {role === "admin" && (
               <li>
                 <Link
                   to="/employees"
-                  className={`flex items-center gap-4 px-4 py-3 rounded-lg transition ${
+                  className={`flex items-center gap-4 px-4 py-2.5 rounded-lg transition ${
                     isActive("/employees") || location.pathname.startsWith("/employees/")
                       ? "bg-gradient-to-r from-teal-600 to-teal-700 text-white shadow-md"
                       : "text-gray-200 hover:bg-gray-700"
                   }`}
                 >
                   <Users className="w-5 h-5" />
-                  {sidebarOpen && <span className="font-medium">Data Pegawai</span>}
+                  {sidebarOpen && <span className="font-medium text-sm">Data Pegawai</span>}
                 </Link>
               </li>
             )}
+
+            {/* Divider - Kategori Dokumen */}
+            {sidebarOpen && (
+              <li className="pt-3 pb-1">
+                <div className="flex items-center gap-2 px-4">
+                  <FileText className="w-4 h-4 text-gray-500" />
+                  <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Kategori Dokumen</span>
+                </div>
+              </li>
+            )}
+            {!sidebarOpen && (
+              <li className="pt-3 pb-1">
+                <div className="border-t border-gray-700"></div>
+              </li>
+            )}
+
+            {/* 14 Kategori */}
+            {KATEGORI.map((kat) => (
+              <li key={kat.id}>
+                <Link
+                  to={`/kategori/${kat.id}`}
+                  className={`flex items-center gap-4 px-4 py-2 rounded-lg transition ${
+                    isKategoriActive(kat.id)
+                      ? "bg-gradient-to-r from-teal-600 to-teal-700 text-white shadow-md"
+                      : "text-gray-200 hover:bg-gray-700"
+                  }`}
+                >
+                  <span className="text-xs font-mono bg-gray-700 text-gray-300 w-6 h-6 rounded flex items-center justify-center">
+                    {String(kat.id).padStart(2, "0")}
+                  </span>
+                  {sidebarOpen && (
+                    <span className="font-medium text-sm truncate">{kat.nama}</span>
+                  )}
+                </Link>
+              </li>
+            ))}
 
             {/* Divider */}
             {sidebarOpen && <li className="py-2"><div className="border-t border-gray-700"></div></li>}
@@ -92,14 +147,14 @@ const Layout = ({ children, title = "Dashboard" }) => {
             <li>
               <Link
                 to="/profile"
-                className={`flex items-center gap-4 px-4 py-3 rounded-lg transition ${
+                className={`flex items-center gap-4 px-4 py-2.5 rounded-lg transition ${
                   isActive("/profile")
                     ? "bg-gradient-to-r from-teal-600 to-teal-700 text-white shadow-md"
                     : "text-gray-200 hover:bg-gray-700"
                 }`}
               >
                 <User className="w-5 h-5" />
-                {sidebarOpen && <span className="font-medium">Profil Saya</span>}
+                {sidebarOpen && <span className="font-medium text-sm">Profil Saya</span>}
               </Link>
             </li>
 
@@ -107,14 +162,14 @@ const Layout = ({ children, title = "Dashboard" }) => {
             <li>
               <Link
                 to="/settings"
-                className={`flex items-center gap-4 px-4 py-3 rounded-lg transition ${
+                className={`flex items-center gap-4 px-4 py-2.5 rounded-lg transition ${
                   isActive("/settings")
                     ? "bg-gradient-to-r from-teal-600 to-teal-700 text-white shadow-md"
                     : "text-gray-200 hover:bg-gray-700"
                 }`}
               >
                 <Settings className="w-5 h-5" />
-                {sidebarOpen && <span className="font-medium">Pengaturan</span>}
+                {sidebarOpen && <span className="font-medium text-sm">Pengaturan</span>}
               </Link>
             </li>
           </ul>
@@ -133,7 +188,7 @@ const Layout = ({ children, title = "Dashboard" }) => {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
         <header className="bg-white shadow-sm sticky top-0 z-40 border-b border-gray-200">
           <div className="flex items-center justify-between px-6 py-4">
@@ -148,7 +203,7 @@ const Layout = ({ children, title = "Dashboard" }) => {
                   <Menu className="w-6 h-6 text-gray-700" />
                 )}
               </button>
-              <h1 className="text-xl font-semibold text-gray-800">{title}</h1>
+              <h1 className="text-xl font-semibold text-gray-800 truncate">{title}</h1>
             </div>
 
             {/* User Profile Dropdown */}
@@ -157,7 +212,7 @@ const Layout = ({ children, title = "Dashboard" }) => {
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
                 className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 rounded-lg transition group"
               >
-                <div className="text-right text-sm">
+                <div className="text-right text-sm hidden sm:block">
                   <p className="font-semibold text-gray-800 capitalize">{username || "User"}</p>
                   <p className="text-gray-600 text-xs capitalize">{role || "role"}</p>
                 </div>
