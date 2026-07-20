@@ -51,11 +51,9 @@ export default function Login() {
       localStorage.setItem("username", username);
       localStorage.setItem("role", role);
 
-      if (role === "admin") {
-        window.location.href = "/admin";
-      } else {
-        window.location.href = "/user";
-      }
+      // ✅ SEMUA USER LANGSUNG KE DASHBOARD!
+      window.location.href = "/dashboard";
+
     } catch (err) {
       setError("Terjadi kesalahan, silakan coba lagi");
       setIsLoading(false);
@@ -98,7 +96,6 @@ export default function Login() {
         <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
           {/* Header hijau + biru khas RS */}
           <div className="bg-gradient-to-r from-blue-900 to-teal-600 px-6 pt-8 pb-6 relative overflow-hidden">
-            {/* Ornamen Reog (watermark) */}
             <div className="absolute -right-8 -top-8 opacity-10 pointer-events-none">
               <svg className="w-32 h-32 text-white" viewBox="0 0 100 100" fill="currentColor">
                 <path d="M50 20 L55 35 L70 35 L58 45 L62 60 L50 50 L38 60 L42 45 L30 35 L45 35 Z" />
@@ -108,7 +105,6 @@ export default function Login() {
               </svg>
             </div>
 
-            {/* Logo RSUD Dr. Hardjono (lebih besar) */}
             <div className="flex justify-center mb-4">
               <div className="bg-white/20 p-3 rounded-2xl">
                 <img
