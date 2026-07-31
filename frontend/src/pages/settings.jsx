@@ -4,7 +4,6 @@ import {
   Settings, Bell, Lock, Eye, Sun, Moon, Monitor, 
   Volume2, Save, X 
 } from 'lucide-react';
-import Layout from './layout';
 import { useTheme } from '../context/ThemeContext'; // ← Import ini
 
 export default function SettingsPage() {

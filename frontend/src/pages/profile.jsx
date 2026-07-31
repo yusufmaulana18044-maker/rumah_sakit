@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { User, Mail, Phone, MapPin, Building, Badge, Calendar, Edit2, Save, X, Camera } from "lucide-react";
-import Layout from "./layout";
 
 export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
