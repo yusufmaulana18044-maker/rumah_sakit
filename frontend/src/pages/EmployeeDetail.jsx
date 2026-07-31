@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Upload, FileText, Download, Trash2, User, Briefcase, Calendar, Phone, Mail, MapPin } from "lucide-react";
 import dummyEmployees from "../data/dummyEmployees";
-import { documentTypes } from "../data/dummyEmployees";
+
 
 export default function EmployeeDetail() {
   const { id } = useParams();

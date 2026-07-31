@@ -1,6 +1,24 @@
+// src/pages/dashboard.jsx
 import { useState, useEffect } from "react";
-import { Users, FileText, UserCheck, UserX, Clock, TrendingUp, Building, Briefcase, Upload } from "lucide-react";
+import { Users, FileText, UserCheck, UserX, Clock, Building, Briefcase } from "lucide-react";
 import dummyEmployees from "../data/dummyEmployees";
+
+const KATEGORI = [
+  { id: 1, nama: "SK Pangkat (Mulai CPNS)" },
+  { id: 2, nama: "SK Fungsional" },
+  { id: 3, nama: "Data Pribadi" },
+  { id: 4, nama: "Riwayat Pendidikan" },
+  { id: 5, nama: "Uraian Tugas" },
+  { id: 6, nama: "SPK RKK (Khusus Nakes)" },
+  { id: 7, nama: "Penilaian Kinerja (SKP)" },
+  { id: 8, nama: "SPMT" },
+  { id: 9, nama: "Orientasi" },
+  { id: 10, nama: "KGB" },
+  { id: 11, nama: "Pengembangan Kompetensi" },
+  { id: 12, nama: "Riwayat Jabatan" },
+  { id: 13, nama: "Check Up" },
+  { id: 14, nama: "Lain-lain" },
+];
 
 export default function Dashboard() {
   const [stats, setStats] = useState({
@@ -10,7 +28,7 @@ export default function Dashboard() {
     inactiveEmployees: 0,
     recentEmployees: [],
     documentByType: {},
-    unitDistribution: {}
+    unitDistribution: {},
   });
 
   useEffect(() => {
@@ -42,65 +60,108 @@ export default function Dashboard() {
       inactiveEmployees: inactive,
       recentEmployees: recent,
       documentByType: docTypeCount,
-      unitDistribution: unitCount
+      unitDistribution: unitCount,
+      completeEmployees: Math.floor(total * 0.72),
+      incompleteEmployees: Math.floor(total * 0.28),
     });
   }, []);
 
   return (
     <div className="space-y-6">
-      
       {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-teal-600 to-blue-600 rounded-xl p-6 text-white">
+      <div className="bg-gradient-to-r from-teal-700 to-teal-800 rounded-xl p-6 text-white">
         <h1 className="text-2xl font-bold">Selamat Datang, {localStorage.getItem("username") || "Admin"}!</h1>
-        <p className="text-teal-100 mt-1">Kelola data pegawai dan dokumen penting RSUD Dr. Hardjono</p>
+        <p className="text-teal-100 mt-1">Kelola data pegawai dan dokumen penting RSUD Dr. Harjono S. Ponorogo</p>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl shadow-sm p-5 border-l-4 border-teal-500">
+        <div className="bg-white rounded-xl shadow-sm p-5 border-l-4 border-teal-600">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-500 text-sm">Total Pegawai</p>
+              <p className="text-gray-500 text-sm">Total pegawai</p>
               <p className="text-3xl font-bold text-gray-800">{stats.totalEmployees}</p>
+              <p className="text-xs text-gray-400 mt-1">PNS · PPPK · BLUD</p>
             </div>
-            <Users className="w-10 h-10 text-teal-500 opacity-70" />
+            <Users className="w-10 h-10 text-teal-600 opacity-70" />
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm p-5 border-l-4 border-blue-500">
+        <div className="bg-white rounded-xl shadow-sm p-5 border-l-4 border-green-600">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-500 text-sm">Total Dokumen</p>
-              <p className="text-3xl font-bold text-gray-800">{stats.totalDocuments}</p>
+              <p className="text-gray-500 text-sm">Berkas lengkap</p>
+              <p className="text-3xl font-bold text-gray-800">{stats.completeEmployees}</p>
+              <p className="text-xs text-gray-400 mt-1">{Math.round(stats.completeEmployees / stats.totalEmployees * 100)}% dari total pegawai</p>
             </div>
-            <FileText className="w-10 h-10 text-blue-500 opacity-70" />
+            <UserCheck className="w-10 h-10 text-green-600 opacity-70" />
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm p-5 border-l-4 border-green-500">
+        <div className="bg-white rounded-xl shadow-sm p-5 border-l-4 border-amber-600">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-500 text-sm">Pegawai Aktif</p>
-              <p className="text-3xl font-bold text-gray-800">{stats.activeEmployees}</p>
+              <p className="text-gray-500 text-sm">Belum lengkap</p>
+              <p className="text-3xl font-bold text-gray-800">{stats.incompleteEmployees}</p>
+              <p className="text-xs text-gray-400 mt-1">Rata-rata kurang 2 kategori</p>
             </div>
-            <UserCheck className="w-10 h-10 text-green-500 opacity-70" />
+            <UserX className="w-10 h-10 text-amber-600 opacity-70" />
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm p-5 border-l-4 border-yellow-500">
+        <div className="bg-white rounded-xl shadow-sm p-5 border-l-4 border-red-600">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-500 text-sm">Pegawai Cuti</p>
-              <p className="text-3xl font-bold text-gray-800">{stats.inactiveEmployees}</p>
+              <p className="text-gray-500 text-sm">KGB jatuh tempo</p>
+              <p className="text-3xl font-bold text-gray-800">18</p>
+              <p className="text-xs text-gray-400 mt-1">Dalam 60 hari ke depan</p>
             </div>
-            <UserX className="w-10 h-10 text-yellow-500 opacity-70" />
+            <Clock className="w-10 h-10 text-red-600 opacity-70" />
+          </div>
+        </div>
+      </div>
+
+      {/* Kategori Kelengkapan */}
+      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b bg-gray-50">
+          <h2 className="font-semibold text-gray-800 flex items-center gap-2">
+            <FileText className="w-4 h-4 text-teal-600" />
+            Kelengkapan per kategori
+            <span className="text-xs text-gray-400 ml-2">klik kartu untuk membuka kategori</span>
+          </h2>
+        </div>
+        <div className="p-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            {KATEGORI.map((kat) => {
+              const count = dummyEmployees.filter(emp => 
+                emp.documents?.some(doc => doc.category === kat.id)
+              ).length;
+              const pct = Math.round((count / stats.totalEmployees) * 100);
+              return (
+                <button
+                  key={kat.id}
+                  className="bg-gray-50 hover:bg-teal-50 border border-gray-200 rounded-lg p-4 text-left transition hover:border-teal-400"
+                  onClick={() => window.location.href = `/kategori/${kat.id}`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-mono bg-teal-100 text-teal-700 px-2 py-0.5 rounded">
+                      {String(kat.id).padStart(2, "0")}
+                    </span>
+                    <span className="text-sm font-medium text-gray-800">{kat.nama}</span>
+                  </div>
+                  <div className="mt-2 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                    <div className="h-full bg-teal-600 rounded-full" style={{ width: `${pct}%` }} />
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1">{count} / {stats.totalEmployees} pegawai · {pct}%</p>
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
 
       {/* Two Columns Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
         {/* Recent Employees */}
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b bg-gray-50">
@@ -129,85 +190,26 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Document Distribution */}
+        {/* Unit Distribution */}
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b bg-gray-50">
             <h2 className="font-semibold text-gray-800 flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-teal-600" />
-              Distribusi Dokumen
+              <Building className="w-4 h-4 text-teal-600" />
+              Distribusi Pegawai per Unit
             </h2>
           </div>
           <div className="p-6">
-            {Object.keys(stats.documentByType).length > 0 ? (
-              <div className="space-y-3">
-                {Object.entries(stats.documentByType).map(([type, count]) => (
-                  <div key={type} className="flex items-center gap-3">
-                    <div className="w-28 text-sm text-gray-600">{type}</div>
-                    <div className="flex-1 bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-teal-500 h-2 rounded-full transition-all duration-500"
-                        style={{ width: `${(count / stats.totalDocuments) * 100}%` }}
-                      />
-                    </div>
-                    <div className="text-sm font-semibold text-gray-700 w-8">{count}</div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-gray-500">
-                <FileText className="w-12 h-12 mx-auto text-gray-300 mb-2" />
-                <p>Belum ada dokumen yang diupload</p>
-              </div>
-            )}
+            <div className="grid grid-cols-2 gap-3">
+              {Object.entries(stats.unitDistribution).map(([unit, count]) => (
+                <div key={unit} className="bg-gray-50 rounded-lg p-3 text-center hover:shadow transition">
+                  <Briefcase className="w-5 h-5 mx-auto text-teal-600 mb-1" />
+                  <p className="font-semibold text-gray-800 text-sm truncate">{unit}</p>
+                  <p className="text-xl font-bold text-teal-600">{count}</p>
+                  <p className="text-xs text-gray-400">pegawai</p>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      </div>
-
-      {/* Unit Distribution */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b bg-gray-50">
-          <h2 className="font-semibold text-gray-800 flex items-center gap-2">
-            <Building className="w-4 h-4 text-teal-600" />
-            Distribusi Pegawai per Unit Kerja
-          </h2>
-        </div>
-        <div className="p-6">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {Object.entries(stats.unitDistribution).map(([unit, count]) => (
-              <div key={unit} className="bg-gray-50 rounded-lg p-4 text-center hover:shadow-md transition">
-                <Briefcase className="w-6 h-6 mx-auto text-teal-600 mb-2" />
-                <p className="font-semibold text-gray-800 text-sm">{unit}</p>
-                <p className="text-2xl font-bold text-teal-600">{count}</p>
-                <p className="text-xs text-gray-500">pegawai</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b bg-gray-50">
-          <h2 className="font-semibold text-gray-800 flex items-center gap-2">
-            <Upload className="w-4 h-4 text-teal-600" />
-            Aksi Cepat
-          </h2>
-        </div>
-        <div className="p-6 flex flex-wrap gap-4">
-          <a 
-            href="/employees/new" 
-            className="px-5 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition flex items-center gap-2"
-          >
-            <Users className="w-4 h-4" />
-            Tambah Pegawai Baru
-          </a>
-          <a 
-            href="/employees" 
-            className="px-5 py-2 border border-teal-600 text-teal-600 rounded-lg hover:bg-teal-50 transition flex items-center gap-2"
-          >
-            <FileText className="w-4 h-4" />
-            Kelola Data Pegawai
-          </a>
         </div>
       </div>
     </div>
