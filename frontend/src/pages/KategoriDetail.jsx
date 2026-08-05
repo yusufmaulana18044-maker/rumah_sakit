@@ -2,24 +2,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Upload, FileText, Download, Trash2 } from "lucide-react";
-import dummyEmployees from "../data/dummyEmployees";
-
-const KATEGORI = [
-  { id: 1, nama: "SK Pangkat (Mulai CPNS)" },
-  { id: 2, nama: "SK Fungsional" },
-  { id: 3, nama: "Data Pribadi" },
-  { id: 4, nama: "Riwayat Pendidikan" },
-  { id: 5, nama: "Uraian Tugas" },
-  { id: 6, nama: "SPK RKK (Khusus Nakes)" },
-  { id: 7, nama: "Penilaian Kinerja (SKP)" },
-  { id: 8, nama: "SPMT" },
-  { id: 9, nama: "Orientasi" },
-  { id: 10, nama: "KGB" },
-  { id: 11, nama: "Pengembangan Kompetensi" },
-  { id: 12, nama: "Riwayat Jabatan" },
-  { id: 13, nama: "Check Up" },
-  { id: 14, nama: "Lain-lain" },
-];
+import dummyEmployees, { KATEGORI } from "../data/dummyEmployees";
 
 const STATUS = {
   ok: { lbl: "Terverifikasi", cls: "bg-green-100 text-green-700" },
@@ -32,48 +15,56 @@ export default function KategoriDetail() {
   const navigate = useNavigate();
   const [documents, setDocuments] = useState([]);
   const [kategori, setKategori] = useState(null);
-  const [stats, setStats] = useState({ total: 0, ok: 0, tunggu: 0 });
+  const [stats, setStats] = useState({ total: 0, ok: 0, tunggu: 0, revisi: 0 });
 
   useEffect(() => {
     const kat = KATEGORI.find(k => k.id === parseInt(id));
     if (kat) {
       setKategori(kat);
       
+      // 🔥 PERBAIKAN: Cari dokumen dengan category yang cocok
       const docs = [];
       dummyEmployees.forEach(emp => {
-        if (emp.documents) {
+        if (emp.documents && emp.documents.length > 0) {
           emp.documents.forEach(doc => {
+            // Pastikan category cocok dengan id
             if (doc.category === parseInt(id)) {
               docs.push({
                 ...doc,
                 employee: emp.full_name,
                 nip: emp.nip,
                 unit: emp.work_unit,
+                status: doc.status || "ok" // default status jika tidak ada
               });
             }
           });
         }
       });
       
+      console.log(`Kategori ${id} (${kat.nama}) ditemukan ${docs.length} dokumen`); // Debug
+      
       setDocuments(docs);
       
       const okCount = docs.filter(d => d.status === "ok").length;
       const tungguCount = docs.filter(d => d.status === "tunggu").length;
+      const revisiCount = docs.filter(d => d.status === "revisi").length;
       setStats({
         total: docs.length,
         ok: okCount,
         tunggu: tungguCount,
+        revisi: revisiCount,
       });
     }
   }, [id]);
 
   const handleDownload = (doc) => {
-    alert(`Download file: ${doc.name}`);
+    alert(`📥 Download file: ${doc.name}`);
   };
 
   const handleDeleteDoc = (docId, docName) => {
     if (window.confirm(`Yakin ingin menghapus dokumen "${docName}"?`)) {
       setDocuments(documents.filter(doc => doc.id !== docId));
+      alert(`✅ Dokumen "${docName}" berhasil dihapus (simulasi)`);
     }
   };
 
@@ -90,14 +81,16 @@ export default function KategoriDetail() {
 
   return (
     <div className="space-y-6">
+      {/* Tombol Kembali */}
       <button
         onClick={() => navigate("/dashboard")}
         className="flex items-center gap-2 text-gray-600 hover:text-teal-600 transition"
       >
         <ArrowLeft className="w-4 h-4" />
-        Kembali
+        Kembali ke Dashboard
       </button>
 
+      {/* Header */}
       <div className="bg-white rounded-xl shadow-sm p-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
@@ -107,7 +100,9 @@ export default function KategoriDetail() {
               </span>
               <h1 className="text-2xl font-bold text-gray-800">{kategori.nama}</h1>
             </div>
-            <p className="text-gray-500 text-sm mt-1">Kategori dokumen {String(kategori.id).padStart(2, "0")} dari 14</p>
+            <p className="text-gray-500 text-sm mt-1">
+              {stats.total} dokumen dari {dummyEmployees.length} pegawai
+            </p>
           </div>
           <button className="bg-teal-700 text-white px-4 py-2 rounded-lg hover:bg-teal-800 transition flex items-center gap-2">
             <Upload className="w-4 h-4" />
@@ -116,9 +111,10 @@ export default function KategoriDetail() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* Statistik */}
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <div className="bg-white rounded-xl shadow-sm p-4 border-l-4 border-teal-600">
-          <p className="text-xs text-gray-500">Dokumen tersimpan</p>
+          <p className="text-xs text-gray-500">Total Dokumen</p>
           <p className="text-2xl font-bold text-gray-800">{stats.total}</p>
         </div>
         <div className="bg-white rounded-xl shadow-sm p-4 border-l-4 border-green-600">
@@ -126,17 +122,23 @@ export default function KategoriDetail() {
           <p className="text-2xl font-bold text-green-700">{stats.ok}</p>
         </div>
         <div className="bg-white rounded-xl shadow-sm p-4 border-l-4 border-yellow-600">
-          <p className="text-xs text-gray-500">Menunggu verifikasi</p>
+          <p className="text-xs text-gray-500">Menunggu</p>
           <p className="text-2xl font-bold text-yellow-700">{stats.tunggu}</p>
+        </div>
+        <div className="bg-white rounded-xl shadow-sm p-4 border-l-4 border-red-600">
+          <p className="text-xs text-gray-500">Perlu Revisi</p>
+          <p className="text-2xl font-bold text-red-700">{stats.revisi}</p>
         </div>
       </div>
 
+      {/* Tabel Dokumen */}
       <div className="bg-white rounded-xl shadow-sm overflow-hidden">
         {documents.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">
-            <FileText className="w-12 h-12 mx-auto text-gray-300 mb-3" />
-            <p>Belum ada dokumen pada kategori ini.</p>
-            <p className="text-sm mt-1">Gunakan tombol <strong>Unggah dokumen</strong> untuk menambahkan berkas pertama.</p>
+          <div className="p-12 text-center text-gray-500">
+            <FileText className="w-16 h-16 mx-auto text-gray-300 mb-4" />
+            <p className="text-lg font-medium">Belum ada dokumen</p>
+            <p className="text-sm mt-1">Pada kategori <strong>{kategori.nama}</strong></p>
+            <p className="text-sm">Gunakan tombol <strong>Unggah dokumen</strong> untuk menambahkan berkas pertama.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -158,7 +160,7 @@ export default function KategoriDetail() {
                     <tr key={doc.id} className="hover:bg-gray-50 transition">
                       <td className="px-4 py-3">
                         <div className="font-medium text-gray-800">{doc.type}</div>
-                        <div className="text-xs text-gray-400">{doc.name}</div>
+                        <div className="text-xs text-gray-400 truncate max-w-[200px]">{doc.name}</div>
                       </td>
                       <td className="px-4 py-3">
                         <div className="font-medium text-gray-800">{doc.employee}</div>
@@ -176,12 +178,14 @@ export default function KategoriDetail() {
                           <button
                             onClick={() => handleDownload(doc)}
                             className="p-1 text-teal-600 hover:bg-teal-50 rounded transition"
+                            title="Download"
                           >
                             <Download className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDeleteDoc(doc.id, doc.name)}
                             className="p-1 text-red-600 hover:bg-red-50 rounded transition"
+                            title="Hapus"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>

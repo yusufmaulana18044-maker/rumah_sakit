@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { Users, FileText, UserCheck, UserX, Clock, Building, Briefcase } from "lucide-react";
 import dummyEmployees from "../data/dummyEmployees";
+import SearchBar from "../components/SearchBar"; // <--- IMPORT KOMPONEN BARU
 
 const KATEGORI = [
   { id: 1, nama: "SK Pangkat (Mulai CPNS)" },
@@ -30,6 +31,9 @@ export default function Dashboard() {
     documentByType: {},
     unitDistribution: {},
   });
+
+  // --- STATE UNTUK SEARCH BAR ---
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     const total = dummyEmployees.length;
@@ -66,9 +70,39 @@ export default function Dashboard() {
     });
   }, []);
 
+  // --- LOGIKA FILTER PENCARIAN ---
+  const filteredEmployees = dummyEmployees.filter((emp) => {
+    return (
+      emp.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (emp.nip && emp.nip.includes(searchTerm))
+    );
+  });
+
+  // --- AKSI SAAT HASIL PENCARIAN DIKLIK ---
+  const handleResultClick = (employee) => {
+    // Ganti ini dengan navigasi ke halaman detail, contoh:
+    // navigate(`/pegawai/${employee.id}`);
+    console.log("Pegawai dipilih:", employee);
+    alert(`Anda memilih: ${employee.full_name}`);
+  };
+
   return (
     <div className="space-y-6">
-      {/* Welcome Section */}
+      
+      {/* --- HEADER DASHBOARD DENGAN SEARCH BAR --- */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        {/* Search Bar di Kanan Atas (Bisa ditaruh sini atau di atas Welcome Section) */}
+        <div className="w-full sm:w-auto sm:ml-auto">
+           <SearchBar 
+            searchTerm={searchTerm} 
+            setSearchTerm={setSearchTerm}
+            filteredData={filteredEmployees} 
+            onResultClick={handleResultClick}
+          />
+        </div>
+      </div>
+
+      {/* Welcome Section (Tetap di bawah Search Bar) */}
       <div className="bg-gradient-to-r from-teal-700 to-teal-800 rounded-xl p-6 text-white">
         <h1 className="text-2xl font-bold">Selamat Datang, {localStorage.getItem("username") || "Admin"}!</h1>
         <p className="text-teal-100 mt-1">Kelola data pegawai dan dokumen penting RSUD Dr. Harjono S. Ponorogo</p>
