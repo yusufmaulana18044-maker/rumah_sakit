@@ -47,6 +47,13 @@ export default function Register() {
         .or(`username.eq.${username},email.eq.${email}`)
         .maybeSingle();
 
+      if (existingErr) {
+        console.log("Existing check error:", existingErr);
+        setError("Gagal memeriksa data user. Silakan coba lagi nanti.");
+        setIsLoading(false);
+        return;
+      }
+
       if (existing) {
         if (existing.username === username) {
           setError("Username sudah terdaftar, gunakan username lain");
@@ -59,10 +66,13 @@ export default function Register() {
         return;
       }
 
-      // Register di Supabase Auth
+      // Register di Supabase Auth, simpan nama di metadata auth jika diperlukan.
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: { nama },
+        },
       });
 
       if (authError) {
@@ -80,27 +90,28 @@ export default function Register() {
       // ambil id user kalau tersedia (kadang kosong jika perlu konfirmasi)
       const authUserId = authData?.user?.id || null;
 
-      // Insert ke users table. Jika kita punya auth id, sertakan, kalau tidak biarkan DB buat id sendiri
-      const insertPayload = {
-        username,
-        email,
-        role: "user",
-      };
-      if (authUserId) insertPayload.id = authUserId;
+  // Update data user yang sudah dibuat oleh Supabase/trigger
+if (authUserId) {
+  const { error: updateError } = await supabase
+    .from("users")
+    .update({
+      username: username.trim(),
+      email: email.trim().toLowerCase(),
+      role: "user",
+    })
+    .eq("id", authUserId);
 
-      const { error: insertError, data: insertData } = await supabase.from("users").insert([insertPayload]);
+  if (updateError) {
+    console.error("UPDATE USER ERROR:", updateError);
 
-      if (insertError) {
-        console.log("Insert error details:", insertError);
-        const msg = insertError.message || JSON.stringify(insertError);
-        if (msg.toLowerCase().includes("duplicate") || insertError.code === "23505") {
-          setError("User atau email sudah terdaftar. Silakan gunakan data lain");
-        } else {
-          setError("Gagal menyimpan data user: " + msg);
-        }
-        setIsLoading(false);
-        return;
-      }
+    setError(
+      `Akun berhasil dibuat, tetapi data user gagal disimpan: ${updateError.message}`
+    );
+
+    setIsLoading(false);
+    return;
+  }
+}
 
       setSuccess("Pendaftaran berhasil! Mengarahkan ke halaman login...");
       // Clear form
