@@ -104,7 +104,10 @@ export default function KategoriDetail() {
               {stats.total} dokumen dari {dummyEmployees.length} pegawai
             </p>
           </div>
-          <button className="bg-teal-700 text-white px-4 py-2 rounded-lg hover:bg-teal-800 transition flex items-center gap-2">
+          <button
+            onClick={() => navigate(`/kategori/${kategori.id}/upload`)}
+            className="bg-teal-700 text-white px-4 py-2 rounded-lg hover:bg-teal-800 transition flex items-center gap-2"
+          >
             <Upload className="w-4 h-4" />
             Unggah dokumen
           </button>

@@ -250,15 +250,17 @@ export default function Dashboard() {
 
       {/* --- BAGIAN BARU: UNGGAH DOKUMEN DI PALING BAWAH --- */}
       <div className="mt-4">
-        <div className="bg-white rounded-xl shadow-sm border border-dashed border-2 border-gray-300 hover:border-teal-400 hover:bg-teal-50 transition-colors p-8 flex flex-col items-center justify-center text-center cursor-pointer"
-             onClick={() => alert("Fitur Upload Dokumen akan dibuka!")}>
+        <div
+          className="bg-white rounded-xl shadow-sm border border-dashed border-2 border-gray-300 hover:border-teal-400 hover:bg-teal-50 transition-colors p-8 flex flex-col items-center justify-center text-center cursor-pointer"
+          onClick={() => window.location.href = "/kategori/1/upload"}
+        >
           <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center mb-4">
             <Upload className="w-8 h-8 text-teal-700" />
           </div>
           <h3 className="text-lg font-semibold text-gray-800">Unggah Dokumen Baru</h3>
-          <p className="text-sm text-gray-500 mt-1">Klik di sini atau seret file ke area ini untuk mengunggah dokumen pegawai</p>
+          <p className="text-sm text-gray-500 mt-1">Klik di sini untuk memilih kategori dan unggah dokumen pegawai</p>
           <button className="mt-4 bg-teal-700 hover:bg-teal-800 text-white px-6 py-2 rounded-lg font-medium transition-colors flex items-center gap-2">
-            <Plus className="w-4 h-4" /> Pilih File
+            <Plus className="w-4 h-4" /> Pilih Kategori
           </button>
         </div>
       </div>
