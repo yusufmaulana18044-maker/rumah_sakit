@@ -13,6 +13,7 @@ import EmployeeForm from "./pages/EmployeeForm";
 // 📦 IMPORT HALAMAN PROFILE & SETTINGS
 import Profile from "./pages/profile";
 import SettingsPage from "./pages/settings";
+import KategoriDetail from "./pages/KategoriDetail";
 
 function App() {
   return (
@@ -30,6 +31,7 @@ function App() {
         <Route path="/employees/new" element={<Layout><EmployeeForm /></Layout>} />
         <Route path="/employees/:id" element={<Layout><EmployeeDetail /></Layout>} />
         <Route path="/employees/:id/edit" element={<Layout><EmployeeForm /></Layout>} />
+        <Route path="/kategori/:id" element={<Layout><KategoriDetail /></Layout>} />
         
         {/* ROUTE UNTUK PROFILE & SETTINGS */}
         <Route path="/profile" element={<Layout><Profile /></Layout>} />

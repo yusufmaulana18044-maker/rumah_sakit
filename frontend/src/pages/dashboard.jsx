@@ -1,7 +1,11 @@
 // src/pages/dashboard.jsx
 import { useState, useEffect } from "react";
-import { Users, FileText, UserCheck, UserX, Clock, Building, Briefcase } from "lucide-react";
+import { 
+  Users, FileText, UserCheck, UserX, Clock, Building, Briefcase, 
+  Upload, Plus, FileUp 
+} from "lucide-react"; // Tambahkan ikon Upload
 import dummyEmployees from "../data/dummyEmployees";
+import SearchBar from "../components/SearchBar"; 
 
 const KATEGORI = [
   { id: 1, nama: "SK Pangkat (Mulai CPNS)" },
@@ -30,6 +34,8 @@ export default function Dashboard() {
     documentByType: {},
     unitDistribution: {},
   });
+
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     const total = dummyEmployees.length;
@@ -66,16 +72,42 @@ export default function Dashboard() {
     });
   }, []);
 
+  // Logika Pencarian
+  const filteredEmployees = dummyEmployees.filter((emp) => {
+    return (
+      emp.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (emp.nip && emp.nip.includes(searchTerm))
+    );
+  });
+
+  const handleResultClick = (employee) => {
+    alert(`Anda memilih: ${employee.full_name}`);
+  };
+
   return (
     <div className="space-y-6">
-      {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-teal-700 to-teal-800 rounded-xl p-6 text-white">
-        <h1 className="text-2xl font-bold">Selamat Datang, {localStorage.getItem("username") || "Admin"}!</h1>
-        <p className="text-teal-100 mt-1">Kelola data pegawai dan dokumen penting RSUD Dr. Harjono S. Ponorogo</p>
+      
+      {/* --- HEADER DENGAN SEARCH BAR TERINTEGRASI --- */}
+      <div className="bg-gradient-to-r from-teal-700 to-teal-800 rounded-xl p-6 text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">Selamat Datang, {localStorage.getItem("username") || "Admin"}!</h1>
+          <p className="text-teal-100 mt-1">Kelola data pegawai dan dokumen penting RSUD Dr. Harjono S. Ponorogo</p>
+        </div>
+        
+        {/* Search Bar ditaruh di sebelah kanan header */}
+        <div className="w-full md:w-auto">
+          <SearchBar 
+            searchTerm={searchTerm} 
+            setSearchTerm={setSearchTerm}
+            filteredData={filteredEmployees} 
+            onResultClick={handleResultClick}
+          />
+        </div>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Total Pegawai */}
         <div className="bg-white rounded-xl shadow-sm p-5 border-l-4 border-teal-600">
           <div className="flex items-center justify-between">
             <div>
@@ -87,6 +119,7 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* Berkas Lengkap */}
         <div className="bg-white rounded-xl shadow-sm p-5 border-l-4 border-green-600">
           <div className="flex items-center justify-between">
             <div>
@@ -98,6 +131,7 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* Belum Lengkap */}
         <div className="bg-white rounded-xl shadow-sm p-5 border-l-4 border-amber-600">
           <div className="flex items-center justify-between">
             <div>
@@ -109,6 +143,7 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* KGB Jatuh Tempo */}
         <div className="bg-white rounded-xl shadow-sm p-5 border-l-4 border-red-600">
           <div className="flex items-center justify-between">
             <div>
@@ -212,6 +247,22 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* --- BAGIAN BARU: UNGGAH DOKUMEN DI PALING BAWAH --- */}
+      <div className="mt-4">
+        <div className="bg-white rounded-xl shadow-sm border border-dashed border-2 border-gray-300 hover:border-teal-400 hover:bg-teal-50 transition-colors p-8 flex flex-col items-center justify-center text-center cursor-pointer"
+             onClick={() => alert("Fitur Upload Dokumen akan dibuka!")}>
+          <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center mb-4">
+            <Upload className="w-8 h-8 text-teal-700" />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-800">Unggah Dokumen Baru</h3>
+          <p className="text-sm text-gray-500 mt-1">Klik di sini atau seret file ke area ini untuk mengunggah dokumen pegawai</p>
+          <button className="mt-4 bg-teal-700 hover:bg-teal-800 text-white px-6 py-2 rounded-lg font-medium transition-colors flex items-center gap-2">
+            <Plus className="w-4 h-4" /> Pilih File
+          </button>
+        </div>
+      </div>
+
     </div>
   );
 }

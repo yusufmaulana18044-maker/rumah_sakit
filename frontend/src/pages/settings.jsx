@@ -7,12 +7,21 @@ import {
 import { useTheme } from '../context/ThemeContext';
 
 export default function SettingsPage() {
+<<<<<<< HEAD
   const {
     theme,
     fontSize,
     colorScheme,
     applyTheme,
     applyFontSize,
+=======
+  const { 
+    theme, 
+    fontSize, 
+    colorScheme, 
+    applyTheme, 
+    applyFontSize, 
+>>>>>>> bcc5b19d0b731d509dd8b0157c383aaa3f829cca
     applyColorScheme,
     updateAllSettings
   } = useTheme();
@@ -60,7 +69,11 @@ export default function SettingsPage() {
       ...prev,
       [key]: value
     }));
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> bcc5b19d0b731d509dd8b0157c383aaa3f829cca
     if (key === "theme") {
       applyTheme(value);
     }
@@ -76,7 +89,11 @@ export default function SettingsPage() {
 
   const handleSaveSettings = () => {
     localStorage.setItem('appSettings', JSON.stringify(settings));
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> bcc5b19d0b731d509dd8b0157c383aaa3f829cca
     updateAllSettings({
       theme: settings.theme,
       fontSize: settings.fontSize,
@@ -127,6 +144,7 @@ export default function SettingsPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
+<<<<<<< HEAD
 <div className="bg-gradient-to-r from-teal-500 to-teal-600 rounded-lg shadow-lg p-8">
   <div className="flex items-center gap-4">
     <div className="bg-white bg-opacity-20 p-3 rounded-lg">
@@ -234,6 +252,16 @@ export default function SettingsPage() {
                 </button>
               ))}
             </div>
+=======
+      <div className="bg-gradient-to-r from-teal-500 to-teal-600 rounded-lg shadow-lg p-8 text-white">
+        <div className="flex items-center gap-4">
+          <div className="bg-white bg-opacity-20 p-3 rounded-lg">
+            <Settings className="w-8 h-8" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold">Pengaturan Aplikasi</h1>
+            <p className="text-teal-100 mt-1">Kelola preferensi dan pengaturan Anda</p>
+>>>>>>> bcc5b19d0b731d509dd8b0157c383aaa3f829cca
           </div>
         </div>
       </SettingCard>
@@ -266,6 +294,140 @@ export default function SettingsPage() {
           <strong>💡 Tips:</strong> Pengaturan tema akan langsung diterapkan ke seluruh halaman aplikasi.
         </p>
       </div>
+<<<<<<< HEAD
+=======
+
+      {/* Success Message */}
+      {successMessage && (
+        <div className="bg-green-50 border border-green-300 text-green-700 px-6 py-4 rounded-lg flex items-center gap-2">
+          <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+          {successMessage}
+        </div>
+      )}
+
+      {/* Pengaturan Tampilan */}
+      <SettingCard
+        icon={Eye}
+        title="Tampilan & Tema"
+        description="Sesuaikan tampilan aplikasi"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Tema</label>
+            <div className="grid grid-cols-3 gap-3">
+              <button
+                onClick={() => handleSelect("theme", "light")}
+                className={`p-3 rounded-lg border-2 transition flex items-center justify-center gap-2 ${
+                  settings.theme === "light"
+                    ? "border-teal-600 bg-teal-50"
+                    : "border-gray-300 hover:border-teal-300"
+                }`}
+              >
+                <Sun className="w-4 h-4" />
+                <span className="capitalize text-sm font-medium">Terang</span>
+              </button>
+              <button
+                onClick={() => handleSelect("theme", "dark")}
+                className={`p-3 rounded-lg border-2 transition flex items-center justify-center gap-2 ${
+                  settings.theme === "dark"
+                    ? "border-teal-600 bg-teal-50"
+                    : "border-gray-300 hover:border-teal-300"
+                }`}
+              >
+                <Moon className="w-4 h-4" />
+                <span className="capitalize text-sm font-medium">Gelap</span>
+              </button>
+              <button
+                onClick={() => handleSelect("theme", "auto")}
+                className={`p-3 rounded-lg border-2 transition flex items-center justify-center gap-2 ${
+                  settings.theme === "auto"
+                    ? "border-teal-600 bg-teal-50"
+                    : "border-gray-300 hover:border-teal-300"
+                }`}
+              >
+                <Monitor className="w-4 h-4" />
+                <span className="capitalize text-sm font-medium">Otomatis</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="border-t pt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Ukuran Font</label>
+            <div className="grid grid-cols-3 gap-3">
+              {["small", "medium", "large"].map(size => (
+                <button
+                  key={size}
+                  onClick={() => handleSelect("fontSize", size)}
+                  className={`p-3 rounded-lg border-2 transition text-center ${
+                    settings.fontSize === size
+                      ? "border-teal-600 bg-teal-50"
+                      : "border-gray-300 hover:border-teal-300"
+                  }`}
+                >
+                  <span className={`font-medium ${
+                    size === "small" ? "text-xs" : size === "medium" ? "text-sm" : "text-base"
+                  }`}>
+                    {size === "small" ? "Kecil" : size === "medium" ? "Sedang" : "Besar"}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="border-t pt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Skema Warna</label>
+            <div className="grid grid-cols-3 gap-3">
+              {["teal", "blue", "purple"].map(color => (
+                <button
+                  key={color}
+                  onClick={() => handleSelect("colorScheme", color)}
+                  className={`p-3 rounded-lg border-2 transition flex items-center justify-center ${
+                    settings.colorScheme === color
+                      ? "border-gray-800"
+                      : "border-gray-300 hover:border-gray-500"
+                  }`}
+                >
+                  <div className={`w-8 h-8 rounded-full ${
+                    color === "teal" ? "bg-teal-500" : 
+                    color === "blue" ? "bg-blue-500" : 
+                    "bg-purple-500"
+                  }`} />
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </SettingCard>
+
+      {/* Tombol Aksi */}
+      {hasChanges && (
+        <div className="flex gap-3">
+          <button
+            onClick={handleSaveSettings}
+            className="flex-1 flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-6 py-3 rounded-lg font-semibold transition shadow-lg"
+          >
+            <Save className="w-5 h-5" />
+            Simpan Perubahan
+          </button>
+          <button
+            onClick={() => {
+              window.location.reload();
+            }}
+            className="flex-1 flex items-center justify-center gap-2 bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-3 rounded-lg font-semibold transition"
+          >
+            <X className="w-5 h-5" />
+            Batal
+          </button>
+        </div>
+      )}
+
+      {/* Info Box */}
+      <div className="bg-blue-50 border-l-4 border-blue-500 p-6 rounded-lg">
+        <p className="text-sm text-blue-800">
+          <strong>💡 Tips:</strong> Pengaturan tema akan langsung diterapkan ke seluruh halaman aplikasi.
+        </p>
+      </div>
+>>>>>>> bcc5b19d0b731d509dd8b0157c383aaa3f829cca
     </div>
   );
 }

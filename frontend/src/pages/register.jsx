@@ -1,6 +1,6 @@
 import { supabase } from "../supabase";
 import { useState } from "react";
-import { Eye, EyeOff, Mail, Lock, Heart, ArrowRight } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export default function Register() {
@@ -40,88 +40,96 @@ export default function Register() {
     }
 
     try {
-      // Cek apakah username sudah ada
-      const { data: existingUsername, error: userError } = await supabase
+      // Cek apakah username atau email sudah ada di tabel users
+      const { data: existing, error: existingErr } = await supabase
         .from("users")
-        .select("username")
-        .eq("username", username)
+        .select("id, username, email")
+        .or(`username.eq.${username},email.eq.${email}`)
         .maybeSingle();
 
-      if (existingUsername) {
-        setError("Username sudah terdaftar, gunakan username lain");
+      if (existingErr) {
+        console.log("Existing check error:", existingErr);
+        setError("Gagal memeriksa data user. Silakan coba lagi nanti.");
         setIsLoading(false);
         return;
       }
 
-      // Register di Supabase Auth
+      if (existing) {
+        if (existing.username === username) {
+          setError("Username sudah terdaftar, gunakan username lain");
+        } else if (existing.email === email) {
+          setError("Email sudah terdaftar. Silakan login atau gunakan email lain");
+        } else {
+          setError("User sudah terdaftar di sistem. Silakan login");
+        }
+        setIsLoading(false);
+        return;
+      }
+
+      // Register di Supabase Auth, simpan nama di metadata auth jika diperlukan.
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: { nama },
+        },
       });
 
       if (authError) {
         console.log("Auth error:", authError);
-        if (authError.message.includes("User already registered")) {
+        const msg = authError.message || JSON.stringify(authError);
+        if (msg.toLowerCase().includes("already registered") || msg.toLowerCase().includes("user already")) {
           setError("Email sudah terdaftar. Silakan login atau gunakan email lain");
         } else {
-          setError(authError.message);
+          setError(msg);
         }
         setIsLoading(false);
         return;
       }
 
-      console.log("Auth success, inserting user data...", authData.user.id);
+      // ambil id user kalau tersedia (kadang kosong jika perlu konfirmasi)
+      const authUserId = authData?.user?.id || null;
 
-      // Cek apakah user sudah ada di users table (pre-check sebelum insert)
-      const { data: existingUser } = await supabase
-        .from("users")
-        .select("id")
-        .eq("id", authData.user.id)
-        .maybeSingle();
+  // Update data user yang sudah dibuat oleh Supabase/trigger
+if (authUserId) {
+  const { error: updateError } = await supabase
+    .from("users")
+    .update({
+      username: username.trim(),
+      email: email.trim().toLowerCase(),
+      role: "user",
+    })
+    .eq("id", authUserId);
 
-      if (existingUser) {
-        setError("User sudah terdaftar di sistem. Silakan login");
-        setIsLoading(false);
-        return;
-      }
+  if (updateError) {
+    console.error("UPDATE USER ERROR:", updateError);
 
-      // Insert ke users table
-      const { error: insertError, data: insertData } = await supabase.from("users").insert([
-        {
-          id: authData.user.id,
-          username,
-          email,
-          role: "user",
-        },
-      ]);
+    setError(
+      `Akun berhasil dibuat, tetapi data user gagal disimpan: ${updateError.message}`
+    );
 
-      console.log("Insert result:", { error: insertError, data: insertData });
+    setIsLoading(false);
+    return;
+  }
+}
 
-      if (insertError) {
-        console.log("Insert error details:", insertError);
-        if (insertError.code === "23505") {
-          setError("User atau email sudah terdaftar. Silakan gunakan data lain");
-        } else {
-          setError("Gagal menyimpan data user: " + (insertError.message || JSON.stringify(insertError)));
-        }
-      } else {
-        setSuccess("Pendaftaran berhasil! Mengarahkan ke halaman login...");
-        // Clear form
-        setUsername("");
-        setNama("");
-        setEmail("");
-        setPassword("");
-        setConfirmPassword("");
-        // Auto redirect ke login page setelah 2 detik
-        setTimeout(() => {
-          navigate("/");
-        }, 2000);
-      }
+      setSuccess("Pendaftaran berhasil! Mengarahkan ke halaman login...");
+      // Clear form
+      setUsername("");
+      setNama("");
+      setEmail("");
+      setPassword("");
+      setConfirmPassword("");
+      // Auto redirect ke login page setelah 2 detik
+      setTimeout(() => {
+        navigate("/");
+      }, 2000);
     } catch (err) {
       console.log("Catch error:", err);
-      setError("Terjadi kesalahan: " + err.message);
+      setError("Terjadi kesalahan: " + (err.message || JSON.stringify(err)));
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const handleKeyPress = (e) => {
@@ -130,14 +138,46 @@ export default function Register() {
     }
   };
 
+  // CSS animasi slow zoom (sama seperti login)
+  const animationStyle = `
+    @keyframes slowZoom {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+    .animate-slow-zoom {
+      animation: slowZoom 10s ease-in-out infinite;
+    }
+  `;
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-      <div className="w-full max-w-md">
-        <div className="bg-white rounded shadow-md overflow-hidden">
-          {/* Header */}
-          <div className="bg-gray-800 px-8 pt-8 pb-6">
+    <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
+      <style>{animationStyle}</style>
+
+      {/* Background dengan blur + gerak slow zoom */}
+      <div
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat blur-sm animate-slow-zoom"
+        style={{ backgroundImage: "url('/halamanrs2.jpeg')" }}
+      />
+
+      {/* Overlay gelap tipis biar card lebih kontras */}
+      <div className="absolute inset-0 bg-black/20" />
+
+      <div className="relative z-10 w-full max-w-md px-4">
+        <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
+          {/* Header gradient */}
+          <div className="bg-gradient-to-r from-blue-900 to-teal-600 px-8 pt-8 pb-6">
+            <div className="flex justify-center mb-4">
+              <div className="bg-white/20 p-3 rounded-2xl">
+                <img
+                  src="/logo-rsud-harjonos.png"
+                  alt="Logo RSUD"
+                  className="w-16 h-16 object-contain"
+                />
+              </div>
+            </div>
             <h1 className="text-2xl font-bold text-white text-center">Daftar Akun</h1>
-            <p className="text-gray-300 text-center mt-1 text-sm">Buat akun baru</p>
+            <p className="text-teal-100 text-center mt-1 text-sm">Buat akun baru</p>
           </div>
 
           {/* Form */}
@@ -259,7 +299,7 @@ export default function Register() {
             <button
               onClick={register}
               disabled={isLoading}
-              className="w-full bg-gray-800 hover:bg-gray-900 text-white font-semibold py-2 rounded transition disabled:opacity-50"
+              className="w-full bg-gradient-to-r from-blue-800 to-teal-600 hover:from-blue-900 hover:to-teal-700 text-white font-semibold py-2 rounded-lg transition disabled:opacity-50 shadow-md"
             >
               {isLoading ? "Loading..." : "Daftar"}
             </button>
@@ -276,6 +316,11 @@ export default function Register() {
                 </button>
               </p>
             </div>
+          </div>
+
+          {/* Footer */}
+          <div className="bg-gradient-to-r from-blue-50 to-teal-50 px-6 py-3 text-center border-t border-gray-100">
+            <p className="text-gray-400 text-[10px]">© 2026 RSUD Dr. HARDJONO PONOROGO</p>
           </div>
         </div>
       </div>
