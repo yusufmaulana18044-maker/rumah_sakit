@@ -1,24 +1,22 @@
 // src/pages/SettingsPage.jsx
 import React, { useState, useEffect } from 'react';
-import { 
-  Settings, Bell, Lock, Eye, Sun, Moon, Monitor, 
-  Volume2, Save, X 
+import {
+  Settings, Bell, Lock, Eye, Sun, Moon, Monitor,
+  Volume2, Save, X
 } from 'lucide-react';
-import { useTheme } from '../context/ThemeContext'; // ← Import ini
+import { useTheme } from '../context/ThemeContext';
 
 export default function SettingsPage() {
-  // Ambil fungsi dari ThemeContext
-  const { 
-    theme, 
-    fontSize, 
-    colorScheme, 
-    applyTheme, 
-    applyFontSize, 
+  const {
+    theme,
+    fontSize,
+    colorScheme,
+    applyTheme,
+    applyFontSize,
     applyColorScheme,
-    updateAllSettings 
+    updateAllSettings
   } = useTheme();
 
-  // State untuk semua pengaturan
   const [settings, setSettings] = useState({
     emailNotifications: true,
     pushNotifications: true,
@@ -27,9 +25,9 @@ export default function SettingsPage() {
     twoFactorAuth: false,
     sessionTimeout: "30",
     autoLogout: true,
-    theme: theme, // ← Ambil dari context
-    fontSize: fontSize, // ← Ambil dari context
-    colorScheme: colorScheme, // ← Ambil dari context
+    theme: theme,
+    fontSize: fontSize,
+    colorScheme: colorScheme,
     profileVisibility: "public",
     showActivityStatus: true,
     allowDataSharing: false,
@@ -40,7 +38,6 @@ export default function SettingsPage() {
   const [hasChanges, setHasChanges] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
 
-  // Sync state dengan theme dari context
   useEffect(() => {
     setSettings(prev => ({
       ...prev,
@@ -63,8 +60,7 @@ export default function SettingsPage() {
       ...prev,
       [key]: value
     }));
-    
-    // Langsung terapkan perubahan (real-time)
+
     if (key === "theme") {
       applyTheme(value);
     }
@@ -74,15 +70,13 @@ export default function SettingsPage() {
     if (key === "colorScheme") {
       applyColorScheme(value);
     }
-    
+
     setHasChanges(true);
   };
 
   const handleSaveSettings = () => {
-    // Simpan ke localStorage
     localStorage.setItem('appSettings', JSON.stringify(settings));
-    
-    // Update semua pengaturan sekaligus
+
     updateAllSettings({
       theme: settings.theme,
       fontSize: settings.fontSize,
@@ -94,7 +88,6 @@ export default function SettingsPage() {
     setTimeout(() => setSuccessMessage(""), 3000);
   };
 
-  // Component SettingCard (sama seperti sebelumnya)
   const SettingCard = ({ title, description, children, icon: Icon }) => (
     <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-teal-500">
       <div className="flex items-start gap-4">
@@ -112,7 +105,6 @@ export default function SettingsPage() {
     </div>
   );
 
-  // Component ToggleSwitch (sama seperti sebelumnya)
   const ToggleSwitch = ({ label, value, onChange, description = "" }) => (
     <div className="flex items-center justify-between py-2">
       <div>
@@ -121,169 +113,159 @@ export default function SettingsPage() {
       </div>
       <button
         onClick={onChange}
-        className={`w-12 h-6 rounded-full transition-colors ${
-          value ? "bg-teal-600" : "bg-gray-300"
-        } flex items-center`}
+        className={`w-12 h-6 rounded-full transition-colors ${value ? "bg-teal-600" : "bg-gray-300"
+          } flex items-center`}
       >
         <div
-          className={`w-5 h-5 rounded-full bg-white transition-transform ${
-            value ? "translate-x-6" : "translate-x-0.5"
-          }`}
+          className={`w-5 h-5 rounded-full bg-white transition-transform ${value ? "translate-x-6" : "translate-x-0.5"
+            }`}
         />
       </button>
     </div>
   );
 
   return (
-    <Layout title="Pengaturan">
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-teal-500 to-teal-600 rounded-lg shadow-lg p-8 text-white">
-          <div className="flex items-center gap-4">
-            <div className="bg-white bg-opacity-20 p-3 rounded-lg">
-              <Settings className="w-8 h-8" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold">Pengaturan Aplikasi</h1>
-              <p className="text-teal-100 mt-1">Kelola preferensi dan pengaturan Anda</p>
-            </div>
-          </div>
+    <div className="max-w-4xl mx-auto space-y-6">
+      {/* Header */}
+<div className="bg-gradient-to-r from-teal-500 to-teal-600 rounded-lg shadow-lg p-8">
+  <div className="flex items-center gap-4">
+    <div className="bg-white bg-opacity-20 p-3 rounded-lg">
+      <Settings className="w-8 h-8 text-white" />
+    </div>
+    <div>
+      <h1 className="text-3xl font-bold" style={{ color: 'white !important' }}>
+        Pengaturan Aplikasi
+      </h1>
+      <p className="mt-1" style={{ color: 'rgba(255,255,255,0.9) !important' }}>
+        Kelola preferensi dan pengaturan Anda
+      </p>
+    </div>
+  </div>
+</div>
+
+      {/* Success Message */}
+      {successMessage && (
+        <div className="bg-green-50 border border-green-300 text-green-700 px-6 py-4 rounded-lg flex items-center gap-2">
+          <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+          {successMessage}
         </div>
+      )}
 
-        {/* Success Message */}
-        {successMessage && (
-          <div className="bg-green-50 border border-green-300 text-green-700 px-6 py-4 rounded-lg flex items-center gap-2">
-            <div className="w-2 h-2 bg-green-600 rounded-full"></div>
-            {successMessage}
-          </div>
-        )}
-
-        {/* Pengaturan Tampilan - Bagian yang Paling Penting */}
-        <SettingCard
-          icon={Eye}
-          title="Tampilan & Tema"
-          description="Sesuaikan tampilan aplikasi"
-        >
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Tema</label>
-              <div className="grid grid-cols-3 gap-3">
-                <button
-                  onClick={() => handleSelect("theme", "light")}
-                  className={`p-3 rounded-lg border-2 transition flex items-center justify-center gap-2 ${
-                    settings.theme === "light"
-                      ? "border-teal-600 bg-teal-50"
-                      : "border-gray-300 hover:border-teal-300"
+      {/* Pengaturan Tampilan */}
+      <SettingCard
+        icon={Eye}
+        title="Tampilan & Tema"
+        description="Sesuaikan tampilan aplikasi"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Tema</label>
+            <div className="grid grid-cols-3 gap-3">
+              <button
+                onClick={() => handleSelect("theme", "light")}
+                className={`p-3 rounded-lg border-2 transition flex items-center justify-center gap-2 ${settings.theme === "light"
+                    ? "border-teal-600 bg-teal-50"
+                    : "border-gray-300 hover:border-teal-300"
                   }`}
-                >
-                  <Sun className="w-4 h-4" />
-                  <span className="capitalize text-sm font-medium">Terang</span>
-                </button>
-                <button
-                  onClick={() => handleSelect("theme", "dark")}
-                  className={`p-3 rounded-lg border-2 transition flex items-center justify-center gap-2 ${
-                    settings.theme === "dark"
-                      ? "border-teal-600 bg-teal-50"
-                      : "border-gray-300 hover:border-teal-300"
+              >
+                <Sun className="w-4 h-4" />
+                <span className="capitalize text-sm font-medium">Terang</span>
+              </button>
+              <button
+                onClick={() => handleSelect("theme", "dark")}
+                className={`p-3 rounded-lg border-2 transition flex items-center justify-center gap-2 ${settings.theme === "dark"
+                    ? "border-teal-600 bg-teal-50"
+                    : "border-gray-300 hover:border-teal-300"
                   }`}
-                >
-                  <Moon className="w-4 h-4" />
-                  <span className="capitalize text-sm font-medium">Gelap</span>
-                </button>
-                <button
-                  onClick={() => handleSelect("theme", "auto")}
-                  className={`p-3 rounded-lg border-2 transition flex items-center justify-center gap-2 ${
-                    settings.theme === "auto"
-                      ? "border-teal-600 bg-teal-50"
-                      : "border-gray-300 hover:border-teal-300"
+              >
+                <Moon className="w-4 h-4" />
+                <span className="capitalize text-sm font-medium">Gelap</span>
+              </button>
+              <button
+                onClick={() => handleSelect("theme", "auto")}
+                className={`p-3 rounded-lg border-2 transition flex items-center justify-center gap-2 ${settings.theme === "auto"
+                    ? "border-teal-600 bg-teal-50"
+                    : "border-gray-300 hover:border-teal-300"
                   }`}
-                >
-                  <Monitor className="w-4 h-4" />
-                  <span className="capitalize text-sm font-medium">Otomatis</span>
-                </button>
-              </div>
+              >
+                <Monitor className="w-4 h-4" />
+                <span className="capitalize text-sm font-medium">Otomatis</span>
+              </button>
             </div>
+          </div>
 
-            <div className="border-t pt-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Ukuran Font</label>
-              <div className="grid grid-cols-3 gap-3">
-                {["small", "medium", "large"].map(size => (
-                  <button
-                    key={size}
-                    onClick={() => handleSelect("fontSize", size)}
-                    className={`p-3 rounded-lg border-2 transition text-center ${
-                      settings.fontSize === size
-                        ? "border-teal-600 bg-teal-50"
-                        : "border-gray-300 hover:border-teal-300"
+          <div className="border-t pt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Ukuran Font</label>
+            <div className="grid grid-cols-3 gap-3">
+              {["small", "medium", "large"].map(size => (
+                <button
+                  key={size}
+                  onClick={() => handleSelect("fontSize", size)}
+                  className={`p-3 rounded-lg border-2 transition text-center ${settings.fontSize === size
+                      ? "border-teal-600 bg-teal-50"
+                      : "border-gray-300 hover:border-teal-300"
                     }`}
-                  >
-                    <span className={`font-medium ${
-                      size === "small" ? "text-xs" : size === "medium" ? "text-sm" : "text-base"
+                >
+                  <span className={`font-medium ${size === "small" ? "text-xs" : size === "medium" ? "text-sm" : "text-base"
                     }`}>
-                      {size === "small" ? "Kecil" : size === "medium" ? "Sedang" : "Besar"}
-                    </span>
-                  </button>
-                ))}
-              </div>
+                    {size === "small" ? "Kecil" : size === "medium" ? "Sedang" : "Besar"}
+                  </span>
+                </button>
+              ))}
             </div>
+          </div>
 
-            <div className="border-t pt-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Skema Warna</label>
-              <div className="grid grid-cols-3 gap-3">
-                {["teal", "blue", "purple"].map(color => (
-                  <button
-                    key={color}
-                    onClick={() => handleSelect("colorScheme", color)}
-                    className={`p-3 rounded-lg border-2 transition flex items-center justify-center ${
-                      settings.colorScheme === color
-                        ? "border-gray-800"
-                        : "border-gray-300 hover:border-gray-500"
+          <div className="border-t pt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Skema Warna</label>
+            <div className="grid grid-cols-3 gap-3">
+              {["teal", "blue", "purple"].map(color => (
+                <button
+                  key={color}
+                  onClick={() => handleSelect("colorScheme", color)}
+                  className={`p-3 rounded-lg border-2 transition flex items-center justify-center ${settings.colorScheme === color
+                      ? "border-gray-800"
+                      : "border-gray-300 hover:border-gray-500"
                     }`}
-                  >
-                    <div className={`w-8 h-8 rounded-full ${
-                      color === "teal" ? "bg-teal-500" : 
-                      color === "blue" ? "bg-blue-500" : 
-                      "bg-purple-500"
+                >
+                  <div className={`w-8 h-8 rounded-full ${color === "teal" ? "bg-teal-500" :
+                      color === "blue" ? "bg-blue-500" :
+                        "bg-purple-500"
                     }`} />
-                  </button>
-                ))}
-              </div>
+                </button>
+              ))}
             </div>
           </div>
-        </SettingCard>
-
-        {/* ... SettingCard lainnya (Notifikasi, Keamanan, dll) ... */}
-        {/* Saya singkatkan untuk fokus ke tema, tapi Anda bisa tambahkan kembali */}
-
-        {/* Tombol Aksi */}
-        {hasChanges && (
-          <div className="flex gap-3">
-            <button
-              onClick={handleSaveSettings}
-              className="flex-1 flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-6 py-3 rounded-lg font-semibold transition shadow-lg"
-            >
-              <Save className="w-5 h-5" />
-              Simpan Perubahan
-            </button>
-            <button
-              onClick={() => {
-                window.location.reload();
-              }}
-              className="flex-1 flex items-center justify-center gap-2 bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-3 rounded-lg font-semibold transition"
-            >
-              <X className="w-5 h-5" />
-              Batal
-            </button>
-          </div>
-        )}
-
-        {/* Info Box */}
-        <div className="bg-blue-50 border-l-4 border-blue-500 p-6 rounded-lg">
-          <p className="text-sm text-blue-800">
-            <strong>💡 Tips:</strong> Pengaturan tema akan langsung diterapkan ke seluruh halaman aplikasi.
-          </p>
         </div>
+      </SettingCard>
+
+      {/* Tombol Aksi */}
+      {hasChanges && (
+        <div className="flex gap-3">
+          <button
+            onClick={handleSaveSettings}
+            className="flex-1 flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-6 py-3 rounded-lg font-semibold transition shadow-lg"
+          >
+            <Save className="w-5 h-5" />
+            Simpan Perubahan
+          </button>
+          <button
+            onClick={() => {
+              window.location.reload();
+            }}
+            className="flex-1 flex items-center justify-center gap-2 bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-3 rounded-lg font-semibold transition"
+          >
+            <X className="w-5 h-5" />
+            Batal
+          </button>
+        </div>
+      )}
+
+      {/* Info Box */}
+      <div className="bg-blue-50 border-l-4 border-blue-500 p-6 rounded-lg">
+        <p className="text-sm text-blue-800">
+          <strong>💡 Tips:</strong> Pengaturan tema akan langsung diterapkan ke seluruh halaman aplikasi.
+        </p>
       </div>
-    </Layout>
+    </div>
   );
 }
