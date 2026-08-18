@@ -12,7 +12,7 @@ const KATEGORI = [
   { id: 2, nama: "SK Fungsional" },
   { id: 3, nama: "Data Pribadi" },
   { id: 4, nama: "Riwayat Pendidikan" },
-  { id: 5, nama: "Uraian Tugas" },
+  { id: 5, nama: "Uraian Tugas" }, 
   { id: 6, nama: "SPK RKK (Khusus Nakes)" },
   { id: 7, nama: "Penilaian Kinerja (SKP)" },
   { id: 8, nama: "SPMT" },

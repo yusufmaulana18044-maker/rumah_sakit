@@ -1,7 +1,10 @@
 // src/pages/KategoriDetail.jsx
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Upload, FileText, Download, Trash2 } from "lucide-react";
+import { 
+  ArrowLeft, Upload, FileText, Download, Trash2, Eye,
+  CheckCircle, Clock, AlertCircle
+} from "lucide-react";
 import dummyEmployees, { KATEGORI } from "../data/dummyEmployees";
 
 const STATUS = {
@@ -22,26 +25,23 @@ export default function KategoriDetail() {
     if (kat) {
       setKategori(kat);
       
-      // 🔥 PERBAIKAN: Cari dokumen dengan category yang cocok
       const docs = [];
       dummyEmployees.forEach(emp => {
         if (emp.documents && emp.documents.length > 0) {
           emp.documents.forEach(doc => {
-            // Pastikan category cocok dengan id
             if (doc.category === parseInt(id)) {
               docs.push({
                 ...doc,
                 employee: emp.full_name,
+                employee_id: emp.id,
                 nip: emp.nip,
                 unit: emp.work_unit,
-                status: doc.status || "ok" // default status jika tidak ada
+                status: doc.status || "ok"
               });
             }
           });
         }
       });
-      
-      console.log(`Kategori ${id} (${kat.nama}) ditemukan ${docs.length} dokumen`); // Debug
       
       setDocuments(docs);
       
@@ -57,10 +57,30 @@ export default function KategoriDetail() {
     }
   }, [id]);
 
-  const handleDownload = (doc) => {
-    alert(`📥 Download file: ${doc.name}`);
+  // ============================================
+  // FUNGSI MATA - LANGSUNG KE HALAMAN PEGAWAI
+  // ============================================
+  const handleViewEmployee = (doc) => {
+    console.log("🔍 Klik mata! employee_id:", doc.employee_id);
+    console.log("🔍 Nama pegawai:", doc.employee);
+    console.log("🔍 Navigasi ke:", `/employees/${doc.employee_id}`);
+    navigate(`/employees/${doc.employee_id}`);
   };
 
+  // ============================================
+  // FUNGSI DOWNLOAD DOKUMEN
+  // ============================================
+  const handleDownload = (doc) => {
+    if (doc.file_url) {
+      window.open(doc.file_url, '_blank');
+    } else {
+      alert(`📥 Download file: ${doc.name}`);
+    }
+  };
+
+  // ============================================
+  // FUNGSI HAPUS DOKUMEN
+  // ============================================
   const handleDeleteDoc = (docId, docName) => {
     if (window.confirm(`Yakin ingin menghapus dokumen "${docName}"?`)) {
       setDocuments(documents.filter(doc => doc.id !== docId));
@@ -166,7 +186,13 @@ export default function KategoriDetail() {
                         <div className="text-xs text-gray-400 truncate max-w-[200px]">{doc.name}</div>
                       </td>
                       <td className="px-4 py-3">
-                        <div className="font-medium text-gray-800">{doc.employee}</div>
+                        {/* Nama Pegawai bisa diklik -> langsung ke halaman detail */}
+                        <button
+                          onClick={() => handleViewEmployee(doc)}
+                          className="font-medium text-blue-600 hover:text-blue-800 hover:underline text-left cursor-pointer"
+                        >
+                          {doc.employee}
+                        </button>
                         <div className="text-xs text-gray-400">{doc.unit}</div>
                       </td>
                       <td className="px-4 py-3 font-mono text-sm text-gray-600">{doc.number || "—"}</td>
@@ -178,6 +204,15 @@ export default function KategoriDetail() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex gap-2">
+                          {/* 👁️ TOMBOL MATA - LANGSUNG KE HALAMAN PEGAWAI */}
+                          <button
+                            onClick={() => handleViewEmployee(doc)}
+                            className="p-1 text-blue-600 hover:bg-blue-50 rounded transition"
+                            title="Lihat Detail Pegawai"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          {/* 📥 TOMBOL DOWNLOAD */}
                           <button
                             onClick={() => handleDownload(doc)}
                             className="p-1 text-teal-600 hover:bg-teal-50 rounded transition"
@@ -185,6 +220,7 @@ export default function KategoriDetail() {
                           >
                             <Download className="w-4 h-4" />
                           </button>
+                          {/* 🗑️ TOMBOL HAPUS */}
                           <button
                             onClick={() => handleDeleteDoc(doc.id, doc.name)}
                             className="p-1 text-red-600 hover:bg-red-50 rounded transition"
