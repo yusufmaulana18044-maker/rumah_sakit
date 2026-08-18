@@ -14,6 +14,7 @@ import EmployeeForm from "./pages/EmployeeForm";
 import Profile from "./pages/profile";
 import SettingsPage from "./pages/settings";
 import KategoriDetail from "./pages/KategoriDetail";
+import UploadDokumen from "./pages/UploadDokumen";
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
         <Route path="/employees/:id" element={<Layout><EmployeeDetail /></Layout>} />
         <Route path="/employees/:id/edit" element={<Layout><EmployeeForm /></Layout>} />
         <Route path="/kategori/:id" element={<Layout><KategoriDetail /></Layout>} />
+        <Route path="/kategori/:id/upload" element={<Layout><UploadDokumen /></Layout>} />
         
         {/* ROUTE UNTUK PROFILE & SETTINGS */}
         <Route path="/profile" element={<Layout><Profile /></Layout>} />
