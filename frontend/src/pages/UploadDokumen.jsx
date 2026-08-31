@@ -26,6 +26,7 @@ export default function UploadDokumen() {
   const [tanggalUpload, setTanggalUpload] = useState(new Date().toISOString().slice(0, 10));
   const [fileName, setFileName] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [fileError, setFileError] = useState("");
 
   useEffect(() => {
     if (id) {
@@ -37,7 +38,25 @@ export default function UploadDokumen() {
 
   const handleFileChange = (event) => {
     const file = event.target.files?.[0];
+    setFileError("");
+
     if (file) {
+      // VALIDASI: HANYA PDF
+      if (file.type !== 'application/pdf') {
+        setFileError("❌ Hanya file PDF yang diizinkan!");
+        event.target.value = "";
+        setFileName("");
+        return;
+      }
+
+      // VALIDASI: MAKSIMAL 10MB
+      if (file.size > 10 * 1024 * 1024) {
+        setFileError("❌ Ukuran file maksimal 10MB!");
+        event.target.value = "";
+        setFileName("");
+        return;
+      }
+
       setFileName(file.name);
     }
   };
@@ -158,21 +177,36 @@ export default function UploadDokumen() {
             </div>
           </div>
 
-          <div className="rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 p-5">
+          <div className={`rounded-xl border-2 border-dashed p-5 ${
+            fileError ? 'border-red-400 bg-red-50' : 'border-gray-300 bg-gray-50'
+          }`}>
             <label className="flex cursor-pointer flex-col items-center justify-center gap-3 text-center">
-              <div className="w-14 h-14 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center">
+              <div className={`w-14 h-14 rounded-full flex items-center justify-center ${
+                fileError ? 'bg-red-100 text-red-700' : 'bg-teal-100 text-teal-700'
+              }`}>
                 <FileText className="w-7 h-7" />
               </div>
               <div>
                 <p className="text-base font-semibold text-gray-800">Pilih file dokumen</p>
-                <p className="text-sm text-gray-500">PDF, JPG, PNG, DOCX, atau format lain yang didukung</p>
+                <p className="text-sm text-gray-500">Format: PDF (Maksimal 10MB)</p>
               </div>
-              <input type="file" className="hidden" onChange={handleFileChange} />
+              <input 
+                type="file" 
+                className="hidden" 
+                onChange={handleFileChange} 
+                accept=".pdf"
+              />
             </label>
 
-            {fileName && (
+            {fileName && !fileError && (
               <div className="mt-4 rounded-lg bg-white border border-teal-200 px-4 py-3 text-sm text-gray-700">
                 <span className="font-medium text-teal-700">File terpilih:</span> {fileName}
+              </div>
+            )}
+
+            {fileError && (
+              <div className="mt-4 rounded-lg bg-red-100 border border-red-300 px-4 py-3 text-sm text-red-700">
+                {fileError}
               </div>
             )}
           </div>
