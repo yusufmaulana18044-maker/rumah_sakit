@@ -2,13 +2,23 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, Plus, Eye, Edit, Trash2, Users } from "lucide-react";
-import dummyEmployees from "../data/dummyEmployees";
+import { supabase } from "../supabase";
 
 const KATEGORI = [
-  "SK Pangkat", "SK Fungsional", "Data Pribadi", "Riwayat Pendidikan",
-  "Uraian Tugas", "SPK RKK", "Penilaian Kinerja", "SPMT",
-  "Orientasi", "KGB", "Pengembangan Kompetensi", "Riwayat Jabatan",
-  "Check Up", "Lain-lain"
+  "SK Pangkat (Mulai CPNS)",
+  "SK Fungsional",
+  "Data Pribadi",
+  "Riwayat Pendidikan",
+  "Uraian Tugas",
+  "SPK RKK (Khusus Nakes)",
+  "Penilaian Kinerja (SKP)",
+  "SPMT",
+  "Orientasi",
+  "KGB",
+  "Pengembangan Kompetensi",
+  "Riwayat Jabatan",
+  "Check Up",
+  "Lain-lain"
 ];
 
 export default function EmployeeList() {
@@ -16,21 +26,78 @@ export default function EmployeeList() {
   const [employees, setEmployees] = useState([]);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("semua");
+  const [loading, setLoading] = useState(true);
 
+  // Ambil data dari Supabase
   useEffect(() => {
-    setEmployees(dummyEmployees);
+    const fetchEmployees = async () => {
+      setLoading(true);
+      try {
+        // 1. Ambil pegawai
+        const { data: pegawai, error: pegawaiError } = await supabase
+          .from("pegawai")
+          .select("*")
+          .order("full_name", { ascending: true });
+
+        if (pegawaiError) throw pegawaiError;
+
+        // 2. Ambil dokumen per pegawai
+        const employeesWithDocs = await Promise.all(
+          (pegawai || []).map(async (emp) => {
+            const { data: docs, error: docsError } = await supabase
+              .from("dokumen")
+              .select("type")
+              .eq("employee_id", emp.id);
+
+            if (docsError) throw docsError;
+
+            const docTypes = docs.map(doc => doc.type);
+            const kelengkapan = KATEGORI.map(kat => docTypes.includes(kat) ? "isi" : "");
+
+            return {
+              ...emp,
+              kelengkapan,
+              dokumenCount: docs.length
+            };
+          })
+        );
+
+        setEmployees(employeesWithDocs || []);
+
+      } catch (error) {
+        console.error("Error fetching employees:", error);
+        alert("Gagal mengambil data pegawai");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEmployees();
   }, []);
 
-  const handleDelete = (id, name) => {
-    if (window.confirm(`Yakin ingin menghapus pegawai "${name}"?`)) {
+  const handleDelete = async (id, name) => {
+    if (!window.confirm(`Yakin ingin menghapus pegawai "${name}"?`)) return;
+
+    try {
+      const { error } = await supabase
+        .from("pegawai")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+
       setEmployees(employees.filter(emp => emp.id !== id));
+      alert(`✅ Pegawai "${name}" berhasil dihapus!`);
+    } catch (error) {
+      console.error("Delete error:", error);
+      alert("❌ Gagal menghapus pegawai: " + error.message);
     }
   };
 
   const filteredEmployees = employees.filter(emp => {
-    const matchesSearch = emp.full_name.toLowerCase().includes(search.toLowerCase()) ||
-                          emp.nip.includes(search) ||
-                          emp.position.toLowerCase().includes(search.toLowerCase());
+    const matchesSearch = emp.full_name?.toLowerCase().includes(search.toLowerCase()) ||
+                          emp.nip?.includes(search) ||
+                          emp.position?.toLowerCase().includes(search.toLowerCase());
     const matchesStatus = filterStatus === "semua" || emp.status === filterStatus;
     return matchesSearch && matchesStatus;
   });
@@ -42,17 +109,20 @@ export default function EmployeeList() {
     return <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-700">Cuti</span>;
   };
 
-  const getKelengkapan = (emp) => {
-    const docCategories = emp.documents?.map(doc => doc.category) || [];
-    return KATEGORI.map((_, i) => docCategories.includes(i + 1) ? "isi" : "");
-  };
-
   const stats = {
     total: employees.length,
     aktif: employees.filter(e => e.status === "aktif").length,
     cuti: employees.filter(e => e.status === "cuti").length,
-    dokumen: employees.reduce((sum, e) => sum + (e.documents?.length || 0), 0)
+    dokumen: employees.reduce((sum, e) => sum + (e.dokumenCount || 0), 0)
   };
+
+  if (loading) {
+    return (
+      <div className="p-6 text-center">
+        <p className="text-gray-500">Loading data pegawai...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -112,7 +182,10 @@ export default function EmployeeList() {
           <option value="aktif">Aktif</option>
           <option value="cuti">Cuti</option>
         </select>
-        <button className="border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50">
+        <button 
+          onClick={() => alert("Fitur Export Excel akan segera hadir!")}
+          className="border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50"
+        >
           Ekspor Excel
         </button>
       </div>
@@ -123,6 +196,7 @@ export default function EmployeeList() {
           <div className="p-8 text-center text-gray-500">
             <Users className="w-12 h-12 mx-auto text-gray-300 mb-3" />
             <p>Tidak ada data pegawai</p>
+            <p className="text-sm mt-1">Tambahkan pegawai baru dengan tombol "Tambah Pegawai"</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -139,8 +213,7 @@ export default function EmployeeList() {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {filteredEmployees.map((emp) => {
-                  const strip = getKelengkapan(emp);
-                  const filled = strip.filter(s => s === "isi").length;
+                  const filled = emp.kelengkapan?.filter(s => s === "isi").length || 0;
                   return (
                     <tr key={emp.id} className="hover:bg-gray-50 transition">
                       <td className="px-4 py-3">
@@ -151,7 +224,7 @@ export default function EmployeeList() {
                       <td className="px-4 py-3 text-sm text-gray-600">{emp.work_unit}</td>
                       <td className="px-4 py-3">
                         <div className="flex gap-0.5">
-                          {strip.map((s, i) => (
+                          {emp.kelengkapan?.map((s, i) => (
                             <div 
                               key={i}
                               className={`w-2.5 h-3.5 rounded-sm ${s === "isi" ? "bg-teal-600" : "bg-gray-200"}`}

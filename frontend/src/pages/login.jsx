@@ -22,9 +22,10 @@ export default function Login() {
     }
 
     try {
+      // 1. Cari user di profiles berdasarkan username
       const { data: userData, error: userError } = await supabase
-        .from("users")
-        .select("email, role, id")
+        .from("profiles")
+        .select("email, role, username")
         .eq("username", username)
         .single();
 
@@ -34,27 +35,31 @@ export default function Login() {
         return;
       }
 
-      const { email, role } = userData;
+      const email = userData.email;
+      const role = userData.role;
 
-      const { data, error: authError } = await supabase.auth.signInWithPassword({
+      // 2. Login pake email & password
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (authError) {
+      if (signInError) {
         setError("Password salah");
         setIsLoading(false);
         return;
       }
 
+      // 3. Simpan ke localStorage
       localStorage.setItem("user", JSON.stringify(data.user));
       localStorage.setItem("username", username);
       localStorage.setItem("role", role);
 
-      // ✅ SEMUA USER LANGSUNG KE DASHBOARD!
+      // 4. Redirect ke dashboard
       window.location.href = "/dashboard";
 
     } catch (err) {
+      console.error("Login error:", err);
       setError("Terjadi kesalahan, silakan coba lagi");
       setIsLoading(false);
     }
@@ -82,19 +87,15 @@ export default function Login() {
     <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
       <style>{animationStyle}</style>
 
-      {/* Background dengan blur + gerak slow zoom */}
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat blur-sm animate-slow-zoom"
         style={{ backgroundImage: "url('/halamanrs2.jpeg')" }}
       />
 
-      {/* Overlay gelap tipis biar card lebih kontras */}
       <div className="absolute inset-0 bg-black/20" />
 
-      {/* Card Login */}
       <div className="relative z-10 w-full max-w-sm px-4">
         <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
-          {/* Header hijau + biru khas RS */}
           <div className="bg-gradient-to-r from-blue-900 to-teal-600 px-6 pt-8 pb-6 relative overflow-hidden">
             <div className="absolute -right-8 -top-8 opacity-10 pointer-events-none">
               <svg className="w-32 h-32 text-white" viewBox="0 0 100 100" fill="currentColor">
@@ -123,7 +124,6 @@ export default function Login() {
             </p>
           </div>
 
-          {/* Form Login */}
           <div className="px-6 py-6">
             {error && (
               <div className="mb-4 p-2 bg-red-50 border border-red-200 rounded-lg text-red-600 text-xs">
@@ -189,7 +189,6 @@ export default function Login() {
             </div>
           </div>
 
-          {/* Footer */}
           <div className="bg-gradient-to-r from-blue-50 to-teal-50 px-6 py-3 text-center border-t border-gray-100">
             <p className="text-gray-400 text-[10px]">
               © 2026 RSUD Dr. HARDJONO PONOROGO

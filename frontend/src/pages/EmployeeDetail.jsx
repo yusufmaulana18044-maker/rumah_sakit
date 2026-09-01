@@ -1,122 +1,12 @@
 // src/pages/EmployeeDetail.jsx
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Upload, FileText, Download, Trash2, User, Briefcase, Calendar, Phone, Mail, MapPin } from "lucide-react";
 import { supabase } from "../supabase";
-
-// Daftar tipe dokumen yang tersedia
-const documentTypes = [
-  "SK Pangkat (Mulai CPNS)",
-  "SK Fungsional",
-  "Data Pribadi",
-  "Riwayat Pendidikan",
-  "Uraian Tugas",
-  "SPK RKK (Khusus Nakes)",
-  "Penilaian Kinerja (SKP)",
-  "SPMT",
-  "Orientasi",
-  "KGB",
-  "Pengembangan Kompetensi",
-  "Riwayat Jabatan",
-  "Check Up",
-  "Lain-lain"
-];
-
-// Component Modal Upload (sementara digabung di sini)
-const UploadModal = ({ isOpen, onClose, onUpload, employeeName, documentTypes }) => {
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [selectedType, setSelectedType] = useState(documentTypes[0] || "");
-  const [isLoading, setIsLoading] = useState(false);
-
-  if (!isOpen) return null;
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!selectedFile) {
-      alert("Pilih file terlebih dahulu!");
-      return;
-    }
-    if (!selectedType) {
-      alert("Pilih jenis dokumen!");
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      await onUpload(selectedFile, selectedType);
-      setSelectedFile(null);
-      setSelectedType(documentTypes[0] || "");
-      onClose();
-    } catch (error) {
-      console.error("Upload error:", error);
-      alert("Gagal upload dokumen: " + error.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-gray-800">Upload Dokumen</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-            ✕
-          </button>
-        </div>
-        <p className="text-sm text-gray-500 mb-4">Upload dokumen untuk: <span className="font-semibold">{employeeName}</span></p>
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Jenis Dokumen</label>
-            <select
-              value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-teal-500 focus:outline-none"
-              required
-            >
-              {documentTypes.map((type) => (
-                <option key={type} value={type}>{type}</option>
-              ))}
-            </select>
-          </div>
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Pilih File</label>
-            <input
-              type="file"
-              onChange={(e) => setSelectedFile(e.target.files[0])}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-teal-500 focus:outline-none"
-              required
-            />
-          </div>
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg transition"
-            >
-              Batal
-            </button>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="flex-1 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition disabled:opacity-50"
-            >
-              {isLoading ? "Uploading..." : "Upload"}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-};
-
 import { 
   ArrowLeft, Upload, FileText, Download, Trash2, User, Briefcase, 
   Calendar, Phone, Mail, MapPin, X, Loader2, Eye, EyeOff,
   Award, GraduationCap, CreditCard, Users, Building2
 } from "lucide-react";
-import dummyEmployees from "../data/dummyEmployees";
-import { supabase } from "../supabase";
 
 // 14 Kategori Dokumen
 const KATEGORI = [
@@ -135,7 +25,6 @@ const KATEGORI = [
   { id: 13, nama: "Check Up" },
   { id: 14, nama: "Lain-lain" },
 ];
-
 
 const documentTypes = KATEGORI.map(k => k.nama);
 
@@ -323,13 +212,10 @@ export default function EmployeeDetail() {
   const [employee, setEmployee] = useState(null);
   const [documents, setDocuments] = useState([]);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Ambil data pegawai & dokumen dari Supabase
   const [isLoading, setIsLoading] = useState(false);
   const [showAllBio, setShowAllBio] = useState(false);
 
-  // Ambil data pegawai dari dummy
+  // Ambil data pegawai dari Supabase
   useEffect(() => {
     const fetchEmployee = async () => {
       setIsLoading(true);
@@ -365,45 +251,6 @@ export default function EmployeeDetail() {
     if (id) fetchEmployee();
   }, [id]);
 
-
-  // UPLOAD DOKUMEN KE SUPABASE
-  const handleUpload = async (file, docType) => {
-    if (!file || !docType) {
-      alert("Pilih file dan jenis dokumen!");
-      return;
-    }
-
-    try {
-      // 1. Upload file ke Supabase Storage
-      const filePath = `pegawai/${employee.id}/${Date.now()}_${file.name}`;
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from("documents")
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      // 2. Dapatkan URL publik
-      const { data: urlData } = supabase.storage
-        .from("documents")
-        .getPublicUrl(filePath);
-
-      // 3. Simpan metadata ke tabel dokumen
-      const { data: docData, error: dbError } = await supabase
-        .from("dokumen")
-        .insert([{
-          employee_id: employee.id,
-          name: file.name,
-          type: docType,
-          file_path: filePath,
-          file_url: urlData.publicUrl,
-          status: "pending"
-        }])
-        .select();
-
-      if (dbError) throw dbError;
-
-      // 4. Update state
-      setDocuments([docData[0], ...documents]);
   // ============================================
   // FUNGSI UPLOAD KE SUPABASE
   // ============================================
@@ -416,7 +263,7 @@ export default function EmployeeDetail() {
       const filePath = `pegawai/${employee.id}/${fileName}`;
 
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('dokumen')
+        .from('documents')
         .upload(filePath, file);
 
       if (uploadError) {
@@ -427,7 +274,7 @@ export default function EmployeeDetail() {
       }
 
       const { data: urlData } = supabase.storage
-        .from('dokumen')
+        .from('documents')
         .getPublicUrl(filePath);
 
       const newDoc = {
@@ -461,81 +308,6 @@ export default function EmployeeDetail() {
 
     } catch (error) {
       console.error("Upload error:", error);
-      alert("❌ Gagal upload dokumen: " + error.message);
-      throw error;
-    }
-  };
-
-  // DOWNLOAD DOKUMEN DARI SUPABASE
-  const handleDownload = async (doc) => {
-    try {
-      if (!doc.file_path) {
-        alert("File tidak ditemukan di server.");
-        return;
-      }
-
-      const { data, error } = await supabase.storage
-        .from("documents")
-        .download(doc.file_path);
-
-      if (error) throw error;
-
-      // Buat URL blob dan download
-      const url = URL.createObjectURL(data);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = doc.name;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-
-    } catch (error) {
-      console.error("Download error:", error);
-      alert("❌ Gagal download dokumen: " + error.message);
-    }
-  };
-
-  // HAPUS DOKUMEN
-  const handleDeleteDoc = async (docId, docName, filePath) => {
-    if (!window.confirm(`Yakin ingin menghapus dokumen "${docName}"?`)) return;
-
-    try {
-      // 1. Hapus file dari Storage
-      if (filePath) {
-        const { error: storageError } = await supabase.storage
-          .from("documents")
-          .remove([filePath]);
-
-        if (storageError) throw storageError;
-      }
-
-      // 2. Hapus metadata dari database
-      const { error: dbError } = await supabase
-        .from("dokumen")
-        .delete()
-        .eq("id", docId);
-
-      if (dbError) throw dbError;
-
-      // 3. Update state
-      setDocuments(documents.filter(doc => doc.id !== docId));
-      alert("✅ Dokumen berhasil dihapus!");
-
-    } catch (error) {
-      console.error("Delete error:", error);
-      alert("❌ Gagal hapus dokumen: " + error.message);
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <div className="p-6 text-center">
-        <p className="text-gray-500">Loading...</p>
-      </div>
-    );
-  }
-
       alert("❌ Terjadi kesalahan: " + error.message);
     } finally {
       setIsLoading(false);
@@ -551,7 +323,7 @@ export default function EmployeeDetail() {
     try {
       if (filePath) {
         const { error: deleteError } = await supabase.storage
-          .from('dokumen')
+          .from('documents')
           .remove([filePath]);
 
         if (deleteError) {
@@ -591,14 +363,12 @@ export default function EmployeeDetail() {
   };
 
   // ============================================
-  // FUNGSI PREVIEW DOKUMEN (MATA) 👈 TAMBAHAN BARU
+  // FUNGSI PREVIEW DOKUMEN (MATA)
   // ============================================
   const handlePreviewDoc = (doc) => {
     if (doc.file_url) {
-      // Buka file di tab baru untuk preview
       window.open(doc.file_url, '_blank');
     } else {
-      // Tampilkan detail dokumen dalam alert
       alert(
         `📄 Detail Dokumen\n\n` +
         `Jenis: ${doc.type}\n` +
@@ -610,9 +380,6 @@ export default function EmployeeDetail() {
     }
   };
 
-  // ============================================
-  // RENDER
-  // ============================================
   if (!employee) {
     return (
       <div className="p-6 text-center">
@@ -820,37 +587,6 @@ export default function EmployeeDetail() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {documents.map((doc) => (
-                    <div key={doc.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
-                      <div className="flex items-center gap-3">
-                        <FileText className="w-8 h-8 text-blue-500" />
-                        <div>
-                          <p className="font-medium text-gray-800">{doc.type}</p>
-                          <p className="text-xs text-gray-500">{doc.name}</p>
-                          <p className="text-xs text-gray-400">
-                            Upload: {doc.uploaded_at ? new Date(doc.uploaded_at).toLocaleDateString('id-ID') : '-'}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleDownload(doc)}
-                          className="p-2 text-teal-600 hover:bg-teal-50 rounded transition"
-                          title="Download"
-                        >
-                          <Download className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteDoc(doc.id, doc.name, doc.file_path)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded transition"
-                          title="Hapus"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-=======
                   {documents.map((doc) => {
                     const filePath = doc.file_url ? doc.file_url.split('/').pop() : null;
                     return (
@@ -892,7 +628,6 @@ export default function EmployeeDetail() {
                       </div>
                     );
                   })}
-
                 </div>
               )}
             </div>

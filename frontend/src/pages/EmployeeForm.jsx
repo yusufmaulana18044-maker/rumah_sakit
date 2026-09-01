@@ -1,8 +1,43 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Save, User } from "lucide-react";
-import dummyEmployees from "../data/dummyEmployees";
-import { workUnits, positions } from "../data/dummyEmployees";
+import { supabase } from "../supabase";
+
+// Data untuk dropdown
+const workUnits = [
+  "Instalasi Rawat Inap",
+  "Instalasi Rawat Jalan",
+  "Instalasi Gawat Darurat",
+  "Instalasi Rekam Medis",
+  "Instalasi IT",
+  "Instalasi Laboratorium",
+  "Instalasi Farmasi",
+  "Instalasi Radiologi",
+  "Instalasi Gizi",
+  "Instalasi CSSD",
+  "Instalasi Kebidanan",
+  "Instalasi Anak",
+  "Instalasi Penyakit Dalam",
+  "Instalasi Bedah"
+];
+
+const positions = [
+  "Dokter Spesialis",
+  "Dokter Umum",
+  "Perawat",
+  "Bidan",
+  "Analis",
+  "Administrator",
+  "Teknisi",
+  "Farmasi",
+  "Gizi",
+  "Radiografer",
+  "Fisioterapis",
+  "Psikolog",
+  "Apoteker",
+  "Asisten Apoteker",
+  "Staff Administrasi"
+];
 
 export default function EmployeeForm() {
   const { id } = useParams();
@@ -24,25 +59,44 @@ export default function EmployeeForm() {
     status: "aktif"
   });
 
+  const [loading, setLoading] = useState(false);
+
+  // Ambil data pegawai jika edit
   useEffect(() => {
     if (isEdit) {
-      const employee = dummyEmployees.find(e => e.id === parseInt(id));
-      if (employee) {
-        setFormData({
-          nip: employee.nip,
-          full_name: employee.full_name,
-          birthplace: employee.birthplace || "",
-          birth_date: employee.birth_date || "",
-          gender: employee.gender || "L",
-          address: employee.address || "",
-          phone: employee.phone || "",
-          email: employee.email || "",
-          position: employee.position,
-          work_unit: employee.work_unit,
-          join_date: employee.join_date || "",
-          status: employee.status || "aktif"
-        });
-      }
+      const fetchEmployee = async () => {
+        try {
+          const { data, error } = await supabase
+            .from("pegawai")
+            .select("*")
+            .eq("id", id)
+            .single();
+
+          if (error) throw error;
+
+          if (data) {
+            setFormData({
+              nip: data.nip || "",
+              full_name: data.full_name || "",
+              birthplace: data.birthplace || "",
+              birth_date: data.birth_date || "",
+              gender: data.gender || "L",
+              address: data.address || "",
+              phone: data.phone || "",
+              email: data.email || "",
+              position: data.position || "",
+              work_unit: data.work_unit || "",
+              join_date: data.join_date || "",
+              status: data.status || "aktif"
+            });
+          }
+        } catch (error) {
+          console.error("Error fetching employee:", error);
+          alert("Gagal mengambil data pegawai");
+        }
+      };
+
+      fetchEmployee();
     }
   }, [isEdit, id]);
 
@@ -53,18 +107,39 @@ export default function EmployeeForm() {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (isEdit) {
-      // Simulasi update (nanti ganti dengan Supabase)
-      alert("Data pegawai berhasil diupdate!");
-    } else {
-      // Simulasi tambah (nanti ganti dengan Supabase)
-      alert("Pegawai baru berhasil ditambahkan!");
+    setLoading(true);
+
+    try {
+      if (isEdit) {
+        // UPDATE pegawai
+        const { error } = await supabase
+          .from("pegawai")
+          .update(formData)
+          .eq("id", id);
+
+        if (error) throw error;
+        alert("✅ Data pegawai berhasil diupdate!");
+
+      } else {
+        // INSERT pegawai baru
+        const { error } = await supabase
+          .from("pegawai")
+          .insert([formData]);
+
+        if (error) throw error;
+        alert("✅ Pegawai baru berhasil ditambahkan!");
+      }
+
+      navigate("/employees");
+
+    } catch (error) {
+      console.error("Error saving employee:", error);
+      alert("❌ Gagal menyimpan data: " + error.message);
+    } finally {
+      setLoading(false);
     }
-    
-    navigate("/employees");
   };
 
   return (
@@ -297,10 +372,11 @@ export default function EmployeeForm() {
             </button>
             <button
               type="submit"
-              className="px-6 py-2 bg-gradient-to-r from-teal-600 to-blue-600 text-white rounded-lg hover:from-teal-700 hover:to-blue-700 transition flex items-center gap-2"
+              disabled={loading}
+              className="px-6 py-2 bg-gradient-to-r from-teal-600 to-blue-600 text-white rounded-lg hover:from-teal-700 hover:to-blue-700 transition flex items-center gap-2 disabled:opacity-50"
             >
               <Save className="w-4 h-4" />
-              {isEdit ? "Simpan Perubahan" : "Simpan Pegawai"}
+              {loading ? "Menyimpan..." : (isEdit ? "Simpan Perubahan" : "Simpan Pegawai")}
             </button>
           </div>
         </form>

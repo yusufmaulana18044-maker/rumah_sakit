@@ -3,9 +3,9 @@ import { useState, useEffect } from "react";
 import { 
   Users, FileText, UserCheck, UserX, Clock, Building, Briefcase, 
   Upload, Plus, FileUp 
-} from "lucide-react"; // Tambahkan ikon Upload
-import dummyEmployees from "../data/dummyEmployees";
-import SearchBar from "../components/SearchBar"; 
+} from "lucide-react";
+import { supabase } from "../supabase";
+import SearchBar from "../components/SearchBar";
 
 const KATEGORI = [
   { id: 1, nama: "SK Pangkat (Mulai CPNS)" },
@@ -30,71 +30,99 @@ export default function Dashboard() {
     totalDocuments: 0,
     activeEmployees: 0,
     inactiveEmployees: 0,
+    completeEmployees: 0,
+    incompleteEmployees: 0,
     recentEmployees: [],
     documentByType: {},
     unitDistribution: {},
   });
 
   const [searchTerm, setSearchTerm] = useState("");
+  const [pegawaiList, setPegawaiList] = useState([]);
 
+  // Ambil data dari Supabase
   useEffect(() => {
-    const total = dummyEmployees.length;
-    const active = dummyEmployees.filter(emp => emp.status === "aktif").length;
-    const inactive = dummyEmployees.filter(emp => emp.status === "cuti").length;
-    
-    let totalDocs = 0;
-    const docTypeCount = {};
-    const unitCount = {};
-    
-    dummyEmployees.forEach(emp => {
-      unitCount[emp.work_unit] = (unitCount[emp.work_unit] || 0) + 1;
-      
-      if (emp.documents && emp.documents.length > 0) {
-        totalDocs += emp.documents.length;
-        emp.documents.forEach(doc => {
+    const fetchStats = async () => {
+      try {
+        // 1. Ambil pegawai
+        const { data: pegawai, error: pegawaiError } = await supabase
+          .from("pegawai")
+          .select("*");
+
+        if (pegawaiError) throw pegawaiError;
+        setPegawaiList(pegawai || []);
+
+        const total = pegawai.length;
+        const aktif = pegawai.filter(e => e.status === "aktif").length;
+        const cuti = pegawai.filter(e => e.status === "cuti").length;
+
+        // 2. Ambil dokumen
+        const { data: dokumen, error: dokumenError } = await supabase
+          .from("dokumen")
+          .select("*");
+
+        if (dokumenError) throw dokumenError;
+
+        const totalDocs = dokumen.length;
+
+        // 3. Hitung unit distribution
+        const unitCount = {};
+        pegawai.forEach(emp => {
+          unitCount[emp.work_unit] = (unitCount[emp.work_unit] || 0) + 1;
+        });
+
+        // 4. Hitung document by type
+        const docTypeCount = {};
+        dokumen.forEach(doc => {
           docTypeCount[doc.type] = (docTypeCount[doc.type] || 0) + 1;
         });
+
+        // 5. Kelengkapan (sementara 0, nanti dihitung dari dokumen)
+        const completeEmployees = 0;
+        const incompleteEmployees = total - completeEmployees;
+
+        setStats({
+          totalEmployees: total,
+          totalDocuments: totalDocs,
+          activeEmployees: aktif,
+          inactiveEmployees: cuti,
+          completeEmployees: completeEmployees,
+          incompleteEmployees: incompleteEmployees,
+          recentEmployees: pegawai.slice(0, 5),
+          documentByType: docTypeCount,
+          unitDistribution: unitCount,
+        });
+
+      } catch (error) {
+        console.error("Error fetching stats:", error);
       }
-    });
-    
-    const recent = [...dummyEmployees].reverse().slice(0, 5);
-    
-    setStats({
-      totalEmployees: total,
-      totalDocuments: totalDocs,
-      activeEmployees: active,
-      inactiveEmployees: inactive,
-      recentEmployees: recent,
-      documentByType: docTypeCount,
-      unitDistribution: unitCount,
-      completeEmployees: Math.floor(total * 0.72),
-      incompleteEmployees: Math.floor(total * 0.28),
-    });
+    };
+
+    fetchStats();
   }, []);
 
-  // Logika Pencarian
-  const filteredEmployees = dummyEmployees.filter((emp) => {
+  // Logika Pencarian (pake pegawaiList dari Supabase)
+  const filteredEmployees = pegawaiList.filter((emp) => {
     return (
-      emp.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      emp.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (emp.nip && emp.nip.includes(searchTerm))
     );
   });
 
   const handleResultClick = (employee) => {
-    alert(`Anda memilih: ${employee.full_name}`);
+    window.location.href = `/employees/${employee.id}`;
   };
 
   return (
     <div className="space-y-6">
       
-      {/* --- HEADER DENGAN SEARCH BAR TERINTEGRASI --- */}
+      {/* HEADER DENGAN SEARCH BAR */}
       <div className="bg-gradient-to-r from-teal-700 to-teal-800 rounded-xl p-6 text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold">Selamat Datang, {localStorage.getItem("username") || "Admin"}!</h1>
           <p className="text-teal-100 mt-1">Kelola data pegawai dan dokumen penting RSUD Dr. Harjono S. Ponorogo</p>
         </div>
         
-        {/* Search Bar ditaruh di sebelah kanan header */}
         <div className="w-full md:w-auto">
           <SearchBar 
             searchTerm={searchTerm} 
@@ -107,7 +135,6 @@ export default function Dashboard() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total Pegawai */}
         <div className="bg-white rounded-xl shadow-sm p-5 border-l-4 border-teal-600">
           <div className="flex items-center justify-between">
             <div>
@@ -119,19 +146,17 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Berkas Lengkap */}
         <div className="bg-white rounded-xl shadow-sm p-5 border-l-4 border-green-600">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-gray-500 text-sm">Berkas lengkap</p>
               <p className="text-3xl font-bold text-gray-800">{stats.completeEmployees}</p>
-              <p className="text-xs text-gray-400 mt-1">{Math.round(stats.completeEmployees / stats.totalEmployees * 100)}% dari total pegawai</p>
+              <p className="text-xs text-gray-400 mt-1">{stats.totalEmployees > 0 ? Math.round(stats.completeEmployees / stats.totalEmployees * 100) : 0}% dari total pegawai</p>
             </div>
             <UserCheck className="w-10 h-10 text-green-600 opacity-70" />
           </div>
         </div>
 
-        {/* Belum Lengkap */}
         <div className="bg-white rounded-xl shadow-sm p-5 border-l-4 border-amber-600">
           <div className="flex items-center justify-between">
             <div>
@@ -143,7 +168,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* KGB Jatuh Tempo */}
         <div className="bg-white rounded-xl shadow-sm p-5 border-l-4 border-red-600">
           <div className="flex items-center justify-between">
             <div>
@@ -168,10 +192,11 @@ export default function Dashboard() {
         <div className="p-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {KATEGORI.map((kat) => {
-              const count = dummyEmployees.filter(emp => 
-                emp.documents?.some(doc => doc.category === kat.id)
+              // Hitung jumlah pegawai yang punya dokumen dengan type = kat.nama
+              const count = pegawaiList.filter(emp => 
+                emp.documents?.some(doc => doc.type === kat.nama)
               ).length;
-              const pct = Math.round((count / stats.totalEmployees) * 100);
+              const pct = stats.totalEmployees > 0 ? Math.round((count / stats.totalEmployees) * 100) : 0;
               return (
                 <button
                   key={kat.id}
@@ -248,7 +273,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* --- BAGIAN BARU: UNGGAH DOKUMEN DI PALING BAWAH --- */}
+      {/* Upload Dokumen */}
       <div className="mt-4">
         <div
           className="bg-white rounded-xl shadow-sm border border-dashed border-2 border-gray-300 hover:border-teal-400 hover:bg-teal-50 transition-colors p-8 flex flex-col items-center justify-center text-center cursor-pointer"

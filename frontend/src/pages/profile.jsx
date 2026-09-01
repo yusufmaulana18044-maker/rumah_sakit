@@ -1,41 +1,70 @@
 import { useState, useEffect } from "react";
 import { User, Mail, Phone, MapPin, Building, Badge, Calendar, Edit2, Save, X, Camera } from "lucide-react";
+import { supabase } from "../supabase";
 
 export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
   const [profileData, setProfileData] = useState({
-    fullName: "Nama Pengguna",
-    email: "user@example.com",
-    phone: "+62 812-3456-7890",
-    department: "Bagian Administrasi",
-    position: "Admin",
-    joinDate: "2024-01-15",
-    bio: "Selamat datang di profil saya",
-    address: "Jl. Rumah Sakit No. 123",
+    fullName: "",
+    email: "",
+    phone: "",
+    department: "",
+    position: "",
+    joinDate: "",
+    bio: "",
+    address: "",
     avatar: "👤"
   });
 
   const [editData, setEditData] = useState(profileData);
-  const [avatar, setAvatar] = useState("👤");
+  const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState(null);
 
+  // Ambil data dari Supabase
   useEffect(() => {
-    // Load data dari localStorage jika ada
-    const userData = localStorage.getItem("user");
-    if (userData) {
-      const parsed = JSON.parse(userData);
-      setProfileData(prev => ({
-        ...prev,
-        fullName: parsed.username || "Nama Pengguna",
-        email: parsed.email || "user@example.com",
-        position: localStorage.getItem("role") || "User"
-      }));
-      setEditData(prev => ({
-        ...prev,
-        fullName: parsed.username || "Nama Pengguna",
-        email: parsed.email || "user@example.com",
-        position: localStorage.getItem("role") || "User"
-      }));
-    }
+    const fetchProfile = async () => {
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      const username = localStorage.getItem("username") || "";
+      
+      if (!user.id) {
+        setLoading(false);
+        return;
+      }
+
+      setUserId(user.id);
+
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("user_id", user.id)
+          .single();
+
+        if (error) throw error;
+
+        if (data) {
+          const profile = {
+            fullName: data.full_name || username,
+            email: data.email || user.email || "",
+            phone: data.phone || "",
+            department: data.department || "",
+            position: data.role || "User",
+            joinDate: data.join_date || "",
+            bio: data.bio || "",
+            address: data.address || "",
+            avatar: data.avatar || "👤"
+          };
+          setProfileData(profile);
+          setEditData(profile);
+        }
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
   }, []);
 
   const handleEditToggle = () => {
@@ -45,10 +74,37 @@ export default function Profile() {
     setIsEditing(!isEditing);
   };
 
-  const handleSaveProfile = () => {
-    setProfileData(editData);
-    setIsEditing(false);
-    alert("Profil berhasil diperbarui!");
+  const handleSaveProfile = async () => {
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          full_name: editData.fullName,
+          email: editData.email,
+          phone: editData.phone,
+          department: editData.department,
+          role: editData.position,
+          join_date: editData.joinDate,
+          bio: editData.bio,
+          address: editData.address,
+          avatar: editData.avatar
+        })
+        .eq("user_id", userId);
+
+      if (error) throw error;
+
+      setProfileData(editData);
+      setIsEditing(false);
+      alert("✅ Profil berhasil diperbarui!");
+
+      // Update localStorage juga
+      localStorage.setItem("username", editData.fullName);
+      localStorage.setItem("role", editData.position);
+
+    } catch (error) {
+      console.error("Save error:", error);
+      alert("❌ Gagal menyimpan profil: " + error.message);
+    }
   };
 
   const handleInputChange = (e) => {
@@ -60,6 +116,14 @@ export default function Profile() {
   };
 
   const avatarOptions = ["👤", "👨‍⚕️", "👩‍⚕️", "👨‍💼", "👩‍💼", "🧑‍💻", "👨‍🔬", "👩‍🔬"];
+
+  if (loading) {
+    return (
+      <div className="p-6 text-center">
+        <p className="text-gray-500">Loading profil...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -95,7 +159,7 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* Avatar Selection (only show when editing) */}
+      {/* Avatar Selection */}
       {isEditing && (
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-lg font-semibold text-gray-800 mb-4">Pilih Avatar</h3>
@@ -286,7 +350,7 @@ export default function Profile() {
                 />
               ) : (
                 <p className="text-gray-800 px-4 py-2 bg-gray-50 rounded-lg">
-                  {new Date(profileData.joinDate).toLocaleDateString('id-ID')}
+                  {profileData.joinDate ? new Date(profileData.joinDate).toLocaleDateString('id-ID') : "-"}
                 </p>
               )}
             </div>

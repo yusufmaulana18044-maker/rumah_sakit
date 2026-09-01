@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, UploadCloud, FileText, CheckCircle2 } from "lucide-react";
-import dummyEmployees, { KATEGORI } from "../data/dummyEmployees";
+import { supabase } from "../supabase";
 
 const formatDate = (value) => {
   if (!value) return "—";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-
   return new Intl.DateTimeFormat("id-ID", {
     day: "2-digit",
     month: "short",
@@ -21,11 +20,50 @@ export default function UploadDokumen() {
 
   const initialCategory = Number(id) || 1;
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState(dummyEmployees[0]?.id ?? "");
+  const [pegawaiList, setPegawaiList] = useState([]);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
   const [nomorSurat, setNomorSurat] = useState("");
   const [tanggalUpload, setTanggalUpload] = useState(new Date().toISOString().slice(0, 10));
-  const [fileName, setFileName] = useState("");
+  const [selectedFile, setSelectedFile] = useState(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [kategoriList, setKategoriList] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Ambil data kategori & pegawai dari Supabase
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // 1. Ambil kategori
+        const { data: katData, error: katError } = await supabase
+          .from("kategori_dokumen")
+          .select("*")
+          .order("id", { ascending: true });
+
+        if (katError) throw katError;
+        setKategoriList(katData || []);
+
+        // 2. Ambil pegawai
+        const { data: empData, error: empError } = await supabase
+          .from("pegawai")
+          .select("id, full_name, nip")
+          .order("full_name", { ascending: true });
+
+        if (empError) throw empError;
+        setPegawaiList(empData || []);
+        if (empData && empData.length > 0) {
+          setSelectedEmployeeId(empData[0].id);
+        }
+
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        alert("Gagal mengambil data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   useEffect(() => {
     if (id) {
@@ -33,16 +71,31 @@ export default function UploadDokumen() {
     }
   }, [id]);
 
-  const category = KATEGORI.find((item) => item.id === selectedCategory) || KATEGORI[0];
+  const category = kategoriList.find((item) => item.id === selectedCategory) || kategoriList[0] || { id: 1, nama: "Kategori" };
 
   const handleFileChange = (event) => {
     const file = event.target.files?.[0];
     if (file) {
-      setFileName(file.name);
+      // Validasi ukuran (3 MB)
+      if (file.size > 3 * 1024 * 1024) {
+        alert("❌ Ukuran file maksimal 3 MB!");
+        event.target.value = "";
+        return;
+      }
+
+      // Validasi format
+      const allowedTypes = ["application/pdf", "image/png", "image/jpeg"];
+      if (!allowedTypes.includes(file.type)) {
+        alert("❌ Format file harus PDF, PNG, atau JPG!");
+        event.target.value = "";
+        return;
+      }
+
+      setSelectedFile(file);
     }
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     if (!selectedEmployeeId) {
@@ -50,37 +103,62 @@ export default function UploadDokumen() {
       return;
     }
 
-    if (!fileName) {
+    if (!selectedFile) {
       alert("Pilih file dokumen yang akan diunggah.");
       return;
     }
 
-    const employeeIndex = dummyEmployees.findIndex((emp) => emp.id === Number(selectedEmployeeId));
+    try {
+      setLoading(true);
 
-    if (employeeIndex === -1) {
-      alert("Pegawai tidak ditemukan.");
-      return;
+      // 1. Upload ke Storage
+      const filePath = `pegawai/${selectedEmployeeId}/${Date.now()}_${selectedFile.name}`;
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from("documents")
+        .upload(filePath, selectedFile);
+
+      if (uploadError) throw uploadError;
+
+      // 2. Dapatkan URL publik
+      const { data: urlData } = supabase.storage
+        .from("documents")
+        .getPublicUrl(filePath);
+
+      // 3. Simpan ke database
+      const { error: dbError } = await supabase
+        .from("dokumen")
+        .insert([{
+          employee_id: selectedEmployeeId,
+          name: selectedFile.name,
+          type: category.nama,
+          number: nomorSurat || "-",
+          file_path: filePath,
+          file_url: urlData.publicUrl,
+          status: "tunggu"
+        }]);
+
+      if (dbError) throw dbError;
+
+      setIsSubmitted(true);
+      setTimeout(() => {
+        navigate(`/kategori/${selectedCategory}`);
+      }, 900);
+
+    } catch (error) {
+      console.error("Upload error:", error);
+      alert("❌ Gagal upload dokumen: " + error.message);
+    } finally {
+      setLoading(false);
     }
-
-    const newDoc = {
-      id: Date.now(),
-      name: fileName,
-      type: category.nama,
-      category: selectedCategory,
-      number: nomorSurat || "—",
-      uploaded_at: formatDate(tanggalUpload),
-      status: "tunggu",
-    };
-
-    const employee = dummyEmployees[employeeIndex];
-    const existingDocs = Array.isArray(employee.documents) ? employee.documents : [];
-    employee.documents = [...existingDocs, newDoc];
-
-    setIsSubmitted(true);
-    setTimeout(() => {
-      navigate(`/kategori/${selectedCategory}`);
-    }, 900);
   };
+
+  if (loading && pegawaiList.length === 0) {
+    return (
+      <div className="p-6 text-center">
+        <p className="text-gray-500">Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -106,6 +184,7 @@ export default function UploadDokumen() {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {/* Kategori Dokumen */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Kategori Dokumen</label>
               <select
@@ -113,7 +192,7 @@ export default function UploadDokumen() {
                 onChange={(event) => setSelectedCategory(Number(event.target.value))}
                 className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-gray-800 focus:border-teal-500 focus:outline-none"
               >
-                {KATEGORI.map((item) => (
+                {kategoriList.map((item) => (
                   <option key={item.id} value={item.id}>
                     {String(item.id).padStart(2, "0")} - {item.nama}
                   </option>
@@ -121,6 +200,7 @@ export default function UploadDokumen() {
               </select>
             </div>
 
+            {/* Pegawai */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Pegawai</label>
               <select
@@ -128,7 +208,7 @@ export default function UploadDokumen() {
                 onChange={(event) => setSelectedEmployeeId(event.target.value)}
                 className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-gray-800 focus:border-teal-500 focus:outline-none"
               >
-                {dummyEmployees.map((employee) => (
+                {pegawaiList.map((employee) => (
                   <option key={employee.id} value={employee.id}>
                     {employee.full_name} - {employee.nip}
                   </option>
@@ -136,6 +216,7 @@ export default function UploadDokumen() {
               </select>
             </div>
 
+            {/* Nomor Surat */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Nomor Surat / Dokumen</label>
               <input
@@ -147,6 +228,7 @@ export default function UploadDokumen() {
               />
             </div>
 
+            {/* Tanggal Unggah */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Tanggal Unggah</label>
               <input
@@ -158,6 +240,7 @@ export default function UploadDokumen() {
             </div>
           </div>
 
+          {/* Pilih File */}
           <div className="rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 p-5">
             <label className="flex cursor-pointer flex-col items-center justify-center gap-3 text-center">
               <div className="w-14 h-14 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center">
@@ -165,14 +248,25 @@ export default function UploadDokumen() {
               </div>
               <div>
                 <p className="text-base font-semibold text-gray-800">Pilih file dokumen</p>
-                <p className="text-sm text-gray-500">PDF, JPG, PNG, DOCX, atau format lain yang didukung</p>
+                <p className="text-sm text-gray-500">PDF, PNG, JPG (Maks 3 MB)</p>
               </div>
-              <input type="file" className="hidden" onChange={handleFileChange} />
+              <input 
+                type="file" 
+                className="hidden" 
+                onChange={handleFileChange} 
+                accept=".pdf,.png,.jpg,.jpeg" 
+              />
             </label>
 
-            {fileName && (
-              <div className="mt-4 rounded-lg bg-white border border-teal-200 px-4 py-3 text-sm text-gray-700">
-                <span className="font-medium text-teal-700">File terpilih:</span> {fileName}
+            {selectedFile && (
+              <div className="mt-4 rounded-lg bg-white border border-teal-200 px-4 py-3 flex items-center gap-3">
+                <FileText className="w-5 h-5 text-teal-600" />
+                <div>
+                  <p className="text-sm font-medium text-gray-800">{selectedFile.name}</p>
+                  <p className="text-xs text-gray-400">
+                    {Math.round(selectedFile.size / 1024)} KB • {selectedFile.type}
+                  </p>
+                </div>
               </div>
             )}
           </div>
@@ -184,10 +278,11 @@ export default function UploadDokumen() {
 
             <button
               type="submit"
-              className="bg-teal-700 hover:bg-teal-800 text-white px-5 py-2.5 rounded-lg font-medium transition flex items-center gap-2"
+              disabled={loading}
+              className="bg-gradient-to-r from-teal-700 to-teal-800 hover:from-teal-800 hover:to-teal-900 text-white px-5 py-2.5 rounded-lg font-medium transition flex items-center gap-2 disabled:opacity-50"
             >
               <UploadCloud className="w-4 h-4" />
-              Simpan Dokumen
+              {loading ? "Mengupload..." : "Simpan Dokumen"}
             </button>
           </div>
         </form>
