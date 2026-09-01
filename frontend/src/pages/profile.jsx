@@ -17,11 +17,15 @@ export default function Profile() {
   });
 
   const [editData, setEditData] = useState(profileData);
+<<<<<<< HEAD
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState(null);
+=======
+>>>>>>> 280cfd6ad0c3277b26a2895209b81185c46b7dfd
 
   // Ambil data dari Supabase
   useEffect(() => {
+<<<<<<< HEAD
     const fetchProfile = async () => {
       const user = JSON.parse(localStorage.getItem("user") || "{}");
       const username = localStorage.getItem("username") || "";
@@ -65,6 +69,28 @@ export default function Profile() {
     };
 
     fetchProfile();
+=======
+    const savedProfile = localStorage.getItem("profileData");
+    const userData = localStorage.getItem("user");
+
+    if (savedProfile) {
+      const parsedProfile = JSON.parse(savedProfile);
+      setProfileData(prev => ({ ...prev, ...parsedProfile }));
+      setEditData(prev => ({ ...prev, ...parsedProfile }));
+    }
+
+    if (userData) {
+      const parsed = JSON.parse(userData);
+      const updatedProfile = {
+        fullName: parsed.username || "Nama Pengguna",
+        email: parsed.email || "user@example.com",
+        position: localStorage.getItem("role") || "User"
+      };
+
+      setProfileData(prev => ({ ...prev, ...updatedProfile }));
+      setEditData(prev => ({ ...prev, ...updatedProfile }));
+    }
+>>>>>>> 280cfd6ad0c3277b26a2895209b81185c46b7dfd
   }, []);
 
   const handleEditToggle = () => {
@@ -74,6 +100,7 @@ export default function Profile() {
     setIsEditing(!isEditing);
   };
 
+<<<<<<< HEAD
   const handleSaveProfile = async () => {
     try {
       const { error } = await supabase
@@ -105,6 +132,14 @@ export default function Profile() {
       console.error("Save error:", error);
       alert("❌ Gagal menyimpan profil: " + error.message);
     }
+=======
+  const handleSaveProfile = () => {
+    const profileToSave = { ...editData };
+    localStorage.setItem("profileData", JSON.stringify(profileToSave));
+    setProfileData(profileToSave);
+    setIsEditing(false);
+    alert("Profil berhasil diperbarui!");
+>>>>>>> 280cfd6ad0c3277b26a2895209b81185c46b7dfd
   };
 
   const handleInputChange = (e) => {
@@ -113,6 +148,51 @@ export default function Profile() {
       ...prev,
       [name]: value
     }));
+  };
+
+  const handleAvatarUpload = (event) => {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      alert("Pilih file gambar yang valid.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const image = new Image();
+      image.onload = () => {
+        const maxSize = 512;
+        const scale = Math.min(1, maxSize / Math.max(image.width, image.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(image.width * scale));
+        canvas.height = Math.max(1, Math.round(image.height * scale));
+        canvas.getContext("2d").drawImage(image, 0, 0, canvas.width, canvas.height);
+
+        const imageData = canvas.toDataURL("image/jpeg", 0.85);
+        setEditData(prev => ({ ...prev, avatar: imageData }));
+      };
+      image.src = reader.result;
+    };
+    reader.onerror = () => alert("Foto tidak dapat dibaca. Silakan pilih foto lain.");
+    reader.readAsDataURL(file);
+    event.target.value = "";
+  };
+
+  const renderAvatar = (avatarValue) => {
+    if (typeof avatarValue === "string" && avatarValue.startsWith("data:image/")) {
+      return (
+        <img
+          src={avatarValue}
+          alt="Foto profil"
+          className="w-full h-full object-cover rounded-full"
+        />
+      );
+    }
+
+    return <span>{avatarValue || "👤"}</span>;
   };
 
   const avatarOptions = ["👤", "👨‍⚕️", "👩‍⚕️", "👨‍💼", "👩‍💼", "🧑‍💻", "👨‍🔬", "👩‍🔬"];
@@ -132,13 +212,24 @@ export default function Profile() {
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-6">
             <div className="relative">
-              <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center text-5xl shadow-lg">
-                {profileData.avatar}
+              <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center text-5xl shadow-lg overflow-hidden">
+                {renderAvatar(isEditing ? editData.avatar : profileData.avatar)}
               </div>
               {isEditing && (
-                <button className="absolute bottom-0 right-0 bg-white text-teal-600 p-2 rounded-full shadow-lg hover:bg-gray-100 transition">
+                <label
+                  htmlFor="profile-image-upload"
+                  className="absolute bottom-0 right-0 bg-white text-teal-600 p-2 rounded-full shadow-lg hover:bg-gray-100 transition cursor-pointer"
+                  title="Pilih foto profil"
+                >
                   <Camera className="w-4 h-4" />
-                </button>
+                  <input
+                    id="profile-image-upload"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleAvatarUpload}
+                  />
+                </label>
               )}
             </div>
             <div>
@@ -161,22 +252,45 @@ export default function Profile() {
 
       {/* Avatar Selection */}
       {isEditing && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Pilih Avatar</h3>
-          <div className="grid grid-cols-4 sm:grid-cols-8 gap-3">
-            {avatarOptions.map((ava) => (
-              <button
-                key={ava}
-                onClick={() => setEditData(prev => ({ ...prev, avatar: ava }))}
-                className={`w-16 h-16 text-3xl rounded-lg border-2 transition ${
-                  editData.avatar === ava
-                    ? "border-teal-500 bg-teal-50"
-                    : "border-gray-200 hover:border-teal-300 bg-gray-50"
-                }`}
+        <div className="bg-white rounded-lg shadow p-6 space-y-5">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">Pilih Foto Profil</h3>
+            <div className="flex flex-wrap items-center gap-3">
+              <label
+                htmlFor="profile-image-upload-2"
+                className="inline-flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg font-medium cursor-pointer transition"
               >
-                {ava}
-              </button>
-            ))}
+                <Camera className="w-4 h-4" />
+                Pilih dari file / galeri
+                <input
+                  id="profile-image-upload-2"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleAvatarUpload}
+                />
+              </label>
+              <span className="text-sm text-gray-500">atau pilih avatar default</span>
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Pilih Avatar</h3>
+            <div className="grid grid-cols-4 sm:grid-cols-8 gap-3">
+              {avatarOptions.map((ava) => (
+                <button
+                  key={ava}
+                  onClick={() => setEditData(prev => ({ ...prev, avatar: ava }))}
+                  className={`w-16 h-16 text-3xl rounded-lg border-2 transition ${
+                    editData.avatar === ava
+                      ? "border-teal-500 bg-teal-50"
+                      : "border-gray-200 hover:border-teal-300 bg-gray-50"
+                  }`}
+                >
+                  {ava}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       )}

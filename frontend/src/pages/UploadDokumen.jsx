@@ -26,6 +26,7 @@ export default function UploadDokumen() {
   const [tanggalUpload, setTanggalUpload] = useState(new Date().toISOString().slice(0, 10));
   const [selectedFile, setSelectedFile] = useState(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
+<<<<<<< HEAD
   const [kategoriList, setKategoriList] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -64,6 +65,9 @@ export default function UploadDokumen() {
 
     fetchData();
   }, []);
+=======
+  const [fileError, setFileError] = useState("");
+>>>>>>> 280cfd6ad0c3277b26a2895209b81185c46b7dfd
 
   useEffect(() => {
     if (id) {
@@ -75,7 +79,10 @@ export default function UploadDokumen() {
 
   const handleFileChange = (event) => {
     const file = event.target.files?.[0];
+    setFileError("");
+
     if (file) {
+<<<<<<< HEAD
       // Validasi ukuran (3 MB)
       if (file.size > 3 * 1024 * 1024) {
         alert("❌ Ukuran file maksimal 3 MB!");
@@ -92,6 +99,25 @@ export default function UploadDokumen() {
       }
 
       setSelectedFile(file);
+=======
+      // VALIDASI: HANYA PDF
+      if (file.type !== 'application/pdf') {
+        setFileError("❌ Hanya file PDF yang diizinkan!");
+        event.target.value = "";
+        setFileName("");
+        return;
+      }
+
+      // VALIDASI: MAKSIMAL 10MB
+      if (file.size > 10 * 1024 * 1024) {
+        setFileError("❌ Ukuran file maksimal 10MB!");
+        event.target.value = "";
+        setFileName("");
+        return;
+      }
+
+      setFileName(file.name);
+>>>>>>> 280cfd6ad0c3277b26a2895209b81185c46b7dfd
     }
   };
 
@@ -240,20 +266,33 @@ export default function UploadDokumen() {
             </div>
           </div>
 
+<<<<<<< HEAD
           {/* Pilih File */}
           <div className="rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 p-5">
+=======
+          <div className={`rounded-xl border-2 border-dashed p-5 ${
+            fileError ? 'border-red-400 bg-red-50' : 'border-gray-300 bg-gray-50'
+          }`}>
+>>>>>>> 280cfd6ad0c3277b26a2895209b81185c46b7dfd
             <label className="flex cursor-pointer flex-col items-center justify-center gap-3 text-center">
-              <div className="w-14 h-14 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center">
+              <div className={`w-14 h-14 rounded-full flex items-center justify-center ${
+                fileError ? 'bg-red-100 text-red-700' : 'bg-teal-100 text-teal-700'
+              }`}>
                 <FileText className="w-7 h-7" />
               </div>
               <div>
                 <p className="text-base font-semibold text-gray-800">Pilih file dokumen</p>
+<<<<<<< HEAD
                 <p className="text-sm text-gray-500">PDF, PNG, JPG (Maks 3 MB)</p>
+=======
+                <p className="text-sm text-gray-500">Format: PDF (Maksimal 10MB)</p>
+>>>>>>> 280cfd6ad0c3277b26a2895209b81185c46b7dfd
               </div>
               <input 
                 type="file" 
                 className="hidden" 
                 onChange={handleFileChange} 
+<<<<<<< HEAD
                 accept=".pdf,.png,.jpg,.jpeg" 
               />
             </label>
@@ -267,6 +306,21 @@ export default function UploadDokumen() {
                     {Math.round(selectedFile.size / 1024)} KB • {selectedFile.type}
                   </p>
                 </div>
+=======
+                accept=".pdf"
+              />
+            </label>
+
+            {fileName && !fileError && (
+              <div className="mt-4 rounded-lg bg-white border border-teal-200 px-4 py-3 text-sm text-gray-700">
+                <span className="font-medium text-teal-700">File terpilih:</span> {fileName}
+>>>>>>> 280cfd6ad0c3277b26a2895209b81185c46b7dfd
+              </div>
+            )}
+
+            {fileError && (
+              <div className="mt-4 rounded-lg bg-red-100 border border-red-300 px-4 py-3 text-sm text-red-700">
+                {fileError}
               </div>
             )}
           </div>
