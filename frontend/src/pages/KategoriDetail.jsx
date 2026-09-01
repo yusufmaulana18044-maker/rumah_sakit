@@ -5,7 +5,8 @@ import { supabase } from "../supabase";
 import {
   ArrowLeft, Upload, FileText, Download, Trash2, User, Briefcase,
   Calendar, Phone, Mail, MapPin, X, Loader2, Eye, EyeOff,
-  Award, GraduationCap, CreditCard, Users, Building2
+  Award, GraduationCap, CreditCard, Users, Building2,
+  CheckCircle, Clock, AlertCircle
 } from "lucide-react";
 
 // 14 Kategori Dokumen
@@ -28,8 +29,15 @@ const KATEGORI = [
 
 const documentTypes = KATEGORI.map(k => k.nama);
 
+// ✅ MAPPING STATUS
+const STATUS_MAP = {
+  verified: { lbl: "Terverifikasi", cls: "bg-green-100 text-green-700" },
+  pending: { lbl: "Menunggu", cls: "bg-yellow-100 text-yellow-700" },
+  rejected: { lbl: "Perlu Revisi", cls: "bg-red-100 text-red-700" },
+};
+
 // ============================================
-// COMPONENT MODAL UPLOAD (VERSI IMPROVISASI)
+// COMPONENT MODAL UPLOAD
 // ============================================
 function UploadModal({ isOpen, onClose, onUpload, employeeName, isLoading }) {
   const [formData, setFormData] = useState({
@@ -260,6 +268,8 @@ export default function EmployeeDetail() {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showAllBio, setShowAllBio] = useState(false);
+  const [deleting, setDeleting] = useState(null);
+  const [stats, setStats] = useState({ total: 0, verified: 0, pending: 0, rejected: 0 });
 
   // Ambil data pegawai dari Supabase
   useEffect(() => {
@@ -284,7 +294,20 @@ export default function EmployeeDetail() {
           .order("uploaded_at", { ascending: false });
 
         if (docError) throw docError;
-        setDocuments(docData || []);
+        
+        const formattedDocs = docData || [];
+        setDocuments(formattedDocs);
+
+        // Hitung statistik
+        const verified = formattedDocs.filter(d => d.status === "verified").length;
+        const pending = formattedDocs.filter(d => d.status === "pending").length;
+        const rejected = formattedDocs.filter(d => d.status === "rejected").length;
+        setStats({
+          total: formattedDocs.length,
+          verified,
+          pending,
+          rejected
+        });
 
       } catch (error) {
         console.error("Error fetching employee:", error);
@@ -323,18 +346,23 @@ export default function EmployeeDetail() {
         .from('documents')
         .getPublicUrl(filePath);
 
+      // Cari ID kategori dari nama dokumen
+      const kategori = KATEGORI.find(k => k.nama === formData.type);
+      
       const newDoc = {
         id: Date.now(),
         employee_id: employee.id,
         type: formData.type,
         name: formData.name,
         number: formData.number || "-",
-        uploaded_at: new Date().toISOString().split('T')[0],
-        status: "tunggu",
+        uploaded_at: new Date().toISOString(),
+        status: "pending",
         file_url: urlData.publicUrl,
+        file_path: filePath,
         file_name: fileName,
         file_size: file.size,
-        file_type: file.type
+        file_type: file.type,
+        category: kategori ? kategori.id : 14 // default ke "Lain-lain"
       };
 
       const { error: dbError } = await supabase
@@ -349,6 +377,14 @@ export default function EmployeeDetail() {
       }
 
       setDocuments(prev => [newDoc, ...prev]);
+      
+      // Update statistik
+      setStats(prev => ({
+        ...prev,
+        total: prev.total + 1,
+        pending: prev.pending + 1
+      }));
+      
       alert("✅ Dokumen berhasil diupload!");
 
     } catch (error) {
@@ -365,6 +401,7 @@ export default function EmployeeDetail() {
   const handleDeleteDoc = async (docId, docName, filePath) => {
     if (!window.confirm(`Yakin ingin menghapus dokumen "${docName}"?`)) return;
 
+    setDeleting(docId);
     try {
       if (filePath) {
         const { error: deleteError } = await supabase.storage
@@ -387,23 +424,27 @@ export default function EmployeeDetail() {
         return;
       }
 
+      const deletedDoc = documents.find(d => d.id === docId);
       setDocuments(documents.filter(doc => doc.id !== docId));
+      
+      // Update statistik
+      if (deletedDoc) {
+        setStats(prev => ({
+          ...prev,
+          total: prev.total - 1,
+          verified: deletedDoc.status === "verified" ? prev.verified - 1 : prev.verified,
+          pending: deletedDoc.status === "pending" ? prev.pending - 1 : prev.pending,
+          rejected: deletedDoc.status === "rejected" ? prev.rejected - 1 : prev.rejected,
+        }));
+      }
+      
       alert("✅ Dokumen berhasil dihapus!");
 
     } catch (error) {
       console.error("Delete error:", error);
       alert("❌ Gagal hapus dokumen: " + error.message);
-    }
-  };
-
-  // ============================================
-  // FUNGSI DOWNLOAD DOKUMEN
-  // ============================================
-  const handleDownload = (doc) => {
-    if (doc.file_url) {
-      window.open(doc.file_url, '_blank');
-    } else {
-      alert(`📥 Download file: ${doc.name}`);
+    } finally {
+      setDeleting(null);
     }
   };
 
@@ -419,22 +460,28 @@ export default function EmployeeDetail() {
         `Jenis: ${doc.type}\n` +
         `Nama: ${doc.name}\n` +
         `Nomor: ${doc.number || '-'}\n` +
-        `Upload: ${doc.uploaded_at}\n` +
+        `Upload: ${new Date(doc.uploaded_at).toLocaleDateString('id-ID')}\n` +
         `Status: ${doc.status || 'Belum diverifikasi'}`
       );
+    }
+  };
+
+  // ============================================
+  // FUNGSI DOWNLOAD DOKUMEN
+  // ============================================
+  const handleDownload = (doc) => {
+    if (doc.file_url) {
+      window.open(doc.file_url, "_blank");
+    } else {
+      alert("📥 File tidak tersedia untuk didownload");
     }
   };
 
   if (!employee) {
     return (
       <div className="p-6 text-center">
-        <p className="text-gray-500 dark:text-gray-400">Pegawai tidak ditemukan</p>
-        <button
-          onClick={() => navigate("/employees")}
-          className="mt-4 text-teal-600 hover:underline dark:text-teal-400"
-        >
-          Kembali ke daftar pegawai
-        </button>
+        <Loader2 className="w-8 h-8 text-teal-600 animate-spin mx-auto mb-4" />
+        <p className="text-gray-500 dark:text-gray-400">Memuat data pegawai...</p>
       </div>
     );
   }
@@ -451,7 +498,7 @@ export default function EmployeeDetail() {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6 max-w-7xl mx-auto">
       {/* Tombol Kembali */}
       <button
         onClick={() => navigate("/employees")}
@@ -603,7 +650,7 @@ export default function EmployeeDetail() {
         {/* Kolom Kanan - Dokumen */}
         <div className="lg:col-span-2">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow">
-            <div className="p-6 border-b dark:border-gray-700 flex justify-between items-center">
+            <div className="p-6 border-b dark:border-gray-700 flex flex-wrap justify-between items-center gap-4">
               <div>
                 <h2 className="text-lg font-semibold text-gray-800 dark:text-white">📄 Dokumen Penting</h2>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Kelola file-file penting pegawai</p>
@@ -622,6 +669,26 @@ export default function EmployeeDetail() {
               </button>
             </div>
 
+            {/* Statistik */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-6 border-b dark:border-gray-700">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-gray-800 dark:text-white">{stats.total}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Total</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-green-600">{stats.verified}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Terverifikasi</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Menunggu</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-red-600">{stats.rejected}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Perlu Revisi</p>
+              </div>
+            </div>
+
             <div className="p-6">
               {documents.length === 0 ? (
                 <div className="text-center py-8 text-gray-500 dark:text-gray-400">
@@ -632,42 +699,56 @@ export default function EmployeeDetail() {
               ) : (
                 <div className="space-y-3">
                   {documents.map((doc) => {
-                    const filePath = doc.file_url ? doc.file_url.split('/').pop() : null;
+                    const filePath = doc.file_path || (doc.file_url ? doc.file_url.split('/').pop() : null);
+                    const status = STATUS_MAP[doc.status] || STATUS_MAP.pending;
+                    
                     return (
-                      <div key={doc.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                        <div className="flex items-center gap-3">
-                          <FileText className="w-8 h-8 text-blue-500 dark:text-blue-400" />
+                      <div key={doc.id} className="flex flex-wrap items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition gap-3">
+                        <div className="flex items-center gap-3 min-w-[200px]">
+                          <FileText className="w-8 h-8 text-blue-500 dark:text-blue-400 flex-shrink-0" />
                           <div>
                             <p className="font-medium text-gray-800 dark:text-white">{doc.type}</p>
                             <p className="text-xs text-gray-500 dark:text-gray-400">{doc.name}</p>
-                            <p className="text-xs text-gray-400 dark:text-gray-500">Upload: {doc.uploaded_at}</p>
+                            <p className="text-xs text-gray-400 dark:text-gray-500">
+                              Upload: {new Date(doc.uploaded_at).toLocaleDateString('id-ID')}
+                            </p>
                           </div>
                         </div>
-                        <div className="flex gap-2">
-                          {/* 👁️ TOMBOL PREVIEW - MATA */}
-                          <button
-                            onClick={() => handlePreviewDoc(doc)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/30 rounded transition"
-                            title="Preview Dokumen"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          {/* 📥 TOMBOL DOWNLOAD */}
-                          <button
-                            onClick={() => handleDownload(doc)}
-                            className="p-2 text-teal-600 hover:bg-teal-50 dark:text-teal-400 dark:hover:bg-teal-900/30 rounded transition"
-                            title="Download"
-                          >
-                            <Download className="w-4 h-4" />
-                          </button>
-                          {/* 🗑️ TOMBOL HAPUS */}
-                          <button
-                            onClick={() => handleDeleteDoc(doc.id, doc.name, filePath)}
-                            className="p-2 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30 rounded transition"
-                            title="Hapus"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                        
+                        <div className="flex flex-wrap items-center gap-3">
+                          <span className={`px-2 py-1 text-xs rounded-full ${status.cls}`}>
+                            {status.lbl}
+                          </span>
+                          
+                          <div className="flex gap-2">
+                            {/* 👁️ TOMBOL PREVIEW - MATA */}
+                            <button
+                              onClick={() => handlePreviewDoc(doc)}
+                              className="p-2 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/30 rounded transition"
+                              title="Preview Dokumen"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDownload(doc)}
+                              className="p-2 text-teal-600 hover:bg-teal-50 dark:text-teal-400 dark:hover:bg-teal-900/30 rounded transition"
+                              title="Download"
+                            >
+                              <Download className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteDoc(doc.id, doc.name, filePath)}
+                              disabled={deleting === doc.id}
+                              className="p-2 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30 rounded transition disabled:opacity-50"
+                              title="Hapus"
+                            >
+                              {deleting === doc.id ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Trash2 className="w-4 h-4" />
+                              )}
+                            </button>
+                          </div>
                         </div>
                       </div>
                     );

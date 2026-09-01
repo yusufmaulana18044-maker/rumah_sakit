@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { 
   Users, FileText, UserCheck, UserX, Clock, Building, Briefcase, 
-  Upload, Plus, FileUp, TrendingUp, TrendingDown
+  Upload, Plus, FileUp, TrendingUp, TrendingDown, Activity, Loader2
 } from "lucide-react";
 import { supabase } from "../supabase";
 import SearchBar from "../components/SearchBar";
@@ -12,7 +12,7 @@ const KATEGORI = [
   { id: 2, nama: "SK Fungsional" },
   { id: 3, nama: "Data Pribadi" },
   { id: 4, nama: "Riwayat Pendidikan" },
-  { id: 5, nama: "Uraian Tugas" }, 
+  { id: 5, nama: "Uraian Tugas" },
   { id: 6, nama: "SPK RKK (Khusus Nakes)" },
   { id: 7, nama: "Penilaian Kinerja (SKP)" },
   { id: 8, nama: "SPMT" },
@@ -23,8 +23,6 @@ const KATEGORI = [
   { id: 13, nama: "Check Up" },
   { id: 14, nama: "Lain-lain" },
 ];
-
-const COLORS = ['#10B981', '#F59E0B', '#EF4444', '#3B82F6', '#8B5CF6', '#EC4899', '#14B8A6', '#F97316'];
 
 export default function Dashboard() {
   const [stats, setStats] = useState({
@@ -38,67 +36,81 @@ export default function Dashboard() {
     documentByType: {},
     unitDistribution: {},
   });
-
+  const [pegawai, setPegawai] = useState([]);
+  const [dokumen, setDokumen] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [pegawaiList, setPegawaiList] = useState([]);
 
   // Ambil data dari Supabase
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const { data: pegawai, error: pegawaiError } = await supabase
-          .from("pegawai")
-          .select("*");
-
-        if (pegawaiError) throw pegawaiError;
-        setPegawaiList(pegawai || []);
-
-        const total = pegawai.length;
-        const aktif = pegawai.filter(e => e.status === "aktif").length;
-        const cuti = pegawai.filter(e => e.status === "cuti").length;
-
-        const { data: dokumen, error: dokumenError } = await supabase
-          .from("dokumen")
-          .select("*");
-
-        if (dokumenError) throw dokumenError;
-
-        const totalDocs = dokumen.length;
-
-        const unitCount = {};
-        pegawai.forEach(emp => {
-          unitCount[emp.work_unit] = (unitCount[emp.work_unit] || 0) + 1;
-        });
-
-        const docTypeCount = {};
-        dokumen.forEach(doc => {
-          docTypeCount[doc.type] = (docTypeCount[doc.type] || 0) + 1;
-        });
-
-        const completeEmployees = 0;
-        const incompleteEmployees = total - completeEmployees;
-
-        setStats({
-          totalEmployees: total,
-          totalDocuments: totalDocs,
-          activeEmployees: aktif,
-          inactiveEmployees: cuti,
-          completeEmployees: completeEmployees,
-          incompleteEmployees: incompleteEmployees,
-          recentEmployees: pegawai.slice(0, 5),
-          documentByType: docTypeCount,
-          unitDistribution: unitCount,
-        });
-
-      } catch (error) {
-        console.error("Error fetching stats:", error);
-      }
-    };
-
-    fetchStats();
+    fetchData();
   }, []);
 
-  const filteredEmployees = pegawaiList.filter((emp) => {
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      // ✅ FETCH PEGAWAI
+      const { data: pegawaiData, error: pegawaiError } = await supabase
+        .from("pegawai")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (pegawaiError) throw pegawaiError;
+
+      // ✅ FETCH DOKUMEN
+      const { data: dokumenData, error: dokumenError } = await supabase
+        .from("dokumen")
+        .select("*");
+
+      if (dokumenError) throw dokumenError;
+
+      setPegawai(pegawaiData || []);
+      setDokumen(dokumenData || []);
+
+      // ✅ HITUNG STATISTIK
+      const total = pegawaiData?.length || 0;
+      const active = pegawaiData?.filter(p => p.status?.toLowerCase() === "aktif").length || 0;
+      const inactive = pegawaiData?.filter(p => p.status?.toLowerCase() === "cuti").length || 0;
+      const totalDocs = dokumenData?.length || 0;
+
+      // ✅ DISTRIBUSI PER UNIT
+      const unitCount = {};
+      pegawaiData?.forEach(emp => {
+        if (emp.work_unit) {
+          unitCount[emp.work_unit] = (unitCount[emp.work_unit] || 0) + 1;
+        }
+      });
+
+      // ✅ 5 PEGAWAI TERBARU
+      const recent = pegawaiData?.slice(0, 5) || [];
+
+      // ✅ KELENGKAPAN (asumsi: pegawai lengkap kalau punya minimal 3 dokumen)
+      const complete = pegawaiData?.filter(p => {
+        const docCount = dokumenData?.filter(d => d.employee_id === p.id).length || 0;
+        return docCount >= 3;
+      }).length || 0;
+
+      setStats({
+        totalEmployees: total,
+        totalDocuments: totalDocs,
+        activeEmployees: active,
+        inactiveEmployees: inactive,
+        recentEmployees: recent,
+        documentByType: {},
+        unitDistribution: unitCount,
+        completeEmployees: complete,
+        incompleteEmployees: total - complete,
+      });
+
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ SEARCH
+  const filteredEmployees = pegawai.filter((emp) => {
     return (
       emp.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (emp.nip && emp.nip.includes(searchTerm))
@@ -109,9 +121,23 @@ export default function Dashboard() {
     window.location.href = `/employees/${employee.id}`;
   };
 
+  // ✅ HITUNG KATEGORI
+  const getCategoryCount = (categoryId) => {
+    return dokumen.filter(d => d.category === categoryId).length;
+  };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-3">
+        <Loader2 className="w-8 h-8 text-teal-600 animate-spin" />
+        <p className="text-gray-500 text-sm">Memuat dashboard...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      {/* HEADER DENGAN SEARCH BAR */}
+      {/* HEADER DENGAN SEARCH BAR TERINTEGRASI */}
       <div className="bg-gradient-to-r from-teal-700 to-teal-800 rounded-xl p-6 text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-lg">
         <div>
           <h1 className="text-2xl font-bold">Selamat Datang, {localStorage.getItem("username") || "Admin"}!</h1>
@@ -165,11 +191,11 @@ export default function Dashboard() {
         <div className="bg-white rounded-xl shadow-sm p-5 border-l-4 border-red-600">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-500 text-sm">KGB jatuh tempo</p>
-              <p className="text-3xl font-bold text-gray-800">18</p>
-              <p className="text-xs text-gray-400 mt-1">Dalam 60 hari ke depan</p>
+              <p className="text-gray-500 text-sm">Total Dokumen</p>
+              <p className="text-3xl font-bold text-gray-800">{stats.totalDocuments}</p>
+              <p className="text-xs text-gray-400 mt-1">Terupload</p>
             </div>
-            <Clock className="w-10 h-10 text-red-600 opacity-70" />
+            <FileText className="w-10 h-10 text-red-600 opacity-70" />
           </div>
         </div>
       </div>
@@ -186,10 +212,8 @@ export default function Dashboard() {
         <div className="p-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {KATEGORI.map((kat) => {
-              const count = pegawaiList.filter(emp => 
-                emp.documents?.some(doc => doc.type === kat.nama)
-              ).length;
-              const pct = stats.totalEmployees > 0 ? Math.round((count / stats.totalEmployees) * 100) : 0;
+              const count = getCategoryCount(kat.id);
+              const pct = stats.totalEmployees ? Math.round((count / stats.totalEmployees) * 100) : 0;
               return (
                 <button
                   key={kat.id}
@@ -203,9 +227,9 @@ export default function Dashboard() {
                     <span className="text-sm font-medium text-gray-800">{kat.nama}</span>
                   </div>
                   <div className="mt-2 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                    <div className="h-full bg-teal-600 rounded-full" style={{ width: `${pct}%` }} />
+                    <div className="h-full bg-teal-600 rounded-full" style={{ width: `${Math.min(pct, 100)}%` }} />
                   </div>
-                  <p className="text-xs text-gray-400 mt-1">{count} / {stats.totalEmployees} pegawai · {pct}%</p>
+                  <p className="text-xs text-gray-400 mt-1">{count} dokumen</p>
                 </button>
               );
             })}
@@ -224,20 +248,21 @@ export default function Dashboard() {
             </h2>
           </div>
           <div className="divide-y">
-            {stats.recentEmployees.map((emp) => (
-              <div key={emp.id} className="px-6 py-4 flex items-center justify-between hover:bg-gray-50">
-                <div>
-                  <p className="font-medium text-gray-800">{emp.full_name}</p>
-                  <p className="text-sm text-gray-500">{emp.position} • {emp.work_unit}</p>
+            {stats.recentEmployees.length > 0 ? (
+              stats.recentEmployees.map((emp) => (
+                <div key={emp.id} className="px-6 py-4 flex items-center justify-between hover:bg-gray-50">
+                  <div>
+                    <p className="font-medium text-gray-800">{emp.full_name}</p>
+                    <p className="text-sm text-gray-500">{emp.position} • {emp.work_unit}</p>
+                  </div>
+                  <span className={`px-2 py-1 text-xs rounded-full ${
+                    emp.status === "aktif" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
+                  }`}>
+                    {emp.status === "aktif" ? "Aktif" : "Cuti"}
+                  </span>
                 </div>
-                <span className={`px-2 py-1 text-xs rounded-full ${
-                  emp.status === "aktif" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
-                }`}>
-                  {emp.status === "aktif" ? "Aktif" : "Cuti"}
-                </span>
-              </div>
-            ))}
-            {stats.recentEmployees.length === 0 && (
+              ))
+            ) : (
               <div className="p-6 text-center text-gray-500">Belum ada data pegawai</div>
             )}
           </div>
@@ -253,24 +278,28 @@ export default function Dashboard() {
           </div>
           <div className="p-6">
             <div className="grid grid-cols-2 gap-3">
-              {Object.entries(stats.unitDistribution).map(([unit, count]) => (
-                <div key={unit} className="bg-gray-50 rounded-lg p-3 text-center hover:shadow transition">
-                  <Briefcase className="w-5 h-5 mx-auto text-teal-600 mb-1" />
-                  <p className="font-semibold text-gray-800 text-sm truncate">{unit}</p>
-                  <p className="text-xl font-bold text-teal-600">{count}</p>
-                  <p className="text-xs text-gray-400">pegawai</p>
-                </div>
-              ))}
+              {Object.entries(stats.unitDistribution).length > 0 ? (
+                Object.entries(stats.unitDistribution).map(([unit, count]) => (
+                  <div key={unit} className="bg-gray-50 rounded-lg p-3 text-center hover:shadow transition">
+                    <Briefcase className="w-5 h-5 mx-auto text-teal-600 mb-1" />
+                    <p className="font-semibold text-gray-800 text-sm truncate">{unit}</p>
+                    <p className="text-xl font-bold text-teal-600">{count}</p>
+                    <p className="text-xs text-gray-400">pegawai</p>
+                  </div>
+                ))
+              ) : (
+                <div className="col-span-2 text-center text-gray-500 py-4">Belum ada data unit</div>
+              )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Upload Dokumen */}
+      {/* Upload Button */}
       <div className="mt-4">
         <div
           className="bg-white rounded-xl shadow-sm border border-dashed border-2 border-gray-300 hover:border-teal-400 hover:bg-teal-50 transition-colors p-8 flex flex-col items-center justify-center text-center cursor-pointer"
-          onClick={() => window.location.href = "/kategori/1/upload"}
+          onClick={() => window.location.href = "/dokumen/upload"}
         >
           <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center mb-4">
             <Upload className="w-8 h-8 text-teal-700" />
@@ -278,7 +307,7 @@ export default function Dashboard() {
           <h3 className="text-lg font-semibold text-gray-800">Unggah Dokumen Baru</h3>
           <p className="text-sm text-gray-500 mt-1">Klik di sini untuk memilih kategori dan unggah dokumen pegawai</p>
           <button className="mt-4 bg-teal-700 hover:bg-teal-800 text-white px-6 py-2 rounded-lg font-medium transition-colors flex items-center gap-2">
-            <Plus className="w-4 h-4" /> Pilih Kategori
+            <Plus className="w-4 h-4" /> Upload Sekarang
           </button>
         </div>
       </div>
