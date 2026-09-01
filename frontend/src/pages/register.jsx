@@ -175,18 +175,11 @@ export default function Register() {
     }
   };
 
-  // ✅ ANIMASI BACKGROUND HALUS (SAMA KAYAK LOGIN)
   const animationStyle = `
     @keyframes slowZoom {
-      0% { 
-        transform: scale(1) translateX(0);
-      }
-      50% { 
-        transform: scale(1.08) translateX(-10px);
-      }
-      100% { 
-        transform: scale(1) translateX(0);
-      }
+      0% { transform: scale(1) translateX(0); }
+      50% { transform: scale(1.08) translateX(-10px); }
+      100% { transform: scale(1) translateX(0); }
     }
     .animate-slow-zoom {
       animation: slowZoom 17s ease-in-out infinite;
@@ -200,28 +193,21 @@ export default function Register() {
     <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
       <style>{animationStyle}</style>
 
-      {/* Background RSUD - GERAK, BLUR, TAPI HALUS */}
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat animate-slow-zoom bg-blur-custom"
         style={{ backgroundImage: "url('/halamanrs2.jpeg')" }}
       />
 
-      {/* Overlay gelap */}
       <div className="absolute inset-0 bg-black/30" />
 
-      {/* Dekorasi Blob */}
       <div className="absolute top-0 -right-40 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl"></div>
       <div className="absolute bottom-0 -left-40 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
 
-      {/* Card - DIAM, TIDAK GERAK */}
       <div className="relative z-10 w-full max-w-sm px-4">
         <div className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden border border-white/20">
-
-          {/* Header */}
           <div className="relative bg-gradient-to-r from-teal-700 via-teal-600 to-blue-700 px-6 pt-6 pb-5 overflow-hidden">
             <div className="absolute -right-20 -top-20 w-64 h-64 bg-white/5 rounded-full"></div>
             <div className="absolute -left-20 -bottom-20 w-48 h-48 bg-white/5 rounded-full"></div>
-
             <div className="relative flex flex-col items-center">
               <div className="w-16 h-16 bg-white/20 backdrop-blur rounded-2xl flex items-center justify-center shadow-lg mb-3 border border-white/10 overflow-hidden">
                 <img
@@ -245,7 +231,6 @@ export default function Register() {
             </div>
           </div>
 
-          {/* Form */}
           <div className="px-6 py-5">
             <div className="flex items-center gap-2 mb-4">
               <div className="w-1 h-5 bg-gradient-to-b from-teal-600 to-blue-600 rounded-full"></div>
@@ -265,9 +250,11 @@ export default function Register() {
               </div>
             )}
 
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div>
-                <label className="block text-gray-700 text-sm font-semibold mb-2">Username</label>
+                <label className="block text-[10px] font-semibold text-gray-600 uppercase tracking-wider mb-1">
+                  Username
+                </label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
@@ -276,13 +263,15 @@ export default function Register() {
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     onKeyPress={handleKeyPress}
-                    className="w-full pl-9 pr-3 py-2 text-sm bg-gray-50/80 border border-gray-200 rounded-xl focus:bg-white focus:border-teal-400 focus:outline-none focus:ring-4 focus:ring-teal-100/50 transition-all duration-200"
+                    className="w-full pl-9 pr-3 py-2.5 text-sm bg-gray-50/80 border border-gray-200 rounded-xl focus:bg-white focus:border-teal-400 focus:outline-none focus:ring-4 focus:ring-teal-100/50 transition-all duration-200"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-gray-700 text-sm font-semibold mb-2">Nama Panjang</label>
+                <label className="block text-[10px] font-semibold text-gray-600 uppercase tracking-wider mb-1">
+                  Nama Panjang
+                </label>
                 <div className="relative">
                   <UserPlus className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
@@ -291,13 +280,15 @@ export default function Register() {
                     value={nama}
                     onChange={(e) => setNama(e.target.value)}
                     onKeyPress={handleKeyPress}
-                    className="w-full pl-9 pr-3 py-2 text-sm bg-gray-50/80 border border-gray-200 rounded-xl focus:bg-white focus:border-teal-400 focus:outline-none focus:ring-4 focus:ring-teal-100/50 transition-all duration-200"
+                    className="w-full pl-9 pr-3 py-2.5 text-sm bg-gray-50/80 border border-gray-200 rounded-xl focus:bg-white focus:border-teal-400 focus:outline-none focus:ring-4 focus:ring-teal-100/50 transition-all duration-200"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-gray-700 text-sm font-semibold mb-2">Email</label>
+                <label className="block text-[10px] font-semibold text-gray-600 uppercase tracking-wider mb-1">
+                  Email
+                </label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
@@ -306,13 +297,15 @@ export default function Register() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     onKeyPress={handleKeyPress}
-                    className="w-full pl-9 pr-3 py-2 text-sm bg-gray-50/80 border border-gray-200 rounded-xl focus:bg-white focus:border-teal-400 focus:outline-none focus:ring-4 focus:ring-teal-100/50 transition-all duration-200"
+                    className="w-full pl-9 pr-3 py-2.5 text-sm bg-gray-50/80 border border-gray-200 rounded-xl focus:bg-white focus:border-teal-400 focus:outline-none focus:ring-4 focus:ring-teal-100/50 transition-all duration-200"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-gray-700 text-sm font-semibold mb-2">Password</label>
+                <label className="block text-[10px] font-semibold text-gray-600 uppercase tracking-wider mb-1">
+                  Password
+                </label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
@@ -321,7 +314,7 @@ export default function Register() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     onKeyPress={handleKeyPress}
-                    className="w-full pl-9 pr-10 py-2 text-sm bg-gray-50/80 border border-gray-200 rounded-xl focus:bg-white focus:border-teal-400 focus:outline-none focus:ring-4 focus:ring-teal-100/50 transition-all duration-200"
+                    className="w-full pl-9 pr-10 py-2.5 text-sm bg-gray-50/80 border border-gray-200 rounded-xl focus:bg-white focus:border-teal-400 focus:outline-none focus:ring-4 focus:ring-teal-100/50 transition-all duration-200"
                   />
                   <button
                     type="button"
@@ -334,7 +327,9 @@ export default function Register() {
               </div>
 
               <div>
-                <label className="block text-gray-700 text-sm font-semibold mb-2">Konfirmasi Password</label>
+                <label className="block text-[10px] font-semibold text-gray-600 uppercase tracking-wider mb-1">
+                  Konfirmasi Password
+                </label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
@@ -343,7 +338,7 @@ export default function Register() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     onKeyPress={handleKeyPress}
-                    className="w-full pl-9 pr-10 py-2 text-sm bg-gray-50/80 border border-gray-200 rounded-xl focus:bg-white focus:border-teal-400 focus:outline-none focus:ring-4 focus:ring-teal-100/50 transition-all duration-200"
+                    className="w-full pl-9 pr-10 py-2.5 text-sm bg-gray-50/80 border border-gray-200 rounded-xl focus:bg-white focus:border-teal-400 focus:outline-none focus:ring-4 focus:ring-teal-100/50 transition-all duration-200"
                   />
                   <button
                     type="button"

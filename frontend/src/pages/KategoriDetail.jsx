@@ -2,14 +2,11 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
-  ArrowLeft, Upload, FileText, Download, Trash2, User, Briefcase,
-  Calendar, Phone, Mail, MapPin, X, Loader2, Eye, EyeOff,
-  Award, GraduationCap, CreditCard, Users, Building2,
-  CheckCircle, Clock, AlertCircle
+  ArrowLeft, Upload, FileText, Download, Trash2, Eye,
+  CheckCircle, Clock, AlertCircle, Loader2, X
 } from "lucide-react";
 import { supabase } from "../supabase";
 
-// 14 Kategori Dokumen
 const KATEGORI_LIST = [
   { id: 1, nama: "SK Pangkat (Mulai CPNS)" },
   { id: 2, nama: "SK Fungsional" },
@@ -27,7 +24,6 @@ const KATEGORI_LIST = [
   { id: 14, nama: "Lain-lain" }
 ];
 
-// ✅ MAPPING STATUS
 const STATUS_MAP = {
   verified: { lbl: "Terverifikasi", cls: "bg-green-100 text-green-700" },
   pending: { lbl: "Menunggu", cls: "bg-yellow-100 text-yellow-700" },
@@ -37,9 +33,6 @@ const STATUS_MAP = {
   revisi: { lbl: "Perlu Revisi", cls: "bg-red-100 text-red-700" },
 };
 
-// ============================================
-// COMPONENT MODAL UPLOAD
-// ============================================
 function UploadModal({ isOpen, onClose, onUpload, kategoriName, isLoading }) {
   const [formData, setFormData] = useState({
     name: "",
@@ -47,7 +40,6 @@ function UploadModal({ isOpen, onClose, onUpload, kategoriName, isLoading }) {
     date: "",
     file: null
   });
-
   const [selectedFile, setSelectedFile] = useState(null);
 
   const handleChange = (e) => {
@@ -58,26 +50,22 @@ function UploadModal({ isOpen, onClose, onUpload, kategoriName, isLoading }) {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Validasi ukuran (5 MB)
       if (file.size > 5 * 1024 * 1024) {
         alert("❌ Ukuran file maksimal 5 MB!");
         e.target.value = "";
         return;
       }
-
-      // Validasi format
       const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
       if (!allowedTypes.includes(file.type)) {
         alert("❌ Hanya file PDF, JPG, JPEG, PNG yang diizinkan!");
         e.target.value = "";
         return;
       }
-
       setSelectedFile(file);
       setFormData(prev => ({
         ...prev,
         file: file,
-        name: file.name.replace(/\.[^/.]+$/, "") // Auto-fill nama file
+        name: file.name.replace(/\.[^/.]+$/, "")
       }));
     }
   };
@@ -90,7 +78,6 @@ function UploadModal({ isOpen, onClose, onUpload, kategoriName, isLoading }) {
     }
     await onUpload(formData);
     onClose();
-    // Reset form
     setFormData({ name: "", number: "", date: "", file: null });
     setSelectedFile(null);
   };
@@ -100,7 +87,6 @@ function UploadModal({ isOpen, onClose, onUpload, kategoriName, isLoading }) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
         <div className="flex justify-between items-center p-6 border-b dark:border-gray-700">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-teal-100 dark:bg-teal-900 rounded-full flex items-center justify-center">
@@ -111,17 +97,12 @@ function UploadModal({ isOpen, onClose, onUpload, kategoriName, isLoading }) {
               <p className="text-xs text-gray-500 dark:text-gray-400">Kategori: {kategoriName}</p>
             </div>
           </div>
-          <button 
-            onClick={onClose} 
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-            disabled={isLoading}
-          >
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" disabled={isLoading}>
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {/* Nama File (Auto-fill) */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Nama File <span className="text-red-500">*</span>
@@ -137,7 +118,6 @@ function UploadModal({ isOpen, onClose, onUpload, kategoriName, isLoading }) {
             />
           </div>
 
-          {/* Nomor Surat */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Nomor Surat <span className="text-gray-400 text-xs">(opsional)</span>
@@ -152,7 +132,6 @@ function UploadModal({ isOpen, onClose, onUpload, kategoriName, isLoading }) {
             />
           </div>
 
-          {/* Tanggal Dokumen */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Tanggal Dokumen <span className="text-gray-400 text-xs">(opsional)</span>
@@ -166,7 +145,6 @@ function UploadModal({ isOpen, onClose, onUpload, kategoriName, isLoading }) {
             />
           </div>
 
-          {/* Pilih File */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Pilih File <span className="text-red-500">*</span>
@@ -195,16 +173,13 @@ function UploadModal({ isOpen, onClose, onUpload, kategoriName, isLoading }) {
                   <div>
                     <Upload className="w-12 h-12 mx-auto text-gray-400 mb-2" />
                     <p className="text-gray-500 dark:text-gray-400">Klik atau seret file ke sini</p>
-                    <p className="text-xs text-gray-400 mt-1">
-                      Format: PDF, PNG, JPG • Maks 5 MB
-                    </p>
+                    <p className="text-xs text-gray-400 mt-1">Format: PDF, PNG, JPG • Maks 5 MB</p>
                   </div>
                 )}
               </label>
             </div>
           </div>
 
-          {/* Tombol Aksi */}
           <div className="flex gap-3 pt-4 border-t dark:border-gray-700">
             <button
               type="button"
@@ -238,9 +213,6 @@ function UploadModal({ isOpen, onClose, onUpload, kategoriName, isLoading }) {
   );
 }
 
-// ============================================
-// MAIN COMPONENT KATEGORI DETAIL
-// ============================================
 export default function KategoriDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -264,7 +236,6 @@ export default function KategoriDetail() {
     }
   }, [id]);
 
-  // ✅ FETCH DOKUMEN DARI SUPABASE
   const fetchDocuments = async (categoryId) => {
     setLoading(true);
     setError("");
@@ -285,7 +256,6 @@ export default function KategoriDetail() {
 
       if (error) throw error;
 
-      // Format data
       const formattedDocs = data.map(doc => ({
         id: doc.id,
         name: doc.name || "Dokumen",
@@ -303,7 +273,6 @@ export default function KategoriDetail() {
 
       setDocuments(formattedDocs);
 
-      // Hitung statistik
       const verified = formattedDocs.filter(d => d.status === "verified" || d.status === "ok").length;
       const pending = formattedDocs.filter(d => d.status === "pending" || d.status === "tunggu").length;
       const rejected = formattedDocs.filter(d => d.status === "rejected" || d.status === "revisi").length;
@@ -322,34 +291,25 @@ export default function KategoriDetail() {
     }
   };
 
-  // ✅ HAPUS DOKUMEN
   const handleDeleteDoc = async (docId, docName, filePath) => {
     if (!window.confirm(`Yakin ingin menghapus dokumen "${docName}"?`)) return;
-    
     setDeleting(docId);
     try {
-      // Hapus dari storage
       if (filePath) {
         const { error: deleteError } = await supabase.storage
           .from('documents')
           .remove([filePath]);
-
-        if (deleteError) {
-          console.error("Delete storage error:", deleteError);
-        }
+        if (deleteError) console.error("Delete storage error:", deleteError);
       }
 
-      // Hapus dari database
       const { error } = await supabase
         .from("dokumen")
         .delete()
         .eq("id", docId);
 
       if (error) throw error;
-
       await fetchDocuments(parseInt(id));
       alert("✅ Dokumen berhasil dihapus!");
-
     } catch (error) {
       console.error("Error deleting document:", error);
       alert("❌ Gagal menghapus dokumen: " + error.message);
@@ -358,7 +318,6 @@ export default function KategoriDetail() {
     }
   };
 
-  // ✅ LIHAT PEGAWAI
   const handleViewEmployee = (doc) => {
     if (doc.employee_id) {
       navigate(`/employees/${doc.employee_id}`);
@@ -367,7 +326,6 @@ export default function KategoriDetail() {
     }
   };
 
-  // ✅ DOWNLOAD DOKUMEN
   const handleDownload = (doc) => {
     if (doc.file_url) {
       window.open(doc.file_url, "_blank");
@@ -376,7 +334,6 @@ export default function KategoriDetail() {
     }
   };
 
-  // ✅ PREVIEW DOKUMEN
   const handlePreviewDoc = (doc) => {
     if (doc.file_url) {
       window.open(doc.file_url, '_blank');
@@ -392,21 +349,16 @@ export default function KategoriDetail() {
     }
   };
 
-  // ✅ UPLOAD DOKUMEN
   const handleUpload = async (formData) => {
     if (!kategori) return;
-    
     setIsLoading(true);
     try {
-      // Pilih pegawai dari dialog atau dropdown
-      // Untuk demo, kita akan meminta input NIP
       const nipInput = prompt("Masukkan NIP pegawai:");
       if (!nipInput) {
         setIsLoading(false);
         return;
       }
 
-      // Cari pegawai berdasarkan NIP
       const { data: empData, error: empError } = await supabase
         .from("pegawai")
         .select("id")
@@ -464,7 +416,6 @@ export default function KategoriDetail() {
 
       await fetchDocuments(kategori.id);
       alert("✅ Dokumen berhasil diupload!");
-
     } catch (error) {
       console.error("Upload error:", error);
       alert("❌ Terjadi kesalahan: " + error.message);
@@ -496,7 +447,6 @@ export default function KategoriDetail() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
-      {/* Tombol Kembali */}
       <button
         onClick={() => navigate("/dashboard")}
         className="flex items-center gap-2 text-gray-600 hover:text-teal-600 transition"
@@ -505,7 +455,6 @@ export default function KategoriDetail() {
         Kembali ke Dashboard
       </button>
 
-      {/* Header */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
@@ -515,9 +464,7 @@ export default function KategoriDetail() {
               </span>
               <h1 className="text-2xl font-bold text-gray-800 dark:text-white">{kategori.nama}</h1>
             </div>
-            <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
-              {stats.total} dokumen terupload
-            </p>
+            <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">{stats.total} dokumen terupload</p>
           </div>
           <button
             onClick={() => setIsUploadModalOpen(true)}
@@ -530,7 +477,6 @@ export default function KategoriDetail() {
         </div>
       </div>
 
-      {/* Statistik */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border-l-4 border-teal-600">
           <p className="text-xs text-gray-500 dark:text-gray-400">Total Dokumen</p>
@@ -550,7 +496,6 @@ export default function KategoriDetail() {
         </div>
       </div>
 
-      {/* Tabel Dokumen */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden border border-gray-100 dark:border-gray-700">
         {documents.length === 0 ? (
           <div className="p-12 text-center text-gray-500 dark:text-gray-400">
@@ -636,12 +581,10 @@ export default function KategoriDetail() {
         )}
       </div>
 
-      {/* Footer Info */}
       <div className="text-xs text-gray-400 dark:text-gray-500 text-center">
         Menampilkan {documents.length} dokumen dari kategori {kategori.nama}
       </div>
 
-      {/* Modal Upload */}
       <UploadModal
         isOpen={isUploadModalOpen}
         onClose={() => setIsUploadModalOpen(false)}

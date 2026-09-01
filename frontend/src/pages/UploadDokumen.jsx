@@ -1,7 +1,7 @@
 // src/pages/UploadDokumen.jsx
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { supabase } from '../supabase';
+import { supabase } from "../supabase";
 import { 
   ArrowLeft, 
   Upload, 
@@ -12,12 +12,28 @@ import {
   AlertCircle,
   Loader2,
   Trash2
-} from 'lucide-react';
+} from "lucide-react";
 
-// KONFIGURASI
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
 
-// MAPPING KATEGORI (14 kategori)
+const ALLOWED_TYPES = {
+  'SK Pangkat (Mulai CPNS)': ['image/jpeg', 'image/png', 'application/pdf'],
+  'SK Fungsional': ['image/jpeg', 'image/png', 'application/pdf'],
+  'Data Pribadi': ['image/jpeg', 'image/png', 'application/pdf'],
+  'Riwayat Pendidikan': ['image/jpeg', 'image/png', 'application/pdf'],
+  'Uraian Tugas': ['image/jpeg', 'image/png', 'application/pdf'],
+  'SPK RKK (Khusus Nakes)': ['image/jpeg', 'image/png', 'application/pdf'],
+  'Penilaian Kinerja (SKP)': ['image/jpeg', 'image/png', 'application/pdf'],
+  'SPMT': ['image/jpeg', 'image/png', 'application/pdf'],
+  'Orientasi': ['image/jpeg', 'image/png', 'application/pdf'],
+  'KGB': ['image/jpeg', 'image/png', 'application/pdf'],
+  'Pengembangan Kompetensi': ['image/jpeg', 'image/png', 'application/pdf'],
+  'Riwayat Jabatan': ['image/jpeg', 'image/png', 'application/pdf'],
+  'Check Up': ['image/jpeg', 'image/png', 'application/pdf'],
+  'Lain-lain': ['image/jpeg', 'image/png', 'application/pdf'],
+  'default': ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf']
+};
+
 const KATEGORI_LIST = [
   { id: 1, name: 'SK Pangkat (Mulai CPNS)', folder: 'sk_pangkat' },
   { id: 2, name: 'SK Fungsional', folder: 'sk_fungsional' },
@@ -35,8 +51,6 @@ const KATEGORI_LIST = [
   { id: 14, name: 'Lain-lain', folder: 'lain_lain' }
 ];
 
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
-
 export default function UploadDokumen() {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -51,9 +65,7 @@ export default function UploadDokumen() {
   const [success, setSuccess] = useState('');
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
-  const [pegawaiLoading, setPegawaiLoading] = useState(true);
 
-  // ✅ AMBIL DATA PEGAWAI
   useEffect(() => {
     fetchPegawai();
     if (id) {
@@ -62,7 +74,6 @@ export default function UploadDokumen() {
   }, [id]);
 
   const fetchPegawai = async () => {
-    setPegawaiLoading(true);
     try {
       const { data, error } = await supabase
         .from('pegawai')
@@ -74,33 +85,30 @@ export default function UploadDokumen() {
     } catch (error) {
       console.error('Error fetching pegawai:', error);
       setError('Gagal mengambil data pegawai');
-    } finally {
-      setPegawaiLoading(false);
     }
   };
 
-  // ✅ VALIDASI DAN SET FILE
   const validateAndSetFile = (selectedFile) => {
     if (!selectedFile) return;
 
     setError('');
     setSuccess('');
 
-    // CEK UKURAN FILE
     if (selectedFile.size > MAX_FILE_SIZE) {
       setError(`Ukuran file terlalu besar! Maksimal ${MAX_FILE_SIZE / 1024 / 1024}MB`);
       return;
     }
 
-    // CEK FORMAT FILE
-    if (!ALLOWED_TYPES.includes(selectedFile.type)) {
-      setError(`Format file tidak didukung! Gunakan: ${ALLOWED_TYPES.join(', ')}`);
+    const kategori = KATEGORI_LIST.find(k => k.id === parseInt(selectedKategori));
+    const allowedTypes = kategori ? ALLOWED_TYPES[kategori.name] : ALLOWED_TYPES['default'];
+    
+    if (!allowedTypes.includes(selectedFile.type)) {
+      setError(`Format file tidak didukung! Gunakan: ${allowedTypes.join(', ')}`);
       return;
     }
 
     setFile(selectedFile);
     
-    // BUAT PREVIEW UNTUK GAMBAR
     if (selectedFile.type.startsWith('image/')) {
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -138,10 +146,8 @@ export default function UploadDokumen() {
     setFile(null);
     setFilePreview(null);
     setError('');
-    setSuccess('');
   };
 
-  // ✅ GET FILE ICON
   const getFileIcon = () => {
     if (!file) return <File className="w-12 h-12 text-gray-300" />;
     if (file.type.startsWith('image/')) {
@@ -153,14 +159,12 @@ export default function UploadDokumen() {
     return <File className="w-12 h-12 text-gray-300" />;
   };
 
-  // ✅ FORMAT UKURAN FILE
   const getFileSize = (bytes) => {
     if (bytes < 1024) return bytes + ' B';
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   };
 
-  // ✅ UPLOAD DOKUMEN
   const handleUpload = async () => {
     if (!selectedPegawai) {
       setError('Pilih pegawai terlebih dahulu');
@@ -185,11 +189,10 @@ export default function UploadDokumen() {
       const fileExt = file.name.split('.').pop();
       const fileName = `${selectedPegawai}_${Date.now()}.${fileExt}`;
       const filePath = `pegawai/${kategoriObj.folder}/${fileName}`;
-      
+
       setUploadProgress(20);
 
-      // UPLOAD KE SUPABASE STORAGE
-      const { error: uploadError } = await supabase.storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from('documents')
         .upload(filePath, file, {
           cacheControl: '3600',
@@ -200,15 +203,13 @@ export default function UploadDokumen() {
 
       if (uploadError) throw uploadError;
 
-      // GET PUBLIC URL
       const { data: urlData } = supabase.storage
         .from('documents')
         .getPublicUrl(filePath);
 
       setUploadProgress(80);
 
-      // SIMPAN KE TABEL DOKUMEN
-      const { error: docError } = await supabase
+      const { data: docData, error: docError } = await supabase
         .from('dokumen')
         .insert({
           employee_id: selectedPegawai,
@@ -220,14 +221,14 @@ export default function UploadDokumen() {
           category: parseInt(selectedKategori),
           status: 'pending',
           uploaded_at: new Date().toISOString()
-        });
+        })
+        .select();
 
       if (docError) throw docError;
 
       setUploadProgress(100);
       setSuccess('✅ Dokumen berhasil diupload!');
       
-      // Reset form setelah 2 detik
       setTimeout(() => {
         setFile(null);
         setFilePreview(null);
@@ -245,18 +246,8 @@ export default function UploadDokumen() {
     }
   };
 
-  if (pegawaiLoading) {
-    return (
-      <div className="p-6 text-center">
-        <Loader2 className="w-8 h-8 text-teal-600 animate-spin mx-auto" />
-        <p className="text-gray-500 mt-2">Loading data...</p>
-      </div>
-    );
-  }
-
   return (
     <div className="max-w-3xl mx-auto p-6 space-y-6">
-      {/* Tombol Kembali */}
       <button
         onClick={() => navigate(-1)}
         className="flex items-center gap-2 text-gray-600 hover:text-teal-600 transition"
@@ -265,37 +256,33 @@ export default function UploadDokumen() {
         Kembali
       </button>
 
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
-        <h1 className="text-2xl font-bold text-gray-800 dark:text-white">📤 Upload Dokumen</h1>
-        <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Upload dokumen pegawai ke sistem SICAKEP</p>
+      <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+        <h1 className="text-2xl font-bold text-gray-800">📤 Upload Dokumen</h1>
+        <p className="text-gray-500 text-sm mt-1">Upload dokumen pegawai ke sistem SICAKEP</p>
       </div>
 
-      {/* Form */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700 space-y-6">
-        {/* Error & Success */}
+      <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 space-y-6">
         {error && (
-          <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-4 text-red-700 dark:text-red-400 flex items-center gap-3">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 flex items-center gap-3">
             <AlertCircle className="w-5 h-5 flex-shrink-0" />
             <span className="text-sm">{error}</span>
           </div>
         )}
         {success && (
-          <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg p-4 text-green-700 dark:text-green-400 flex items-center gap-3">
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-green-700 flex items-center gap-3">
             <CheckCircle className="w-5 h-5 flex-shrink-0" />
             <span className="text-sm">{success}</span>
           </div>
         )}
 
-        {/* Pilih Pegawai */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
             Pilih Pegawai <span className="text-red-500">*</span>
           </label>
           <select
             value={selectedPegawai}
             onChange={(e) => setSelectedPegawai(e.target.value)}
-            className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg focus:border-teal-400 focus:outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+            className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-200"
           >
             <option value="">-- Pilih Pegawai --</option>
             {pegawai.map((p) => (
@@ -306,15 +293,14 @@ export default function UploadDokumen() {
           </select>
         </div>
 
-        {/* Pilih Kategori */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
             Kategori Dokumen <span className="text-red-500">*</span>
           </label>
           <select
             value={selectedKategori}
             onChange={(e) => setSelectedKategori(e.target.value)}
-            className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg focus:border-teal-400 focus:outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+            className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-200"
           >
             <option value="">-- Pilih Kategori --</option>
             {KATEGORI_LIST.map((k) => (
@@ -323,11 +309,15 @@ export default function UploadDokumen() {
               </option>
             ))}
           </select>
+          {selectedKategori && (
+            <p className="text-xs text-gray-400 mt-1">
+              Format yang didukung: {ALLOWED_TYPES[KATEGORI_LIST.find(k => k.id === parseInt(selectedKategori))?.name || 'default'].join(', ')}
+            </p>
+          )}
         </div>
 
-        {/* Nomor Surat */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
             Nomor Surat <span className="text-gray-400 text-xs">(opsional)</span>
           </label>
           <input
@@ -335,13 +325,12 @@ export default function UploadDokumen() {
             value={nomorSurat}
             onChange={(e) => setNomorSurat(e.target.value)}
             placeholder="Contoh: 800/123/SK/2024"
-            className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg focus:border-teal-400 focus:outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+            className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-200"
           />
         </div>
 
-        {/* Drop Zone */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
             Upload File <span className="text-red-500">*</span>
           </label>
           <div
@@ -350,10 +339,10 @@ export default function UploadDokumen() {
             onDrop={handleDrop}
             className={`border-2 border-dashed rounded-xl p-8 text-center transition-all ${
               isDragging
-                ? 'border-teal-400 bg-teal-50 dark:bg-teal-900/20'
+                ? 'border-teal-400 bg-teal-50'
                 : file
-                ? 'border-green-400 bg-green-50 dark:bg-green-900/20'
-                : 'border-gray-300 dark:border-gray-600 hover:border-teal-400 dark:hover:border-teal-500 bg-gray-50 dark:bg-gray-700/50'
+                ? 'border-green-400 bg-green-50'
+                : 'border-gray-300 hover:border-teal-400 hover:bg-gray-50'
             }`}
           >
             {file ? (
@@ -363,7 +352,7 @@ export default function UploadDokumen() {
                     <img
                       src={filePreview}
                       alt="Preview"
-                      className="w-32 h-32 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
+                      className="w-32 h-32 object-cover rounded-lg border border-gray-200"
                     />
                   ) : (
                     <div className="w-16 h-16 flex items-center justify-center">
@@ -371,14 +360,14 @@ export default function UploadDokumen() {
                     </div>
                   )}
                   <div className="text-left">
-                    <p className="font-medium text-gray-800 dark:text-white">{file.name}</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{getFileSize(file.size)}</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{file.type}</p>
+                    <p className="font-medium text-gray-800">{file.name}</p>
+                    <p className="text-sm text-gray-500">{getFileSize(file.size)}</p>
+                    <p className="text-sm text-gray-500">{file.type}</p>
                   </div>
                 </div>
                 <button
                   onClick={handleRemoveFile}
-                  className="px-4 py-2 text-sm bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 transition"
+                  className="px-4 py-2 text-sm bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition"
                 >
                   <Trash2 className="w-4 h-4 inline mr-1" />
                   Hapus File
@@ -386,10 +375,10 @@ export default function UploadDokumen() {
               </div>
             ) : (
               <div className="space-y-3">
-                <Upload className="w-12 h-12 text-gray-300 dark:text-gray-500 mx-auto" />
+                <Upload className="w-12 h-12 text-gray-300 mx-auto" />
                 <div>
-                  <p className="text-gray-500 dark:text-gray-400">Seret & drop file di sini</p>
-                  <p className="text-sm text-gray-400 dark:text-gray-500">atau klik untuk memilih file</p>
+                  <p className="text-gray-500">Seret & drop file di sini</p>
+                  <p className="text-sm text-gray-400">atau klik untuk memilih file</p>
                 </div>
                 <input
                   type="file"
@@ -407,19 +396,18 @@ export default function UploadDokumen() {
               </div>
             )}
           </div>
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
-            Maksimal ukuran file: {MAX_FILE_SIZE / 1024 / 1024}MB | Format: JPG, PNG, PDF
+          <p className="text-xs text-gray-400 mt-2">
+            Maksimal ukuran file: {MAX_FILE_SIZE / 1024 / 1024}MB (PDF, JPG, PNG)
           </p>
         </div>
 
-        {/* Progress Bar */}
         {uploadProgress > 0 && uploadProgress < 100 && (
           <div className="space-y-2">
-            <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
+            <div className="flex justify-between text-sm text-gray-600">
               <span>Mengupload...</span>
               <span>{uploadProgress}%</span>
             </div>
-            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+            <div className="w-full bg-gray-200 rounded-full h-2.5">
               <div
                 className="bg-teal-600 h-2.5 rounded-full transition-all duration-300"
                 style={{ width: `${uploadProgress}%` }}
@@ -428,7 +416,6 @@ export default function UploadDokumen() {
           </div>
         )}
 
-        {/* Submit Button */}
         <button
           onClick={handleUpload}
           disabled={loading || !file || !selectedPegawai || !selectedKategori}
@@ -448,9 +435,8 @@ export default function UploadDokumen() {
         </button>
       </div>
 
-      {/* Info */}
-      <div className="bg-teal-50 dark:bg-teal-900/20 rounded-lg p-4 border border-teal-200 dark:border-teal-800">
-        <p className="text-sm text-teal-800 dark:text-teal-400">
+      <div className="bg-teal-50 rounded-lg p-4 border border-teal-200">
+        <p className="text-sm text-teal-800">
           💡 File yang sudah diupload akan tersimpan di Supabase Storage dan bisa diakses melalui link publik.
           Status dokumen akan otomatis menjadi <strong>"Menunggu"</strong> sampai diverifikasi.
         </p>

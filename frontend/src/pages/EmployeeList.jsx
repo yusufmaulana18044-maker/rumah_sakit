@@ -30,7 +30,6 @@ export default function EmployeeList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Ambil data dari Supabase
   useEffect(() => {
     fetchEmployees();
   }, []);
@@ -39,7 +38,6 @@ export default function EmployeeList() {
     setLoading(true);
     setError("");
     try {
-      console.log("🔍 Fetching from table: pegawai");
       const { data: pegawai, error: pegawaiError } = await supabase
         .from("pegawai")
         .select("*")
@@ -47,7 +45,6 @@ export default function EmployeeList() {
 
       if (pegawaiError) throw pegawaiError;
 
-      // Ambil dokumen per pegawai untuk hitung kelengkapan
       const employeesWithDocs = await Promise.all(
         (pegawai || []).map(async (emp) => {
           const { data: docs, error: docsError } = await supabase
@@ -57,7 +54,6 @@ export default function EmployeeList() {
 
           if (docsError) throw docsError;
 
-          // Hitung kelengkapan berdasarkan kategori yang ada
           const docCategories = docs.map(doc => doc.category);
           const kelengkapan = KATEGORI.map((_, index) => 
             docCategories.includes(index + 1) ? "isi" : ""
@@ -85,7 +81,6 @@ export default function EmployeeList() {
     if (!window.confirm(`Yakin ingin menghapus pegawai "${name}"?`)) return;
     
     try {
-      // Hapus dokumen terkait dulu
       const { error: docError } = await supabase
         .from("dokumen")
         .delete()
@@ -93,7 +88,6 @@ export default function EmployeeList() {
 
       if (docError) console.error("Error deleting documents:", docError);
 
-      // Hapus pegawai
       const { error } = await supabase
         .from("pegawai")
         .delete()
@@ -109,7 +103,6 @@ export default function EmployeeList() {
     }
   };
 
-  // Filter data
   const filteredEmployees = employees.filter(emp => {
     const searchLower = search.toLowerCase();
     const matchesSearch = 
@@ -131,7 +124,6 @@ export default function EmployeeList() {
     return <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300">-</span>;
   };
 
-  // Statistik
   const stats = {
     total: employees.length,
     aktif: employees.filter(e => e.status === "aktif").length,
@@ -150,7 +142,6 @@ export default function EmployeeList() {
 
   return (
     <div className="space-y-6 p-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-800 dark:text-white">📋 Data Pegawai</h1>
@@ -165,7 +156,6 @@ export default function EmployeeList() {
         </button>
       </div>
 
-      {/* Stats Mini */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-3 border-l-4 border-teal-600">
           <p className="text-xs text-gray-500 dark:text-gray-400">Total Pegawai</p>
@@ -185,7 +175,6 @@ export default function EmployeeList() {
         </div>
       </div>
 
-      {/* Search & Filter */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -220,7 +209,6 @@ export default function EmployeeList() {
         </div>
       )}
 
-      {/* Table */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
         {filteredEmployees.length === 0 ? (
           <div className="p-8 text-center text-gray-500 dark:text-gray-400">
@@ -299,7 +287,6 @@ export default function EmployeeList() {
         )}
       </div>
 
-      {/* Legend */}
       <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
         <span className="flex items-center gap-1">
           <span className="w-3 h-3 bg-teal-600 rounded-sm inline-block"></span> kategori terisi

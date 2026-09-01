@@ -1,10 +1,13 @@
 // src/pages/EmployeeForm.jsx
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Save, User, Loader2 } from "lucide-react";
+import { ArrowLeft, Save, User } from "lucide-react";
 import { supabase } from "../supabase";
 
+<<<<<<< HEAD
 // Data untuk dropdown
+=======
+>>>>>>> 14a75ead446c98c9f0616176254dd6317dd3cb14
 const workUnits = [
   "Instalasi Rawat Inap",
   "Instalasi Rawat Jalan",
@@ -19,11 +22,7 @@ const workUnits = [
   "Instalasi Kebidanan",
   "Instalasi Anak",
   "Instalasi Penyakit Dalam",
-  "Instalasi Bedah",
-  "ICU",
-  "Administrasi",
-  "Keuangan",
-  "SDM"
+  "Instalasi Bedah"
 ];
 
 const positions = [
@@ -41,9 +40,7 @@ const positions = [
   "Psikolog",
   "Apoteker",
   "Asisten Apoteker",
-  "Staff Administrasi",
-  "IT",
-  "Manajemen"
+  "Staff Administrasi"
 ];
 
 export default function EmployeeForm() {
@@ -58,7 +55,10 @@ export default function EmployeeForm() {
     full_name: "",
     birthplace: "",
     birth_date: "",
+<<<<<<< HEAD
     gender: "L",
+=======
+>>>>>>> 14a75ead446c98c9f0616176254dd6317dd3cb14
     address: "",
     phone: "",
     email: "",
@@ -75,7 +75,10 @@ export default function EmployeeForm() {
   }, [isEdit, id]);
 
   const fetchEmployee = async () => {
+<<<<<<< HEAD
     setFetchLoading(true);
+=======
+>>>>>>> 14a75ead446c98c9f0616176254dd6317dd3cb14
     try {
       const { data, error } = await supabase
         .from("pegawai")
@@ -91,7 +94,10 @@ export default function EmployeeForm() {
           full_name: data.full_name || "",
           birthplace: data.birthplace || "",
           birth_date: data.birth_date || "",
+<<<<<<< HEAD
           gender: data.gender || "L",
+=======
+>>>>>>> 14a75ead446c98c9f0616176254dd6317dd3cb14
           address: data.address || "",
           phone: data.phone || "",
           email: data.email || "",
@@ -103,8 +109,11 @@ export default function EmployeeForm() {
     } catch (error) {
       console.error("Error fetching employee:", error);
       alert("Gagal memuat data pegawai");
+<<<<<<< HEAD
     } finally {
       setFetchLoading(false);
+=======
+>>>>>>> 14a75ead446c98c9f0616176254dd6317dd3cb14
     }
   };
 
@@ -146,6 +155,7 @@ export default function EmployeeForm() {
     }
   };
 
+<<<<<<< HEAD
   if (fetchLoading && isEdit) {
     return (
       <div className="p-6 text-center">
@@ -155,6 +165,8 @@ export default function EmployeeForm() {
     );
   }
 
+=======
+>>>>>>> 14a75ead446c98c9f0616176254dd6317dd3cb14
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <button
@@ -165,8 +177,8 @@ export default function EmployeeForm() {
         Kembali
       </button>
 
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow overflow-hidden">
-        <div className="bg-gradient-to-r from-teal-600 to-blue-600 dark:from-teal-700 dark:to-blue-700 px-6 py-4">
+      <div className="bg-white rounded-xl shadow overflow-hidden">
+        <div className="bg-gradient-to-r from-teal-600 to-blue-600 px-6 py-4">
           <div className="flex items-center gap-3">
             <User className="w-6 h-6 text-white" />
             <h1 className="text-xl font-bold text-white">
@@ -182,7 +194,7 @@ export default function EmployeeForm() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* NIP */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 NIP <span className="text-red-500">*</span>
               </label>
               <input
@@ -191,14 +203,14 @@ export default function EmployeeForm() {
                 value={formData.nip}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:border-teal-400 focus:outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-teal-400 focus:outline-none"
                 placeholder="Contoh: 198001012001001"
               />
             </div>
 
             {/* Nama Lengkap */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Nama Lengkap <span className="text-red-500">*</span>
               </label>
               <input
@@ -207,14 +219,14 @@ export default function EmployeeForm() {
                 value={formData.full_name}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:border-teal-400 focus:outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-teal-400 focus:outline-none"
                 placeholder="Contoh: dr. Ahmad Wijaya"
               />
             </div>
 
             {/* Tempat Lahir */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Tempat Lahir
               </label>
               <input
@@ -222,14 +234,14 @@ export default function EmployeeForm() {
                 name="birthplace"
                 value={formData.birthplace}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:border-teal-400 focus:outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-teal-400 focus:outline-none"
                 placeholder="Contoh: Ponorogo"
               />
             </div>
 
             {/* Tanggal Lahir */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Tanggal Lahir
               </label>
               <input
@@ -237,10 +249,11 @@ export default function EmployeeForm() {
                 name="birth_date"
                 value={formData.birth_date}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:border-teal-400 focus:outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-teal-400 focus:outline-none"
               />
             </div>
 
+<<<<<<< HEAD
             {/* Jenis Kelamin */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -257,9 +270,11 @@ export default function EmployeeForm() {
               </select>
             </div>
 
+=======
+>>>>>>> 14a75ead446c98c9f0616176254dd6317dd3cb14
             {/* No. Telepon */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 No. Telepon
               </label>
               <input
@@ -267,14 +282,14 @@ export default function EmployeeForm() {
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:border-teal-400 focus:outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-teal-400 focus:outline-none"
                 placeholder="Contoh: 081234567890"
               />
             </div>
 
             {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Email
               </label>
               <input
@@ -282,14 +297,14 @@ export default function EmployeeForm() {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:border-teal-400 focus:outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-teal-400 focus:outline-none"
                 placeholder="Contoh: nama@rsudharjono.com"
               />
             </div>
 
             {/* Jabatan */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Jabatan <span className="text-red-500">*</span>
               </label>
               <select
@@ -297,7 +312,7 @@ export default function EmployeeForm() {
                 value={formData.position}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:border-teal-400 focus:outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-teal-400 focus:outline-none"
               >
                 <option value="">-- Pilih Jabatan --</option>
                 {positions.map((pos) => (
@@ -308,7 +323,7 @@ export default function EmployeeForm() {
 
             {/* Unit Kerja */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Unit Kerja <span className="text-red-500">*</span>
               </label>
               <select
@@ -316,7 +331,7 @@ export default function EmployeeForm() {
                 value={formData.work_unit}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:border-teal-400 focus:outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-teal-400 focus:outline-none"
               >
                 <option value="">-- Pilih Unit --</option>
                 {workUnits.map((unit) => (
@@ -327,7 +342,7 @@ export default function EmployeeForm() {
 
             {/* Alamat */}
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Alamat
               </label>
               <textarea
@@ -335,21 +350,21 @@ export default function EmployeeForm() {
                 value={formData.address}
                 onChange={handleChange}
                 rows="2"
-                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:border-teal-400 focus:outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-teal-400 focus:outline-none"
                 placeholder="Alamat lengkap pegawai"
               />
             </div>
 
             {/* Status */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Status
               </label>
               <select
                 name="status"
                 value={formData.status}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:border-teal-400 focus:outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-teal-400 focus:outline-none"
               >
                 <option value="aktif">Aktif</option>
                 <option value="cuti">Cuti</option>
@@ -358,11 +373,11 @@ export default function EmployeeForm() {
             </div>
           </div>
 
-          <div className="flex gap-3 mt-8 pt-4 border-t dark:border-gray-700">
+          <div className="flex gap-3 mt-8 pt-4 border-t">
             <button
               type="button"
               onClick={() => navigate("/employees")}
-              className="px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"
             >
               Batal
             </button>
