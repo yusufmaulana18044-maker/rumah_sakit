@@ -1,7 +1,7 @@
 // src/pages/EmployeeForm.jsx
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Save, User } from "lucide-react";
+import { ArrowLeft, Save, User, Loader2 } from "lucide-react";
 import { supabase } from "../supabase";
 
 const workUnits = [
@@ -44,12 +44,14 @@ export default function EmployeeForm() {
   const navigate = useNavigate();
   const isEdit = !!id;
   const [loading, setLoading] = useState(false);
+  const [fetchLoading, setFetchLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     nip: "",
     full_name: "",
     birthplace: "",
     birth_date: "",
+    gender: "L",
     address: "",
     phone: "",
     email: "",
@@ -66,6 +68,7 @@ export default function EmployeeForm() {
   }, [isEdit, id]);
 
   const fetchEmployee = async () => {
+    setFetchLoading(true);
     try {
       const { data, error } = await supabase
         .from("pegawai")
@@ -81,6 +84,7 @@ export default function EmployeeForm() {
           full_name: data.full_name || "",
           birthplace: data.birthplace || "",
           birth_date: data.birth_date || "",
+          gender: data.gender || "L",
           address: data.address || "",
           phone: data.phone || "",
           email: data.email || "",
@@ -92,6 +96,8 @@ export default function EmployeeForm() {
     } catch (error) {
       console.error("Error fetching employee:", error);
       alert("Gagal memuat data pegawai");
+    } finally {
+      setFetchLoading(false);
     }
   };
 
@@ -133,11 +139,20 @@ export default function EmployeeForm() {
     }
   };
 
+  if (fetchLoading && isEdit) {
+    return (
+      <div className="p-6 text-center">
+        <Loader2 className="w-8 h-8 animate-spin text-teal-600 mx-auto" />
+        <p className="text-gray-500 mt-2">Memuat data...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <button
         onClick={() => navigate("/employees")}
-        className="flex items-center gap-2 text-gray-600 hover:text-teal-600 mb-4 transition"
+        className="flex items-center gap-2 text-gray-600 hover:text-teal-600 dark:text-gray-400 dark:hover:text-teal-400 mb-4 transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Kembali
@@ -217,6 +232,22 @@ export default function EmployeeForm() {
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-teal-400 focus:outline-none"
               />
+            </div>
+
+            {/* Jenis Kelamin */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Jenis Kelamin
+              </label>
+              <select
+                name="gender"
+                value={formData.gender}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:border-teal-400 focus:outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+              >
+                <option value="L">Laki-laki</option>
+                <option value="P">Perempuan</option>
+              </select>
             </div>
 
             {/* No. Telepon */}

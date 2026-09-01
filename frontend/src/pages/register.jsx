@@ -1,3 +1,4 @@
+// src/pages/Register.jsx
 import { supabase } from "../supabase";
 import { useState } from "react";
 import { Eye, EyeOff, User, Lock, Mail, UserPlus, HeartPulse, Hospital } from "lucide-react";
@@ -40,9 +41,6 @@ export default function Register() {
     }
 
     try {
-      // ========================
-      // 1. CEK USERNAME & EMAIL
-      // ========================
       const { data: existingUsername, error: userErr } = await supabase
         .from("profiles")
         .select("username")
@@ -74,9 +72,6 @@ export default function Register() {
         return;
       }
 
-      // ========================
-      // 2. REGISTER KE SUPABASE AUTH
-      // ========================
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -107,9 +102,6 @@ export default function Register() {
         return;
       }
 
-      // ========================
-      // 3. PROFILES OTOMATIS TERISI OLEH TRIGGER
-      // ========================
       await new Promise(resolve => setTimeout(resolve, 500));
 
       const { data: profileCheck, error: checkError } = await supabase
@@ -122,7 +114,6 @@ export default function Register() {
         console.error("Check profile error:", checkError);
       }
 
-      // Kalau trigger gagal, kita insert manual
       if (!profileCheck) {
         const isAdmin = email.toLowerCase().includes('admin');
         const role = isAdmin ? 'admin' : 'pegawai';
@@ -144,7 +135,6 @@ export default function Register() {
           return;
         }
       } else {
-        // Trigger jalan, update role-nya
         const isAdmin = email.toLowerCase().includes('admin');
         const role = isAdmin ? 'admin' : 'pegawai';
 
@@ -166,6 +156,7 @@ export default function Register() {
       setEmail("");
       setPassword("");
       setConfirmPassword("");
+
       setTimeout(() => {
         navigate("/");
       }, 2000);
@@ -186,12 +177,15 @@ export default function Register() {
 
   const animationStyle = `
     @keyframes slowZoom {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-      100% { transform: scale(1); }
+      0% { transform: scale(1) translateX(0); }
+      50% { transform: scale(1.08) translateX(-10px); }
+      100% { transform: scale(1) translateX(0); }
     }
     .animate-slow-zoom {
-      animation: slowZoom 10s ease-in-out infinite;
+      animation: slowZoom 17s ease-in-out infinite;
+    }
+    .bg-blur-custom {
+      filter: blur(4px) brightness(0.90) saturate(1.1);
     }
   `;
 
@@ -199,45 +193,36 @@ export default function Register() {
     <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
       <style>{animationStyle}</style>
 
-      {/* Background RSUD */}
       <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat blur-sm scale-105"
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat animate-slow-zoom bg-blur-custom"
         style={{ backgroundImage: "url('/halamanrs2.jpeg')" }}
       />
 
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-black/40" />
+      <div className="absolute inset-0 bg-black/30" />
 
-      {/* Dekorasi Blob */}
       <div className="absolute top-0 -right-40 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl"></div>
       <div className="absolute bottom-0 -left-40 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
 
-      {/* Card */}
       <div className="relative z-10 w-full max-w-sm px-4">
         <div className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden border border-white/20">
-          
-          {/* Header */}
           <div className="relative bg-gradient-to-r from-teal-700 via-teal-600 to-blue-700 px-6 pt-6 pb-5 overflow-hidden">
             <div className="absolute -right-20 -top-20 w-64 h-64 bg-white/5 rounded-full"></div>
             <div className="absolute -left-20 -bottom-20 w-48 h-48 bg-white/5 rounded-full"></div>
-            
             <div className="relative flex flex-col items-center">
-              <div className="w-16 h-16 bg-white/20 backdrop-blur rounded-2xl flex items-center justify-center shadow-lg mb-3 border border-white/10 p-1.5">
+              <div className="w-16 h-16 bg-white/20 backdrop-blur rounded-2xl flex items-center justify-center shadow-lg mb-3 border border-white/10 overflow-hidden">
                 <img
                   src="/logo-rsud-harjonos.png"
                   alt="Logo RSUD Dr. Harjono"
-                  className="w-full h-full object-contain"
+                  className="w-full h-full object-cover"
                 />
               </div>
-              
-              <h1 className="text-3xl font-bold text-white tracking-tight drop-shadow-lg font-display">
+              <h1 className="text-3xl font-bold text-white text-center tracking-tight drop-shadow-lg font-display">
                 SICAKEP
               </h1>
-              <p className="text-teal-100/90 text-xs mt-0.5 font-medium tracking-wider">
-                Sistem Informasi Catat Kepegawaian
+              <p className="text-teal-100/90 text-xs text-center mt-0.5 font-medium tracking-wider">
+                Sistem Informasi Catatan Kepegawaian
               </p>
-              
-              <div className="flex items-center gap-2 mt-2 px-4 py-1.5 bg-white/15 rounded-full backdrop-blur border border-white/15 shadow-inner">
+              <div className="flex items-center justify-center gap-2 mt-2 px-4 py-1.5 bg-white/15 rounded-full backdrop-blur border border-white/15 shadow-inner">
                 <Hospital className="w-3 h-3 text-teal-200" />
                 <span className="text-[10px] text-white/90 font-semibold tracking-wider">
                   RSUD Dr. HARJONO S. PONOROGO
@@ -246,7 +231,6 @@ export default function Register() {
             </div>
           </div>
 
-          {/* Form */}
           <div className="px-6 py-5">
             <div className="flex items-center gap-2 mb-4">
               <div className="w-1 h-5 bg-gradient-to-b from-teal-600 to-blue-600 rounded-full"></div>
@@ -401,9 +385,8 @@ export default function Register() {
             </div>
           </div>
 
-          {/* Footer */}
-          <div className="bg-gradient-to-r from-teal-50/50 to-blue-50/50 px-6 py-2.5 text-center border-t border-gray-100/50">
-            <p className="text-[10px] text-gray-400 flex items-center justify-center gap-2">
+          <div className="bg-gradient-to-r from-blue-50 to-teal-50 px-6 py-3 text-center border-t border-gray-100">
+            <p className="text-gray-400 text-[10px] flex items-center justify-center gap-2">
               <HeartPulse className="w-3 h-3 text-teal-400" />
               <span className="font-medium text-gray-500">SICAKEP</span>
               <span className="text-gray-300">•</span>
@@ -413,7 +396,6 @@ export default function Register() {
           </div>
         </div>
 
-        {/* Version */}
         <div className="flex items-center justify-center gap-3 mt-3">
           <p className="text-center text-[9px] text-white/50 tracking-wider">
             SICAKEP v2.0

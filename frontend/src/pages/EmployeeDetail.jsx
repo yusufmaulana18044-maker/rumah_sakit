@@ -349,7 +349,6 @@ export default function EmployeeDetail() {
       const kategori = KATEGORI.find(k => k.nama === formData.type);
       
       const newDoc = {
-        id: Date.now(),
         employee_id: employee.id,
         type: formData.type,
         name: formData.name,

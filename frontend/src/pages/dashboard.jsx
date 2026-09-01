@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { 
   Users, FileText, UserCheck, UserX, Clock, Building, Briefcase, 
-  Upload, Plus, FileUp, TrendingUp, TrendingDown, Loader2
+  Upload, Plus, TrendingUp, Loader2
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, 
@@ -47,7 +47,7 @@ const KATEGORI = [
   { id: 2, nama: "SK Fungsional" },
   { id: 3, nama: "Data Pribadi" },
   { id: 4, nama: "Riwayat Pendidikan" },
-  { id: 5, nama: "Uraian Tugas" }, 
+  { id: 5, nama: "Uraian Tugas" },
   { id: 6, nama: "SPK RKK (Khusus Nakes)" },
   { id: 7, nama: "Penilaian Kinerja (SKP)" },
   { id: 8, nama: "SPMT" },
@@ -62,8 +62,8 @@ const KATEGORI = [
 const COLORS = ['#10B981', '#F59E0B', '#EF4444', '#3B82F6', '#8B5CF6', '#EC4899', '#14B8A6', '#F97316'];
 
 export default function Dashboard() {
-  const { t, language } = useLanguage(); // ✅ Tambahkan ini
-
+  const { t, language } = useLanguage();
+  
   const [stats, setStats] = useState({
     totalEmployees: 0,
     totalDocuments: 0,
@@ -116,8 +116,8 @@ export default function Dashboard() {
       // DISTRIBUSI PER UNIT
       const unitCount = {};
       pegawaiData?.forEach(emp => {
-        if (emp.unit_kerja) {
-          unitCount[emp.unit_kerja] = (unitCount[emp.unit_kerja] || 0) + 1;
+        if (emp.work_unit) {
+          unitCount[emp.work_unit] = (unitCount[emp.work_unit] || 0) + 1;
         }
       });
 
@@ -126,7 +126,7 @@ export default function Dashboard() {
 
       // KELENGKAPAN (asumsi: pegawai lengkap kalau punya minimal 3 dokumen)
       const complete = pegawaiData?.filter(p => {
-        const docCount = dokumenData?.filter(d => d.pegawai_id === p.id).length || 0;
+        const docCount = dokumenData?.filter(d => d.employee_id === p.id).length || 0;
         return docCount >= 3;
       }).length || 0;
 
@@ -152,9 +152,9 @@ export default function Dashboard() {
   // SEARCH
   const filteredEmployees = pegawai.filter((emp) => {
     return (
-      emp.nama?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      emp.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (emp.nip && emp.nip.includes(searchTerm)) ||
-      emp.jabatan?.toLowerCase().includes(searchTerm.toLowerCase())
+      emp.position?.toLowerCase().includes(searchTerm.toLowerCase())
     );
   });
 
@@ -164,13 +164,13 @@ export default function Dashboard() {
 
   // HITUNG KATEGORI
   const getCategoryCount = (categoryId) => {
-    return dokumen.filter(d => d.kategori_id === categoryId).length;
+    return dokumen.filter(d => d.category === categoryId).length;
   };
 
   // Data untuk diagram
   const statusData = [
-    { name: t.active, value: stats.activeEmployees, fill: '#10B981' },
-    { name: t.inactive, value: stats.inactiveEmployees, fill: '#F59E0B' },
+    { name: t.active || "Aktif", value: stats.activeEmployees, fill: '#10B981' },
+    { name: t.inactive || "Tidak Aktif", value: stats.inactiveEmployees, fill: '#F59E0B' },
   ];
 
   const unitData = Object.entries(stats.unitDistribution).map(([unit, count]) => ({
@@ -226,14 +226,12 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      
       {/* HEADER DENGAN SEARCH BAR */}
       <div className="bg-gradient-to-r from-teal-700 to-teal-800 rounded-xl p-6 text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-lg">
         <div>
-          <h1 className="text-2xl font-bold">{t.welcome} {localStorage.getItem("username") || "Admin"}!</h1>
-          <p className="text-teal-100 mt-1">{t.welcomeDesc}</p>
+          <h1 className="text-2xl font-bold">{t.welcome || "Selamat Datang"} {localStorage.getItem("username") || "Admin"}!</h1>
+          <p className="text-teal-100 mt-1">{t.welcomeDesc || "Kelola data pegawai dan dokumen penting RSUD Dr. Harjono S. Ponorogo"}</p>
         </div>
-        
         <div className="w-full md:w-auto">
           <SearchBar 
             searchTerm={searchTerm} 
@@ -249,14 +247,14 @@ export default function Dashboard() {
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border-l-4 border-teal-600">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">{t.totalEmployees}</p>
+              <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">{t.totalEmployees || "Total Pegawai"}</p>
               <p className="text-3xl font-bold text-gray-800 dark:text-white">{stats.totalEmployees}</p>
               <p className="text-xs text-teal-600 dark:text-teal-400 mt-1 flex items-center gap-1">
                 <TrendingUp className="w-3 h-3" />
-                +12% {t.fromLastMonth}
+                +12% {t.fromLastMonth || "dari bulan lalu"}
               </p>
             </div>
-            <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-teal-600 rounded-lg flex items-center justify-center shadow-lg shadow-teal-200">
+            <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-teal-600 rounded-lg flex items-center justify-center shadow-lg shadow-teal-200 dark:shadow-teal-900/30">
               <Users className="w-6 h-6 text-white" />
             </div>
           </div>
@@ -265,11 +263,11 @@ export default function Dashboard() {
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border-l-4 border-green-600">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">{t.completeDocuments}</p>
+              <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">{t.completeDocuments || "Berkas Lengkap"}</p>
               <p className="text-3xl font-bold text-gray-800 dark:text-white">{stats.completeEmployees}</p>
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{stats.totalEmployees ? Math.round(stats.completeEmployees / stats.totalEmployees * 100) : 0}% {t.fromLastMonth}</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{stats.totalEmployees ? Math.round(stats.completeEmployees / stats.totalEmployees * 100) : 0}% {t.fromTotal || "dari total"}</p>
             </div>
-            <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-200">
+            <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-200 dark:shadow-emerald-900/30">
               <UserCheck className="w-6 h-6 text-white" />
             </div>
           </div>
@@ -278,11 +276,11 @@ export default function Dashboard() {
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border-l-4 border-amber-600">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">{t.incompleteDocuments}</p>
+              <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">{t.incompleteDocuments || "Belum Lengkap"}</p>
               <p className="text-3xl font-bold text-gray-800 dark:text-white">{stats.incompleteEmployees}</p>
-              <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">{t.avgMissing}</p>
+              <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">{t.avgMissing || "Rata-rata kurang 2 kategori"}</p>
             </div>
-            <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg flex items-center justify-center shadow-lg shadow-amber-200">
+            <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg flex items-center justify-center shadow-lg shadow-amber-200 dark:shadow-amber-900/30">
               <UserX className="w-6 h-6 text-white" />
             </div>
           </div>
@@ -291,11 +289,11 @@ export default function Dashboard() {
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border-l-4 border-blue-600">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">{t.totalDocuments}</p>
+              <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">{t.totalDocuments || "Total Dokumen"}</p>
               <p className="text-3xl font-bold text-gray-800 dark:text-white">{stats.totalDocuments}</p>
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{t.documentStats}</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{t.documentStats || "Terupload"}</p>
             </div>
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-200">
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-200 dark:shadow-blue-900/30">
               <FileText className="w-6 h-6 text-white" />
             </div>
           </div>
@@ -311,41 +309,41 @@ export default function Dashboard() {
           onClick={() => setSelectedChart('status')}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
             selectedChart === 'status' 
-              ? 'bg-teal-600 text-white shadow-md shadow-teal-200' 
+              ? 'bg-teal-600 text-white shadow-md shadow-teal-200 dark:shadow-teal-900/30' 
               : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
           }`}
         >
-          {t.chartStatus}
+          {t.chartStatus || "Status Pegawai"}
         </button>
         <button
           onClick={() => setSelectedChart('unit')}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
             selectedChart === 'unit' 
-              ? 'bg-teal-600 text-white shadow-md shadow-teal-200' 
+              ? 'bg-teal-600 text-white shadow-md shadow-teal-200 dark:shadow-teal-900/30' 
               : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
           }`}
         >
-          {t.chartUnit}
+          {t.chartUnit || "Unit Kerja"}
         </button>
         <button
           onClick={() => setSelectedChart('trend')}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
             selectedChart === 'trend' 
-              ? 'bg-teal-600 text-white shadow-md shadow-teal-200' 
+              ? 'bg-teal-600 text-white shadow-md shadow-teal-200 dark:shadow-teal-900/30' 
               : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
           }`}
         >
-          {t.chartTrend}
+          {t.chartTrend || "Tren Data"}
         </button>
         <button
           onClick={() => setSelectedChart('radar')}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
             selectedChart === 'radar' 
-              ? 'bg-teal-600 text-white shadow-md shadow-teal-200' 
+              ? 'bg-teal-600 text-white shadow-md shadow-teal-200 dark:shadow-teal-900/30' 
               : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
           }`}
         >
-          {t.chartRadar}
+          {t.chartRadar || "Radar Kelengkapan"}
         </button>
       </div>
 
@@ -356,8 +354,8 @@ export default function Dashboard() {
           <div>
             <h3 className="font-semibold text-gray-800 dark:text-white mb-4 text-lg flex items-center gap-2">
               <span className="w-1 h-6 bg-teal-600 rounded-full"></span>
-              {t.chartStatus}
-              <span className="text-sm font-normal text-gray-400 dark:text-gray-500 ml-2">Total {stats.totalEmployees} {t.employee}</span>
+              {t.chartStatus || "Status Pegawai"}
+              <span className="text-sm font-normal text-gray-400 dark:text-gray-500 ml-2">Total {stats.totalEmployees} {t.employee || "pegawai"}</span>
             </h3>
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
@@ -377,7 +375,7 @@ export default function Dashboard() {
                   ))}
                 </Pie>
                 <Tooltip 
-                  formatter={(value) => [`${value} ${t.employee}`, '']}
+                  formatter={(value) => [`${value} ${t.employee || "pegawai"}`, '']}
                   contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                 />
                 <Legend verticalAlign="bottom" height={36} iconType="circle" />
@@ -391,7 +389,7 @@ export default function Dashboard() {
           <div>
             <h3 className="font-semibold text-gray-800 dark:text-white mb-4 text-lg flex items-center gap-2">
               <span className="w-1 h-6 bg-blue-600 rounded-full"></span>
-              {t.chartUnit}
+              {t.chartUnit || "Unit Kerja"}
             </h3>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart
@@ -403,7 +401,7 @@ export default function Dashboard() {
                 <XAxis type="number" domain={[0, 'dataMax + 2']} />
                 <YAxis type="category" dataKey="unit" fontSize={12} width={80} />
                 <Tooltip 
-                  formatter={(value) => [`${value} ${t.employee}`, '']}
+                  formatter={(value) => [`${value} ${t.employee || "pegawai"}`, '']}
                   labelFormatter={(label) => {
                     const item = unitData.find(d => d.unit === label);
                     return item ? item.fullName : label;
@@ -425,7 +423,7 @@ export default function Dashboard() {
           <div>
             <h3 className="font-semibold text-gray-800 dark:text-white mb-4 text-lg flex items-center gap-2">
               <span className="w-1 h-6 bg-purple-600 rounded-full"></span>
-              {t.chartTrend}
+              {t.chartTrend || "Tren Data"}
             </h3>
             <ResponsiveContainer width="100%" height={300}>
               <ComposedChart data={trendData}>
@@ -442,7 +440,7 @@ export default function Dashboard() {
                   fill="url(#pegawaiGradient)" 
                   stroke="#0D9488" 
                   strokeWidth={2}
-                  name={t.totalEmployees}
+                  name={t.totalEmployees || "Total Pegawai"}
                 />
                 <Line 
                   yAxisId="right"
@@ -451,7 +449,7 @@ export default function Dashboard() {
                   stroke="#8B5CF6" 
                   strokeWidth={3}
                   dot={{ fill: '#8B5CF6', strokeWidth: 2, r: 5 }}
-                  name={t.totalDocuments}
+                  name={t.totalDocuments || "Total Dokumen"}
                 />
                 <defs>
                   <linearGradient id="pegawaiGradient" x1="0" y1="0" x2="0" y2="1">
@@ -469,7 +467,7 @@ export default function Dashboard() {
           <div>
             <h3 className="font-semibold text-gray-800 dark:text-white mb-4 text-lg flex items-center gap-2">
               <span className="w-1 h-6 bg-orange-600 rounded-full"></span>
-              {t.chartRadar}
+              {t.chartRadar || "Radar Kelengkapan"}
             </h3>
             <ResponsiveContainer width="100%" height={300}>
               <RadarChart data={radarData}>
@@ -477,14 +475,14 @@ export default function Dashboard() {
                 <PolarAngleAxis dataKey="kategori" fontSize={11} />
                 <PolarRadiusAxis domain={[0, 100]} fontSize={11} />
                 <Radar
-                  name={t.categoryCompleteness}
+                  name={t.categoryCompleteness || "Kelengkapan Kategori"}
                   dataKey="persentase"
                   stroke="#0D9488"
                   fill="#0D9488"
                   fillOpacity={0.6}
                 />
                 <Tooltip 
-                  formatter={(value) => [`${value}% ${t.employee}`, '']}
+                  formatter={(value) => [`${value}% ${t.employee || "pegawai"}`, '']}
                   labelFormatter={(label) => {
                     const item = radarData.find(d => d.kategori === label);
                     return item ? item.fullName : label;
@@ -503,8 +501,8 @@ export default function Dashboard() {
         <div className="px-6 py-4 border-b bg-gradient-to-r from-gray-50 to-teal-50 dark:from-gray-800 dark:to-teal-900/20">
           <h2 className="font-semibold text-gray-800 dark:text-white flex items-center gap-2">
             <FileText className="w-5 h-5 text-teal-600 dark:text-teal-400" />
-            {t.categoryCompleteness}
-            <span className="text-xs text-gray-400 dark:text-gray-500 ml-2">{t.clickToOpen}</span>
+            {t.categoryCompleteness || "Kelengkapan per Kategori"}
+            <span className="text-xs text-gray-400 dark:text-gray-500 ml-2">{t.clickToOpen || "klik kartu untuk membuka"}</span>
           </h2>
         </div>
         <div className="p-6">
@@ -532,7 +530,7 @@ export default function Dashboard() {
               return (
                 <button
                   key={kat.id}
-                  className={`${bgColor} border ${borderColor} rounded-lg p-4 text-left transition-all duration-200 hover:shadow-md hover:-translate-y-1`}
+                  className={`${bgColor} border ${borderColor} rounded-lg p-4 text-left transition hover:border-teal-400`}
                   onClick={() => window.location.href = `/kategori/${kat.id}`}
                 >
                   <div className="flex items-center gap-2">
@@ -556,7 +554,7 @@ export default function Dashboard() {
                     />
                   </div>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 flex items-center justify-between">
-                    <span>{count} / {stats.totalEmployees} {t.employee}</span>
+                    <span>{count} / {stats.totalEmployees} {t.employee || "pegawai"}</span>
                     <span className={`font-medium ${
                       isComplete ? 'text-emerald-600 dark:text-emerald-400' :
                       isPartial ? 'text-amber-600 dark:text-amber-400' :
@@ -579,8 +577,8 @@ export default function Dashboard() {
           <div className="px-6 py-4 border-b bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-800 dark:to-blue-900/20">
             <h2 className="font-semibold text-gray-800 dark:text-white flex items-center gap-2">
               <Clock className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              {t.recentEmployees}
-              <span className="text-xs text-gray-400 dark:text-gray-500 ml-2">{t.last5}</span>
+              {t.recentEmployees || "Pegawai Terbaru"}
+              <span className="text-xs text-gray-400 dark:text-gray-500 ml-2">{t.last5 || "5 terakhir"}</span>
             </h2>
           </div>
           <div className="divide-y divide-gray-100 dark:divide-gray-700">
@@ -588,18 +586,18 @@ export default function Dashboard() {
               stats.recentEmployees.map((emp) => (
                 <div key={emp.id} className="px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50">
                   <div>
-                    <p className="font-medium text-gray-800 dark:text-white">{emp.nama}</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{emp.jabatan} • {emp.unit_kerja}</p>
+                    <p className="font-medium text-gray-800 dark:text-white">{emp.full_name}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{emp.position} • {emp.work_unit}</p>
                   </div>
                   <span className={`px-2 py-1 text-xs rounded-full ${
                     emp.status === "aktif" ? "bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300" : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300"
                   }`}>
-                    {emp.status === "aktif" ? t.active : t.inactive}
+                    {emp.status === "aktif" ? (t.active || "Aktif") : (t.inactive || "Tidak Aktif")}
                   </span>
                 </div>
               ))
             ) : (
-              <div className="p-6 text-center text-gray-500 dark:text-gray-400">{t.noData}</div>
+              <div className="p-6 text-center text-gray-500 dark:text-gray-400">{t.noData || "Belum ada data pegawai"}</div>
             )}
           </div>
         </div>
@@ -609,7 +607,7 @@ export default function Dashboard() {
           <div className="px-6 py-4 border-b bg-gradient-to-r from-gray-50 to-purple-50 dark:from-gray-800 dark:to-purple-900/20">
             <h2 className="font-semibold text-gray-800 dark:text-white flex items-center gap-2">
               <Building className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-              {t.unitDistribution}
+              {t.unitDistribution || "Distribusi Pegawai per Unit"}
             </h2>
           </div>
           <div className="p-6">
@@ -620,11 +618,11 @@ export default function Dashboard() {
                     <Briefcase className="w-5 h-5 mx-auto text-teal-600 dark:text-teal-400 mb-1" />
                     <p className="font-semibold text-gray-800 dark:text-white text-sm truncate">{unit}</p>
                     <p className="text-xl font-bold text-teal-600 dark:text-teal-400">{count}</p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500">{t.employee}</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500">{t.employee || "pegawai"}</p>
                   </div>
                 ))
               ) : (
-                <div className="col-span-2 text-center text-gray-500 dark:text-gray-400">{t.noUnit}</div>
+                <div className="col-span-2 text-center text-gray-500 dark:text-gray-400">{t.noUnit || "Belum ada data unit"}</div>
               )}
             </div>
           </div>
@@ -640,14 +638,13 @@ export default function Dashboard() {
           <div className="w-16 h-16 bg-gradient-to-br from-teal-500 to-teal-600 rounded-full flex items-center justify-center mb-4 shadow-lg shadow-teal-200 dark:shadow-teal-900/30 animate-pulse">
             <Upload className="w-8 h-8 text-white" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-white">{t.uploadTitle}</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t.uploadDesc}</p>
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-white">{t.uploadTitle || "Unggah Dokumen Baru"}</h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t.uploadDesc || "Klik di sini untuk memilih kategori dan unggah dokumen pegawai"}</p>
           <button className="mt-4 bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white px-6 py-2 rounded-lg font-medium transition-all shadow-md shadow-teal-200 dark:shadow-teal-900/30 flex items-center gap-2">
-            <Plus className="w-4 h-4" /> {t.uploadButton}
+            <Plus className="w-4 h-4" /> {t.uploadButton || "Upload Sekarang"}
           </button>
         </div>
       </div>
-
     </div>
   );
 }

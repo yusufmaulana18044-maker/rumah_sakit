@@ -1,3 +1,4 @@
+// src/pages/Profile.jsx
 import { useState, useEffect } from "react";
 import { User, Mail, Phone, MapPin, Building, Badge, Calendar, Edit2, Save, X, Camera, Settings } from "lucide-react";
 import { supabase } from "../supabase";
@@ -20,7 +21,6 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState(null);
 
-  // Ambil data dari Supabase
   useEffect(() => {
     const fetchProfile = async () => {
       const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -97,7 +97,6 @@ export default function Profile() {
       setIsEditing(false);
       alert("✅ Profil berhasil diperbarui!");
 
-      // Update localStorage juga
       localStorage.setItem("username", editData.fullName);
       localStorage.setItem("role", editData.position);
 
@@ -117,7 +116,6 @@ export default function Profile() {
 
   const handleAvatarUpload = (event) => {
     const file = event.target.files?.[0];
-
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
@@ -156,7 +154,6 @@ export default function Profile() {
         />
       );
     }
-
     return <span>{avatarValue || "👤"}</span>;
   };
 
@@ -171,8 +168,8 @@ export default function Profile() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      {/* HEADER CARD - DISAMAKAN DENGAN SETTINGSPAGE */}
+    <div className="max-w-4xl mx-auto space-y-6 p-4">
+      {/* HEADER CARD */}
       <div className="bg-gradient-to-r from-gray-700 via-gray-800 to-gray-900 dark:from-gray-800 dark:via-gray-900 dark:to-gray-950 rounded-2xl shadow-xl p-8 text-white relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2"></div>
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2"></div>
@@ -219,7 +216,6 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* Avatar Selection */}
       {isEditing && (
         <div className="bg-white rounded-lg shadow p-6 space-y-5">
           <div>
@@ -264,7 +260,6 @@ export default function Profile() {
         </div>
       )}
 
-      {/* Informasi Pribadi */}
       <div className="bg-white rounded-lg shadow-lg overflow-hidden">
         <div className="bg-gradient-to-r from-teal-500 to-teal-600 px-6 py-4">
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
@@ -275,7 +270,6 @@ export default function Profile() {
         
         <div className="p-6 space-y-6">
           <div className="grid md:grid-cols-2 gap-6">
-            {/* Nama Lengkap */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Nama Lengkap</label>
               {isEditing ? (
@@ -291,7 +285,6 @@ export default function Profile() {
               )}
             </div>
 
-            {/* Email */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                 <Mail className="w-4 h-4 text-teal-600" />
@@ -310,7 +303,6 @@ export default function Profile() {
               )}
             </div>
 
-            {/* Telepon */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                 <Phone className="w-4 h-4 text-teal-600" />
@@ -329,7 +321,6 @@ export default function Profile() {
               )}
             </div>
 
-            {/* Alamat */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-teal-600" />
@@ -349,7 +340,6 @@ export default function Profile() {
             </div>
           </div>
 
-          {/* Bio / Deskripsi */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">Bio / Deskripsi</label>
             {isEditing ? (
@@ -359,15 +349,15 @@ export default function Profile() {
                 onChange={handleInputChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-teal-500 focus:outline-none transition resize-none"
                 rows="3"
+                placeholder="Tuliskan deskripsi singkat tentang Anda..."
               />
             ) : (
-              <p className="text-gray-800 px-4 py-2 bg-gray-50 rounded-lg">{profileData.bio}</p>
-              )}
-            </div>
+              <p className="text-gray-800 px-4 py-2 bg-gray-50 rounded-lg">{profileData.bio || "Belum ada deskripsi"}</p>
+            )}
           </div>
         </div>
+      </div>
 
-      {/* Informasi Pekerjaan */}
       <div className="bg-white rounded-lg shadow-lg overflow-hidden">
         <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4">
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
@@ -378,7 +368,6 @@ export default function Profile() {
         
         <div className="p-6 space-y-6">
           <div className="grid md:grid-cols-2 gap-6">
-            {/* Departemen */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                 <Building className="w-4 h-4 text-blue-600" />
@@ -393,11 +382,10 @@ export default function Profile() {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none transition"
                 />
               ) : (
-                <p className="text-gray-800 px-4 py-2 bg-gray-50 rounded-lg">{profileData.department}</p>
+                <p className="text-gray-800 px-4 py-2 bg-gray-50 rounded-lg">{profileData.department || "-"}</p>
               )}
             </div>
 
-            {/* Posisi */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                 <Badge className="w-4 h-4 text-blue-600" />
@@ -417,7 +405,6 @@ export default function Profile() {
               )}
             </div>
 
-            {/* Tanggal Bergabung */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-blue-600" />
@@ -441,9 +428,8 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* Tombol Aksi */}
       {isEditing && (
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-3">
           <button
             onClick={handleSaveProfile}
             className="flex-1 flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-6 py-3 rounded-lg font-semibold transition shadow-lg"
