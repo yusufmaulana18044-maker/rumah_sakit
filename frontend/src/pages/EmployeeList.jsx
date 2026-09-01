@@ -1,9 +1,10 @@
 // src/pages/EmployeeList.jsx
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Plus, Eye, Edit, Trash2, Users } from "lucide-react";
+import { Search, Plus, Eye, Edit, Trash2, Users, Loader2 } from "lucide-react";
 import { supabase } from "../supabase";
 
+// 14 Kategori Dokumen
 const KATEGORI = [
   "SK Pangkat (Mulai CPNS)",
   "SK Fungsional",
@@ -39,18 +40,41 @@ export default function EmployeeList() {
     setError("");
     try {
       console.log("🔍 Fetching from table: pegawai");
-      const { data, error } = await supabase
-        .from('pegawai')
-        .select('*')
-        .order('full_name', { ascending: true });
-      
-      console.log("📊 Data:", data);
-      console.log("❌ Error:", error);
-      
-      if (error) throw error;
-      setEmployees(data || []);
+      const { data: pegawai, error: pegawaiError } = await supabase
+        .from("pegawai")
+        .select("*")
+        .order("full_name", { ascending: true });
+
+      if (pegawaiError) throw pegawaiError;
+
+      // Ambil dokumen per pegawai untuk hitung kelengkapan
+      const employeesWithDocs = await Promise.all(
+        (pegawai || []).map(async (emp) => {
+          const { data: docs, error: docsError } = await supabase
+            .from("dokumen")
+            .select("category")
+            .eq("employee_id", emp.id);
+
+          if (docsError) throw docsError;
+
+          // Hitung kelengkapan berdasarkan kategori yang ada
+          const docCategories = docs.map(doc => doc.category);
+          const kelengkapan = KATEGORI.map((_, index) => 
+            docCategories.includes(index + 1) ? "isi" : ""
+          );
+
+          return {
+            ...emp,
+            kelengkapan,
+            dokumenCount: docs.length
+          };
+        })
+      );
+
+      setEmployees(employeesWithDocs || []);
+
     } catch (error) {
-      console.error("🔥 Error:", error);
+      console.error("Error fetching employees:", error);
       setError(error.message);
     } finally {
       setLoading(false);
@@ -61,46 +85,50 @@ export default function EmployeeList() {
     if (!window.confirm(`Yakin ingin menghapus pegawai "${name}"?`)) return;
     
     try {
-      const { error } = await supabase
-        .from('pegawai')
+      // Hapus dokumen terkait dulu
+      const { error: docError } = await supabase
+        .from("dokumen")
         .delete()
-        .eq('id', id);
-      
+        .eq("employee_id", id);
+
+      if (docError) console.error("Error deleting documents:", docError);
+
+      // Hapus pegawai
+      const { error } = await supabase
+        .from("pegawai")
+        .delete()
+        .eq("id", id);
+
       if (error) throw error;
-      fetchEmployees();
+
+      await fetchEmployees();
       alert(`✅ Pegawai "${name}" berhasil dihapus!`);
     } catch (error) {
-      console.error('Error deleting employee:', error);
-      alert('❌ Gagal menghapus pegawai: ' + error.message);
+      console.error("Delete error:", error);
+      alert("❌ Gagal menghapus pegawai: " + error.message);
     }
   };
 
   // Filter data
   const filteredEmployees = employees.filter(emp => {
     const searchLower = search.toLowerCase();
-    return (
+    const matchesSearch = 
       emp.nip?.toLowerCase().includes(searchLower) ||
       emp.full_name?.toLowerCase().includes(searchLower) ||
       emp.position?.toLowerCase().includes(searchLower) ||
-      emp.work_unit?.toLowerCase().includes(searchLower)
-    );
-  });
-
-  // Filter status
-  const statusFiltered = filteredEmployees.filter(emp => {
-    if (filterStatus === "semua") return true;
-    if (filterStatus === "aktif") return emp.status === "aktif";
-    if (filterStatus === "cuti") return emp.status === "cuti";
-    return true;
+      emp.work_unit?.toLowerCase().includes(searchLower);
+    
+    const matchesStatus = filterStatus === "semua" || emp.status === filterStatus;
+    return matchesSearch && matchesStatus;
   });
 
   const getStatusBadge = (status) => {
     if (status === "aktif") {
-      return <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-700">Aktif</span>;
+      return <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300">Aktif</span>;
     } else if (status === "cuti") {
-      return <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-700">Cuti</span>;
+      return <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300">Cuti</span>;
     }
-    return <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-700">-</span>;
+    return <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300">-</span>;
   };
 
   // Statistik
@@ -108,27 +136,29 @@ export default function EmployeeList() {
     total: employees.length,
     aktif: employees.filter(e => e.status === "aktif").length,
     cuti: employees.filter(e => e.status === "cuti").length,
+    dokumen: employees.reduce((sum, e) => sum + (e.dokumenCount || 0), 0)
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <p className="text-gray-500">Loading data pegawai...</p>
+        <Loader2 className="w-8 h-8 text-teal-600 animate-spin" />
+        <p className="text-gray-500 ml-3">Loading data pegawai...</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">📋 Data Pegawai</h1>
-          <p className="text-gray-500 text-sm mt-1">Kelola data pegawai RSUD Dr. Harjono S. Ponorogo</p>
+          <h1 className="text-2xl font-bold text-gray-800 dark:text-white">📋 Data Pegawai</h1>
+          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Kelola data pegawai RSUD Dr. Harjono S. Ponorogo</p>
         </div>
         <button
           onClick={() => navigate("/employees/new")}
-          className="bg-teal-700 text-white px-4 py-2 rounded-lg hover:bg-teal-800 transition flex items-center gap-2"
+          className="bg-teal-700 hover:bg-teal-800 text-white px-4 py-2 rounded-lg transition flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />
           Tambah Pegawai
@@ -136,18 +166,22 @@ export default function EmployeeList() {
       </div>
 
       {/* Stats Mini */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="bg-white rounded-lg shadow-sm p-3 border-l-4 border-teal-600">
-          <p className="text-xs text-gray-500">Total Pegawai</p>
-          <p className="text-xl font-bold text-gray-800">{stats.total}</p>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-3 border-l-4 border-teal-600">
+          <p className="text-xs text-gray-500 dark:text-gray-400">Total Pegawai</p>
+          <p className="text-xl font-bold text-gray-800 dark:text-white">{stats.total}</p>
         </div>
-        <div className="bg-white rounded-lg shadow-sm p-3 border-l-4 border-green-600">
-          <p className="text-xs text-gray-500">Aktif</p>
-          <p className="text-xl font-bold text-gray-800">{stats.aktif}</p>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-3 border-l-4 border-green-600">
+          <p className="text-xs text-gray-500 dark:text-gray-400">Aktif</p>
+          <p className="text-xl font-bold text-gray-800 dark:text-white">{stats.aktif}</p>
         </div>
-        <div className="bg-white rounded-lg shadow-sm p-3 border-l-4 border-yellow-600">
-          <p className="text-xs text-gray-500">Cuti</p>
-          <p className="text-xl font-bold text-gray-800">{stats.cuti}</p>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-3 border-l-4 border-yellow-600">
+          <p className="text-xs text-gray-500 dark:text-gray-400">Cuti</p>
+          <p className="text-xl font-bold text-gray-800 dark:text-white">{stats.cuti}</p>
+        </div>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-3 border-l-4 border-blue-600">
+          <p className="text-xs text-gray-500 dark:text-gray-400">Dokumen</p>
+          <p className="text-xl font-bold text-gray-800 dark:text-white">{stats.dokumen}</p>
         </div>
       </div>
 
@@ -160,13 +194,13 @@ export default function EmployeeList() {
             placeholder="Cari NIP, Nama, atau Jabatan..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:border-teal-400 focus:outline-none"
+            className="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:border-teal-400 focus:outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
           />
         </div>
         <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
-          className="px-4 py-2 border border-gray-200 rounded-lg focus:border-teal-400 focus:outline-none"
+          className="px-4 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:border-teal-400 focus:outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
         >
           <option value="semua">Semua Status</option>
           <option value="aktif">Aktif</option>
@@ -174,76 +208,105 @@ export default function EmployeeList() {
         </select>
         <button 
           onClick={() => alert("Fitur Export Excel akan segera hadir!")}
-          className="border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50"
+          className="border border-gray-200 dark:border-gray-600 px-4 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition"
         >
           Ekspor Excel
         </button>
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-600">
+        <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-4 text-red-600 dark:text-red-400">
           {error}
         </div>
       )}
 
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-        {statusFiltered.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">
-            <Users className="w-12 h-12 mx-auto text-gray-300 mb-3" />
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
+        {filteredEmployees.length === 0 ? (
+          <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+            <Users className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-3" />
             <p>Tidak ada data pegawai</p>
             <p className="text-sm mt-1">Tambahkan pegawai baru dengan tombol "Tambah Pegawai"</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b">
+              <thead className="bg-gray-50 dark:bg-gray-700/50 border-b dark:border-gray-700">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pegawai</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">NIP</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Unit Kerja</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Pegawai</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">NIP</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Unit Kerja</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Kelengkapan</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Status</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Aksi</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
-                {statusFiltered.map((emp) => (
-                  <tr key={emp.id} className="hover:bg-gray-50 transition">
-                    <td className="px-4 py-3">
-                      <div className="font-medium text-gray-800">{emp.full_name}</div>
-                      <div className="text-xs text-gray-400">{emp.position}</div>
-                    </td>
-                    <td className="px-4 py-3 font-mono text-sm text-gray-600">{emp.nip}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600">{emp.work_unit}</td>
-                    <td className="px-4 py-3">{getStatusBadge(emp.status)}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => navigate(`/employees/${emp.id}`)}
-                          className="p-1 text-blue-600 hover:bg-blue-50 rounded transition"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => navigate(`/employees/${emp.id}/edit`)}
-                          className="p-1 text-teal-600 hover:bg-teal-50 rounded transition"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(emp.id, emp.full_name)}
-                          className="p-1 text-red-600 hover:bg-red-50 rounded transition"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                {filteredEmployees.map((emp) => {
+                  const filled = emp.kelengkapan?.filter(s => s === "isi").length || 0;
+                  return (
+                    <tr key={emp.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
+                      <td className="px-4 py-3">
+                        <div className="font-medium text-gray-800 dark:text-white">{emp.full_name}</div>
+                        <div className="text-xs text-gray-400 dark:text-gray-500">{emp.position}</div>
+                      </td>
+                      <td className="px-4 py-3 font-mono text-sm text-gray-600 dark:text-gray-400">{emp.nip}</td>
+                      <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{emp.work_unit}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex gap-0.5">
+                          {emp.kelengkapan?.map((s, i) => (
+                            <div 
+                              key={i}
+                              className={`w-2.5 h-3.5 rounded-sm ${s === "isi" ? "bg-teal-600" : "bg-gray-200 dark:bg-gray-600"}`}
+                              title={KATEGORI[i]}
+                            />
+                          ))}
+                        </div>
+                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{filled} dari 14 kategori terisi</p>
+                      </td>
+                      <td className="px-4 py-3">{getStatusBadge(emp.status)}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => navigate(`/employees/${emp.id}`)}
+                            className="p-1 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/30 rounded transition"
+                            title="Lihat Detail"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => navigate(`/employees/${emp.id}/edit`)}
+                            className="p-1 text-teal-600 hover:bg-teal-50 dark:text-teal-400 dark:hover:bg-teal-900/30 rounded transition"
+                            title="Edit"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(emp.id, emp.full_name)}
+                            className="p-1 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30 rounded transition"
+                            title="Hapus"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         )}
+      </div>
+
+      {/* Legend */}
+      <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+        <span className="flex items-center gap-1">
+          <span className="w-3 h-3 bg-teal-600 rounded-sm inline-block"></span> kategori terisi
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="w-3 h-3 bg-gray-200 dark:bg-gray-600 rounded-sm inline-block"></span> belum ada berkas
+        </span>
       </div>
     </div>
   );

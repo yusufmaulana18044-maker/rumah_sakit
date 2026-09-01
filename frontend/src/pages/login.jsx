@@ -1,3 +1,4 @@
+// src/pages/Login.jsx
 import { supabase } from "../supabase";
 import { useState, useEffect } from "react";
 import { Eye, EyeOff, HeartPulse, LogIn, User, Lock, Hospital } from "lucide-react";
@@ -32,7 +33,7 @@ export default function Login() {
       // 1. Cari user di profiles berdasarkan username
       const { data: userData, error: userError } = await supabase
         .from("profiles")
-        .select("email, role")
+        .select("email, role, username")
         .eq("username", username.trim())
         .single();
 
@@ -47,8 +48,8 @@ export default function Login() {
 
       // 2. Login pake email & password
       const { data, error: authError } = await supabase.auth.signInWithPassword({
-        email: email,
-        password: password,
+        email,
+        password,
       });
 
       if (authError) {
@@ -117,6 +118,7 @@ export default function Login() {
             <div className="absolute -left-20 -bottom-20 w-48 h-48 bg-white/5 rounded-full"></div>
             
             <div className="relative flex flex-col items-center">
+              {/* Logo */}
               <div className="w-16 h-16 bg-white/20 backdrop-blur rounded-2xl flex items-center justify-center shadow-lg mb-3 border border-white/10 p-1.5">
                 <img
                   src="/logo-rsud-harjonos.png"
@@ -125,6 +127,7 @@ export default function Login() {
                 />
               </div>
               
+              {/* Title */}
               <h1 className="text-3xl font-bold text-white tracking-tight drop-shadow-lg font-display">
                 SICAKEP
               </h1>
@@ -132,6 +135,7 @@ export default function Login() {
                 Sistem Informasi Catat Kepegawaian
               </p>
               
+              {/* RS Name Badge */}
               <div className="flex items-center gap-2 mt-2 px-4 py-1.5 bg-white/15 rounded-full backdrop-blur border border-white/15 shadow-inner">
                 <Hospital className="w-3 h-3 text-teal-200" />
                 <span className="text-[10px] text-white/90 font-semibold tracking-wider">
