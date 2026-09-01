@@ -1,12 +1,19 @@
 // src/pages/EmployeeDetail.jsx
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+<<<<<<< HEAD
 import { supabase } from "../supabase";
+=======
+>>>>>>> 263e32c (feat: SICAKEP v2.0 - Integrasi Supabase & fitur lengkap)
 import { 
   ArrowLeft, Upload, FileText, Download, Trash2, User, Briefcase, 
   Calendar, Phone, Mail, MapPin, X, Loader2, Eye, EyeOff,
   Award, GraduationCap, CreditCard, Users, Building2
 } from "lucide-react";
+<<<<<<< HEAD
+=======
+import { supabase } from "../supabase";
+>>>>>>> 263e32c (feat: SICAKEP v2.0 - Integrasi Supabase & fitur lengkap)
 
 // 14 Kategori Dokumen
 const KATEGORI = [
@@ -212,7 +219,11 @@ export default function EmployeeDetail() {
   const [employee, setEmployee] = useState(null);
   const [documents, setDocuments] = useState([]);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+<<<<<<< HEAD
   const [isLoading, setIsLoading] = useState(false);
+=======
+  const [isLoading, setIsLoading] = useState(true);
+>>>>>>> 263e32c (feat: SICAKEP v2.0 - Integrasi Supabase & fitur lengkap)
   const [showAllBio, setShowAllBio] = useState(false);
 
   // Ambil data pegawai dari Supabase
@@ -220,7 +231,6 @@ export default function EmployeeDetail() {
     const fetchEmployee = async () => {
       setIsLoading(true);
       try {
-        // 1. Ambil data pegawai
         const { data: empData, error: empError } = await supabase
           .from("pegawai")
           .select("*")
@@ -230,7 +240,6 @@ export default function EmployeeDetail() {
         if (empError) throw empError;
         setEmployee(empData);
 
-        // 2. Ambil dokumen pegawai
         const { data: docData, error: docError } = await supabase
           .from("dokumen")
           .select("*")
@@ -308,7 +317,11 @@ export default function EmployeeDetail() {
 
     } catch (error) {
       console.error("Upload error:", error);
+<<<<<<< HEAD
       alert("❌ Terjadi kesalahan: " + error.message);
+=======
+      alert("❌ Gagal upload dokumen: " + error.message);
+>>>>>>> 263e32c (feat: SICAKEP v2.0 - Integrasi Supabase & fitur lengkap)
     } finally {
       setIsLoading(false);
     }
@@ -420,7 +433,6 @@ export default function EmployeeDetail() {
         {/* Kolom Kiri - Info Pegawai */}
         <div className="lg:col-span-1">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6 relative">
-            {/* 👁️ Toggle Mata - di pojok kanan atas */}
             <button
               onClick={() => setShowAllBio(!showAllBio)}
               className="absolute top-4 right-4 flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full text-sm font-medium text-gray-700 dark:text-gray-300 transition"
@@ -454,7 +466,6 @@ export default function EmployeeDetail() {
             </div>
 
             <div className="border-t dark:border-gray-700 pt-4 space-y-3">
-              {/* BIODATA UTAMA */}
               <div className="flex items-start gap-3">
                 <Briefcase className="w-4 h-4 text-gray-400 dark:text-gray-500 mt-0.5" />
                 <div>
@@ -498,7 +509,6 @@ export default function EmployeeDetail() {
                 </div>
               </div>
 
-              {/* EXTRA BIODATA */}
               {showAllBio && (
                 <div className="border-t border-dashed border-gray-200 dark:border-gray-700 pt-3 mt-2 space-y-3 animate-fadeIn">
                   <div className="flex items-start gap-3">
@@ -600,7 +610,6 @@ export default function EmployeeDetail() {
                           </div>
                         </div>
                         <div className="flex gap-2">
-                          {/* 👁️ TOMBOL PREVIEW - MATA */}
                           <button
                             onClick={() => handlePreviewDoc(doc)}
                             className="p-2 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/30 rounded transition"
@@ -608,7 +617,6 @@ export default function EmployeeDetail() {
                           >
                             <Eye className="w-4 h-4" />
                           </button>
-                          {/* 📥 TOMBOL DOWNLOAD */}
                           <button
                             onClick={() => handleDownload(doc)}
                             className="p-2 text-teal-600 hover:bg-teal-50 dark:text-teal-400 dark:hover:bg-teal-900/30 rounded transition"
@@ -616,7 +624,6 @@ export default function EmployeeDetail() {
                           >
                             <Download className="w-4 h-4" />
                           </button>
-                          {/* 🗑️ TOMBOL HAPUS */}
                           <button
                             onClick={() => handleDeleteDoc(doc.id, doc.name, filePath)}
                             className="p-2 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30 rounded transition"

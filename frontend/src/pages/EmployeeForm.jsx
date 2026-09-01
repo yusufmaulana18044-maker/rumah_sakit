@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Save, User } from "lucide-react";
 import { supabase } from "../supabase";
 
+<<<<<<< HEAD
 // Data untuk dropdown
 const workUnits = [
   "Instalasi Rawat Inap",
@@ -38,24 +39,27 @@ const positions = [
   "Asisten Apoteker",
   "Staff Administrasi"
 ];
+=======
+const workUnits = ["Rawat Inap", "Rawat Jalan", "IGD", "ICU", "Radiologi", "Laboratorium", "Administrasi", "IT"];
+const positions = ["Dokter Spesialis", "Dokter Umum", "Perawat", "Asisten Perawat", "Apoteker", "Analis", "IT", "Administrasi"];
+>>>>>>> 263e32c (feat: SICAKEP v2.0 - Integrasi Supabase & fitur lengkap)
 
 export default function EmployeeForm() {
   const { id } = useParams();
   const navigate = useNavigate();
   const isEdit = !!id;
+  const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     nip: "",
     full_name: "",
     birthplace: "",
     birth_date: "",
-    gender: "L",
     address: "",
     phone: "",
     email: "",
     position: "",
     work_unit: "",
-    join_date: "",
     status: "aktif"
   });
 
@@ -64,6 +68,7 @@ export default function EmployeeForm() {
   // Ambil data pegawai jika edit
   useEffect(() => {
     if (isEdit) {
+<<<<<<< HEAD
       const fetchEmployee = async () => {
         try {
           const { data, error } = await supabase
@@ -96,9 +101,41 @@ export default function EmployeeForm() {
         }
       };
 
+=======
+>>>>>>> 263e32c (feat: SICAKEP v2.0 - Integrasi Supabase & fitur lengkap)
       fetchEmployee();
     }
   }, [isEdit, id]);
+
+  const fetchEmployee = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("pegawai")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        setFormData({
+          nip: data.nip || "",
+          full_name: data.full_name || "",
+          birthplace: data.birthplace || "",
+          birth_date: data.birth_date || "",
+          address: data.address || "",
+          phone: data.phone || "",
+          email: data.email || "",
+          position: data.position || "",
+          work_unit: data.work_unit || "",
+          status: data.status || "aktif"
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching employee:", error);
+      alert("Gagal memuat data pegawai");
+    }
+  };
 
   const handleChange = (e) => {
     setFormData({
@@ -113,7 +150,10 @@ export default function EmployeeForm() {
 
     try {
       if (isEdit) {
+<<<<<<< HEAD
         // UPDATE pegawai
+=======
+>>>>>>> 263e32c (feat: SICAKEP v2.0 - Integrasi Supabase & fitur lengkap)
         const { error } = await supabase
           .from("pegawai")
           .update(formData)
@@ -121,9 +161,13 @@ export default function EmployeeForm() {
 
         if (error) throw error;
         alert("✅ Data pegawai berhasil diupdate!");
+<<<<<<< HEAD
 
       } else {
         // INSERT pegawai baru
+=======
+      } else {
+>>>>>>> 263e32c (feat: SICAKEP v2.0 - Integrasi Supabase & fitur lengkap)
         const { error } = await supabase
           .from("pegawai")
           .insert([formData]);
@@ -133,7 +177,10 @@ export default function EmployeeForm() {
       }
 
       navigate("/employees");
+<<<<<<< HEAD
 
+=======
+>>>>>>> 263e32c (feat: SICAKEP v2.0 - Integrasi Supabase & fitur lengkap)
     } catch (error) {
       console.error("Error saving employee:", error);
       alert("❌ Gagal menyimpan data: " + error.message);
@@ -144,7 +191,6 @@ export default function EmployeeForm() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      {/* Tombol Kembali */}
       <button
         onClick={() => navigate("/employees")}
         className="flex items-center gap-2 text-gray-600 hover:text-teal-600 mb-4 transition"
@@ -154,7 +200,6 @@ export default function EmployeeForm() {
       </button>
 
       <div className="bg-white rounded-xl shadow overflow-hidden">
-        {/* Header */}
         <div className="bg-gradient-to-r from-teal-600 to-blue-600 px-6 py-4">
           <div className="flex items-center gap-3">
             <User className="w-6 h-6 text-white" />
@@ -167,7 +212,6 @@ export default function EmployeeForm() {
           </p>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* NIP */}
@@ -229,22 +273,6 @@ export default function EmployeeForm() {
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-teal-400 focus:outline-none"
               />
-            </div>
-
-            {/* Jenis Kelamin */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Jenis Kelamin
-              </label>
-              <select
-                name="gender"
-                value={formData.gender}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-teal-400 focus:outline-none"
-              >
-                <option value="L">Laki-laki</option>
-                <option value="P">Perempuan</option>
-              </select>
             </div>
 
             {/* No. Telepon */}
@@ -330,20 +358,6 @@ export default function EmployeeForm() {
               />
             </div>
 
-            {/* Tanggal Bergabung */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Tanggal Bergabung
-              </label>
-              <input
-                type="date"
-                name="join_date"
-                value={formData.join_date}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-teal-400 focus:outline-none"
-              />
-            </div>
-
             {/* Status */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -357,11 +371,11 @@ export default function EmployeeForm() {
               >
                 <option value="aktif">Aktif</option>
                 <option value="cuti">Cuti</option>
+                <option value="nonaktif">Nonaktif</option>
               </select>
             </div>
           </div>
 
-          {/* Tombol Submit */}
           <div className="flex gap-3 mt-8 pt-4 border-t">
             <button
               type="button"
@@ -376,7 +390,11 @@ export default function EmployeeForm() {
               className="px-6 py-2 bg-gradient-to-r from-teal-600 to-blue-600 text-white rounded-lg hover:from-teal-700 hover:to-blue-700 transition flex items-center gap-2 disabled:opacity-50"
             >
               <Save className="w-4 h-4" />
+<<<<<<< HEAD
               {loading ? "Menyimpan..." : (isEdit ? "Simpan Perubahan" : "Simpan Pegawai")}
+=======
+              {loading ? "Menyimpan..." : isEdit ? "Simpan Perubahan" : "Simpan Pegawai"}
+>>>>>>> 263e32c (feat: SICAKEP v2.0 - Integrasi Supabase & fitur lengkap)
             </button>
           </div>
         </form>

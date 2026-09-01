@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, UploadCloud, FileText, CheckCircle2 } from "lucide-react";
@@ -12,12 +13,54 @@ const formatDate = (value) => {
     month: "short",
     year: "numeric",
   }).format(date);
+=======
+import { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { supabase } from '../supabase';
+import { 
+  Upload, 
+  X, 
+  File, 
+  FileImage, 
+  FileText, 
+  CheckCircle,
+  AlertCircle,
+  Loader2,
+  Trash2
+} from 'lucide-react';
+
+// ✅ KONFIGURASI BATASAN
+const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+const ALLOWED_TYPES = {
+  'SK Pangkat': ['image/jpeg', 'image/png', 'application/pdf'],
+  'SK Fungsional': ['image/jpeg', 'image/png', 'application/pdf'],
+  'Data Pribadi': ['image/jpeg', 'image/png', 'application/pdf'],
+  'Riwayat Pendidikan': ['image/jpeg', 'image/png', 'application/pdf'],
+  'Ijazah': ['image/jpeg', 'image/png', 'application/pdf'],
+  'SPK RKK': ['image/jpeg', 'image/png', 'application/pdf'],
+  'default': ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf']
+>>>>>>> 263e32c (feat: SICAKEP v2.0 - Integrasi Supabase & fitur lengkap)
 };
 
-export default function UploadDokumen() {
-  const { id } = useParams();
-  const navigate = useNavigate();
+// ✅ MAPPING KATEGORI
+const KATEGORI_LIST = [
+  { id: 1, name: 'SK Pangkat', folder: 'sk_pangkat' },
+  { id: 2, name: 'SK Fungsional', folder: 'sk_fungsional' },
+  { id: 3, name: 'Data Pribadi', folder: 'data_pribadi' },
+  { id: 4, name: 'Riwayat Pendidikan', folder: 'riwayat_pendidikan' },
+  { id: 5, name: 'Uraian Tugas', folder: 'uraian_tugas' },
+  { id: 6, name: 'SPK RKK', folder: 'spk_rkk' },
+  { id: 7, name: 'Penilaian Kinerja', folder: 'penilaian_kinerja' },
+  { id: 8, name: 'SPMT', folder: 'spmt' },
+  { id: 9, name: 'Orientasi', folder: 'orientasi' },
+  { id: 10, name: 'KGB', folder: 'kgb' },
+  { id: 11, name: 'Pengembangan Kompetensi', folder: 'pengembangan_kompetensi' },
+  { id: 12, name: 'Riwayat Jabatan', folder: 'riwayat_jabatan' },
+  { id: 13, name: 'Check Up', folder: 'check_up' },
+  { id: 14, name: 'Lain-lain', folder: 'lain_lain' }
+];
 
+<<<<<<< HEAD
   const initialCategory = Number(id) || 1;
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [pegawaiList, setPegawaiList] = useState([]);
@@ -68,13 +111,30 @@ export default function UploadDokumen() {
 =======
   const [fileError, setFileError] = useState("");
 >>>>>>> 280cfd6ad0c3277b26a2895209b81185c46b7dfd
+=======
+export default function UploadDokumen() {
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const [pegawai, setPegawai] = useState([]);
+  const [selectedPegawai, setSelectedPegawai] = useState('');
+  const [selectedKategori, setSelectedKategori] = useState('');
+  const [file, setFile] = useState(null);
+  const [filePreview, setFilePreview] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+>>>>>>> 263e32c (feat: SICAKEP v2.0 - Integrasi Supabase & fitur lengkap)
 
   useEffect(() => {
+    fetchPegawai();
     if (id) {
-      setSelectedCategory(Number(id));
+      setSelectedPegawai(id);
     }
   }, [id]);
 
+<<<<<<< HEAD
   const category = kategoriList.find((item) => item.id === selectedCategory) || kategoriList[0] || { id: 1, nama: "Kategori" };
 
   const handleFileChange = (event) => {
@@ -123,12 +183,54 @@ export default function UploadDokumen() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+=======
+  const fetchPegawai = async () => {
+    const { data, error } = await supabase
+      .from('pegawai')
+      .select('id, full_name, nip')
+      .order('full_name', { ascending: true });
+    
+    if (!error) {
+      setPegawai(data);
+    }
+  };
 
-    if (!selectedEmployeeId) {
-      alert("Pilih pegawai terlebih dahulu.");
+  const handleFileChange = (e) => {
+    const selectedFile = e.target.files[0];
+    validateAndSetFile(selectedFile);
+  };
+>>>>>>> 263e32c (feat: SICAKEP v2.0 - Integrasi Supabase & fitur lengkap)
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const droppedFile = e.dataTransfer.files[0];
+    validateAndSetFile(droppedFile);
+  };
+
+  const validateAndSetFile = (selectedFile) => {
+    if (!selectedFile) return;
+
+    setError('');
+    setSuccess('');
+
+    // ✅ CEK UKURAN FILE
+    if (selectedFile.size > MAX_FILE_SIZE) {
+      setError(`Ukuran file terlalu besar! Maksimal ${MAX_FILE_SIZE / 1024 / 1024}MB`);
       return;
     }
 
+<<<<<<< HEAD
     if (!selectedFile) {
       alert("Pilih file dokumen yang akan diunggah.");
       return;
@@ -176,6 +278,125 @@ export default function UploadDokumen() {
     } finally {
       setLoading(false);
     }
+=======
+    // ✅ CEK FORMAT FILE
+    const kategori = KATEGORI_LIST.find(k => k.id === parseInt(selectedKategori));
+    const allowedTypes = kategori ? ALLOWED_TYPES[kategori.name] : ALLOWED_TYPES['default'];
+    
+    if (!allowedTypes.includes(selectedFile.type)) {
+      setError(`Format file tidak didukung! Gunakan: ${allowedTypes.join(', ')}`);
+      return;
+    }
+
+    setFile(selectedFile);
+    
+    // ✅ BUAT PREVIEW
+    if (selectedFile.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setFilePreview(e.target.result);
+      };
+      reader.readAsDataURL(selectedFile);
+    } else {
+      setFilePreview(null);
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!selectedPegawai || !selectedKategori || !file) {
+      setError('Pilih pegawai, kategori, dan file terlebih dahulu');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    setSuccess('');
+    setUploadProgress(0);
+
+    try {
+      const kategoriObj = KATEGORI_LIST.find(k => k.id === parseInt(selectedKategori));
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${selectedPegawai}_${Date.now()}.${fileExt}`;
+      const filePath = `${kategoriObj.folder}/${fileName}`;
+
+      // ✅ UPLOAD KE SUPABASE STORAGE
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('documents')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      setUploadProgress(50);
+
+      if (uploadError) throw uploadError;
+
+      // ✅ GET PUBLIC URL
+      const { data: urlData } = supabase.storage
+        .from('dokumen-pegawai')
+        .getPublicUrl(filePath);
+
+      setUploadProgress(75);
+
+      // ✅ SIMPAN KE TABEL DOKUMEN
+      const { data: docData, error: docError } = await supabase
+        .from('dokumen')
+        .insert({
+          employee_id: selectedPegawai,
+          name: file.name,
+          type: file.type,
+          file_path: filePath,
+          file_url: urlData.publicUrl,
+          category: parseInt(selectedKategori),
+          status: 'pending',
+          uploaded_at: new Date().toISOString()
+        })
+        .select();
+
+      if (docError) throw docError;
+
+      setUploadProgress(100);
+      setSuccess('✅ Dokumen berhasil diupload!');
+      
+      // Reset form setelah 2 detik
+      setTimeout(() => {
+        setFile(null);
+        setFilePreview(null);
+        setSelectedKategori('');
+        setUploadProgress(0);
+        navigate('/dokumen');
+      }, 2000);
+
+    } catch (error) {
+      console.error('Upload error:', error);
+      setError(`Gagal upload: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRemoveFile = () => {
+    setFile(null);
+    setFilePreview(null);
+    setError('');
+  };
+
+  const getFileIcon = () => {
+    if (!file) return <File className="w-12 h-12 text-gray-300" />;
+    if (file.type.startsWith('image/')) {
+      return <FileImage className="w-12 h-12 text-blue-500" />;
+    }
+    if (file.type === 'application/pdf') {
+      return <FileText className="w-12 h-12 text-red-500" />;
+    }
+    return <File className="w-12 h-12 text-gray-300" />;
+  };
+
+  const getFileSize = (bytes) => {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+>>>>>>> 263e32c (feat: SICAKEP v2.0 - Integrasi Supabase & fitur lengkap)
   };
 
   if (loading && pegawaiList.length === 0) {
@@ -187,27 +408,49 @@ export default function UploadDokumen() {
   }
 
   return (
-    <div className="space-y-6">
-      <button
-        type="button"
-        onClick={() => navigate(`/kategori/${selectedCategory}`)}
-        className="flex items-center gap-2 text-gray-600 hover:text-teal-600 transition"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        Kembali ke kategori
-      </button>
+    <div className="max-w-3xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+        <h1 className="text-2xl font-bold text-gray-800">📤 Upload Dokumen</h1>
+        <p className="text-gray-500 text-sm mt-1">Upload dokumen pegawai ke sistem</p>
+      </div>
 
-      <div className="bg-white rounded-xl shadow-sm p-6">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 bg-teal-100 rounded-xl flex items-center justify-center">
-            <UploadCloud className="w-6 h-6 text-teal-700" />
+      {/* Form */}
+      <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 space-y-6">
+        {/* Error & Success */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 flex items-center gap-3">
+            <AlertCircle className="w-5 h-5" />
+            <span className="text-sm">{error}</span>
           </div>
-          <div>
-            <p className="text-xs uppercase tracking-wide text-gray-500">Unggah Dokumen</p>
-            <h1 className="text-2xl font-bold text-gray-800">{category.nama}</h1>
+        )}
+        {success && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-green-700 flex items-center gap-3">
+            <CheckCircle className="w-5 h-5" />
+            <span className="text-sm">{success}</span>
           </div>
+        )}
+
+        {/* Pilih Pegawai */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Pilih Pegawai
+          </label>
+          <select
+            value={selectedPegawai}
+            onChange={(e) => setSelectedPegawai(e.target.value)}
+            className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:border-teal-400 focus:outline-none"
+          >
+            <option value="">-- Pilih Pegawai --</option>
+            {pegawai.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.full_name} - {p.nip}
+              </option>
+            ))}
+          </select>
         </div>
 
+<<<<<<< HEAD
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {/* Kategori Dokumen */}
@@ -321,14 +564,119 @@ export default function UploadDokumen() {
             {fileError && (
               <div className="mt-4 rounded-lg bg-red-100 border border-red-300 px-4 py-3 text-sm text-red-700">
                 {fileError}
+=======
+        {/* Pilih Kategori */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Kategori Dokumen
+          </label>
+          <select
+            value={selectedKategori}
+            onChange={(e) => setSelectedKategori(e.target.value)}
+            className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:border-teal-400 focus:outline-none"
+          >
+            <option value="">-- Pilih Kategori --</option>
+            {KATEGORI_LIST.map((k) => (
+              <option key={k.id} value={k.id}>
+                {k.name}
+              </option>
+            ))}
+          </select>
+          {selectedKategori && (
+            <p className="text-xs text-gray-400 mt-1">
+              Format yang didukung: {ALLOWED_TYPES[KATEGORI_LIST.find(k => k.id === parseInt(selectedKategori))?.name || 'default'].join(', ')}
+            </p>
+          )}
+        </div>
+
+        {/* Drop Zone */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Upload File
+          </label>
+          <div
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className={`border-2 border-dashed rounded-xl p-8 text-center transition-all ${
+              isDragging
+                ? 'border-teal-400 bg-teal-50'
+                : file
+                ? 'border-green-400 bg-green-50'
+                : 'border-gray-300 hover:border-teal-400'
+            }`}
+          >
+            {file ? (
+              <div className="space-y-4">
+                <div className="flex items-center justify-center gap-4">
+                  {filePreview ? (
+                    <img
+                      src={filePreview}
+                      alt="Preview"
+                      className="w-32 h-32 object-cover rounded-lg border border-gray-200"
+                    />
+                  ) : (
+                    getFileIcon()
+                  )}
+                  <div className="text-left">
+                    <p className="font-medium text-gray-800">{file.name}</p>
+                    <p className="text-sm text-gray-500">{getFileSize(file.size)}</p>
+                    <p className="text-sm text-gray-500">{file.type}</p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-center gap-3">
+                  <button
+                    onClick={handleRemoveFile}
+                    className="px-4 py-2 text-sm bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition"
+                  >
+                    <Trash2 className="w-4 h-4 inline mr-1" />
+                    Hapus File
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <Upload className="w-12 h-12 text-gray-300 mx-auto" />
+                <div>
+                  <p className="text-gray-500">Seret & drop file di sini</p>
+                  <p className="text-sm text-gray-400">atau klik untuk memilih file</p>
+                </div>
+                <input
+                  type="file"
+                  onChange={handleFileChange}
+                  className="hidden"
+                  id="fileInput"
+                  accept=".jpg,.jpeg,.png,.pdf"
+                />
+                <label
+                  htmlFor="fileInput"
+                  className="inline-block px-6 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition cursor-pointer"
+                >
+                  Pilih File
+                </label>
+>>>>>>> 263e32c (feat: SICAKEP v2.0 - Integrasi Supabase & fitur lengkap)
               </div>
             )}
           </div>
+          <p className="text-xs text-gray-400 mt-2">
+            Maksimal ukuran file: {MAX_FILE_SIZE / 1024 / 1024}MB
+          </p>
+        </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-            <div className="text-sm text-gray-500">
-              Dokumen akan ditambahkan ke kategori <span className="font-semibold text-gray-700">{category.nama}</span>
+        {/* Progress Bar */}
+        {uploadProgress > 0 && uploadProgress < 100 && (
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm text-gray-600">
+              <span>Mengupload...</span>
+              <span>{uploadProgress}%</span>
             </div>
+            <div className="w-full bg-gray-200 rounded-full h-2.5">
+              <div
+                className="bg-teal-600 h-2.5 rounded-full transition-all duration-300"
+                style={{ width: `${uploadProgress}%` }}
+              ></div>
+            </div>
+<<<<<<< HEAD
 
             <button
               type="submit"
@@ -338,16 +686,37 @@ export default function UploadDokumen() {
               <UploadCloud className="w-4 h-4" />
               {loading ? "Mengupload..." : "Simpan Dokumen"}
             </button>
+=======
+>>>>>>> 263e32c (feat: SICAKEP v2.0 - Integrasi Supabase & fitur lengkap)
           </div>
-        </form>
+        )}
+
+        {/* Submit Button */}
+        <button
+          onClick={handleUpload}
+          disabled={loading || !file || !selectedPegawai || !selectedKategori}
+          className="w-full py-3 bg-gradient-to-r from-teal-600 to-blue-600 text-white font-medium rounded-lg hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {loading ? (
+            <span className="flex items-center justify-center gap-2">
+              <Loader2 className="w-5 h-5 animate-spin" />
+              Uploading...
+            </span>
+          ) : (
+            <span className="flex items-center justify-center gap-2">
+              <Upload className="w-5 h-5" />
+              Upload Dokumen
+            </span>
+          )}
+        </button>
       </div>
 
-      {isSubmitted && (
-        <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-green-800 flex items-center gap-3">
-          <CheckCircle2 className="w-5 h-5" />
-          Dokumen berhasil diunggah dan dikirim ke kategori ini.
-        </div>
-      )}
+      {/* Info */}
+      <div className="bg-teal-50 rounded-lg p-4 border border-teal-200">
+        <p className="text-sm text-teal-800">
+          💡 File yang sudah diupload akan tersimpan di Supabase Storage dan bisa diakses melalui link publik.
+        </p>
+      </div>
     </div>
   );
 }

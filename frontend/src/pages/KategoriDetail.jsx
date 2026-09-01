@@ -1,6 +1,7 @@
 // src/pages/EmployeeDetail.jsx
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+<<<<<<< HEAD
 import { supabase } from "../supabase";
 import {
   ArrowLeft, Upload, FileText, Download, Trash2, User, Briefcase,
@@ -11,20 +12,48 @@ import {
 // 14 Kategori Dokumen
 const KATEGORI = [
   { id: 1, nama: "SK Pangkat (Mulai CPNS)" },
+=======
+import { 
+  ArrowLeft, Upload, FileText, Download, Trash2, Eye,
+  CheckCircle, Clock, AlertCircle, Loader2
+} from "lucide-react";
+import { supabase } from "../supabase";
+
+// ✅ MAPPING KATEGORI (14 kategori)
+const KATEGORI_LIST = [
+  { id: 1, nama: "SK Pangkat" },
+>>>>>>> 263e32c (feat: SICAKEP v2.0 - Integrasi Supabase & fitur lengkap)
   { id: 2, nama: "SK Fungsional" },
   { id: 3, nama: "Data Pribadi" },
   { id: 4, nama: "Riwayat Pendidikan" },
   { id: 5, nama: "Uraian Tugas" },
+<<<<<<< HEAD
   { id: 6, nama: "SPK RKK (Khusus Nakes)" },
   { id: 7, nama: "Penilaian Kinerja (SKP)" },
+=======
+  { id: 6, nama: "SPK RKK" },
+  { id: 7, nama: "Penilaian Kinerja" },
+>>>>>>> 263e32c (feat: SICAKEP v2.0 - Integrasi Supabase & fitur lengkap)
   { id: 8, nama: "SPMT" },
   { id: 9, nama: "Orientasi" },
   { id: 10, nama: "KGB" },
   { id: 11, nama: "Pengembangan Kompetensi" },
   { id: 12, nama: "Riwayat Jabatan" },
   { id: 13, nama: "Check Up" },
+<<<<<<< HEAD
   { id: 14, nama: "Lain-lain" },
 ];
+=======
+  { id: 14, nama: "Lain-lain" }
+];
+
+// ✅ MAPPING STATUS
+const STATUS_MAP = {
+  verified: { lbl: "Terverifikasi", cls: "bg-green-100 text-green-700" },
+  pending: { lbl: "Menunggu", cls: "bg-yellow-100 text-yellow-700" },
+  rejected: { lbl: "Perlu Revisi", cls: "bg-red-100 text-red-700" },
+};
+>>>>>>> 263e32c (feat: SICAKEP v2.0 - Integrasi Supabase & fitur lengkap)
 
 const documentTypes = KATEGORI.map(k => k.nama);
 
@@ -257,12 +286,21 @@ export default function EmployeeDetail() {
   const navigate = useNavigate();
   const [employee, setEmployee] = useState(null);
   const [documents, setDocuments] = useState([]);
+<<<<<<< HEAD
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showAllBio, setShowAllBio] = useState(false);
+=======
+  const [kategori, setKategori] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [stats, setStats] = useState({ total: 0, verified: 0, pending: 0, rejected: 0 });
+  const [deleting, setDeleting] = useState(null);
+>>>>>>> 263e32c (feat: SICAKEP v2.0 - Integrasi Supabase & fitur lengkap)
 
   // Ambil data pegawai dari Supabase
   useEffect(() => {
+<<<<<<< HEAD
     const fetchEmployee = async () => {
       setIsLoading(true);
       try {
@@ -393,20 +431,119 @@ export default function EmployeeDetail() {
     } catch (error) {
       console.error("Delete error:", error);
       alert("❌ Gagal hapus dokumen: " + error.message);
+=======
+    const kat = KATEGORI_LIST.find(k => k.id === parseInt(id));
+    if (kat) {
+      setKategori(kat);
+      fetchDocuments(kat.id);
+    } else {
+      setError("Kategori tidak ditemukan");
+      setLoading(false);
+    }
+  }, [id]);
+
+  // ✅ FETCH DOKUMEN DARI SUPABASE
+  const fetchDocuments = async (categoryId) => {
+    setLoading(true);
+    setError("");
+    try {
+      const { data, error } = await supabase
+        .from("dokumen")
+        .select(`
+          *,
+          pegawai:employee_id (
+            id,
+            full_name,
+            nip,
+            work_unit
+          )
+        `)
+        .eq("category", categoryId)
+        .order("uploaded_at", { ascending: false });
+
+      if (error) throw error;
+
+      // Format data
+      const formattedDocs = data.map(doc => ({
+        id: doc.id,
+        name: doc.name || "Dokumen",
+        type: doc.type || "pdf",
+        file_url: doc.file_url || "",
+        file_path: doc.file_path || "",
+        status: doc.status || "pending",
+        uploaded_at: doc.uploaded_at ? new Date(doc.uploaded_at).toLocaleDateString("id-ID") : "-",
+        employee: doc.pegawai?.full_name || "Tidak diketahui",
+        employee_id: doc.employee_id,
+        nip: doc.pegawai?.nip || "-",
+        unit: doc.pegawai?.work_unit || "-",
+        number: doc.number || "-"
+      }));
+
+      setDocuments(formattedDocs);
+
+      // Hitung statistik
+      const verified = formattedDocs.filter(d => d.status === "verified").length;
+      const pending = formattedDocs.filter(d => d.status === "pending").length;
+      const rejected = formattedDocs.filter(d => d.status === "rejected").length;
+      setStats({
+        total: formattedDocs.length,
+        verified,
+        pending,
+        rejected
+      });
+
+    } catch (error) {
+      console.error("Error fetching documents:", error);
+      setError("Gagal memuat data dokumen");
+    } finally {
+      setLoading(false);
+>>>>>>> 263e32c (feat: SICAKEP v2.0 - Integrasi Supabase & fitur lengkap)
     }
   };
 
-  // ============================================
-  // FUNGSI DOWNLOAD DOKUMEN
-  // ============================================
+  // ✅ HAPUS DOKUMEN
+  const handleDeleteDoc = async (docId, docName) => {
+    if (!window.confirm(`Yakin ingin menghapus dokumen "${docName}"?`)) return;
+    
+    setDeleting(docId);
+    try {
+      const { error } = await supabase
+        .from("dokumen")
+        .delete()
+        .eq("id", docId);
+
+      if (error) throw error;
+
+      await fetchDocuments(parseInt(id));
+      alert("✅ Dokumen berhasil dihapus!");
+
+    } catch (error) {
+      console.error("Error deleting document:", error);
+      alert("❌ Gagal menghapus dokumen: " + error.message);
+    } finally {
+      setDeleting(null);
+    }
+  };
+
+  // ✅ LIHAT PEGAWAI
+  const handleViewEmployee = (doc) => {
+    if (doc.employee_id) {
+      navigate(`/employees/${doc.employee_id}`);
+    } else {
+      alert("Data pegawai tidak ditemukan");
+    }
+  };
+
+  // ✅ DOWNLOAD DOKUMEN
   const handleDownload = (doc) => {
     if (doc.file_url) {
-      window.open(doc.file_url, '_blank');
+      window.open(doc.file_url, "_blank");
     } else {
-      alert(`📥 Download file: ${doc.name}`);
+      alert("📥 File tidak tersedia untuk didownload");
     }
   };
 
+<<<<<<< HEAD
   // ============================================
   // FUNGSI PREVIEW DOKUMEN (MATA)
   // ============================================
@@ -434,6 +571,29 @@ export default function EmployeeDetail() {
           className="mt-4 text-teal-600 hover:underline dark:text-teal-400"
         >
           Kembali ke daftar pegawai
+=======
+  // ✅ UPLOAD DOKUMEN
+  const handleUpload = () => {
+    navigate(`/kategori/${id}/upload`);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-3">
+        <Loader2 className="w-8 h-8 text-teal-600 animate-spin" />
+        <p className="text-gray-500 text-sm">Memuat dokumen...</p>
+      </div>
+    );
+  }
+
+  if (error || !kategori) {
+    return (
+      <div className="p-6 text-center">
+        <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+        <p className="text-gray-500">{error || "Kategori tidak ditemukan"}</p>
+        <button onClick={() => navigate("/dashboard")} className="mt-4 text-teal-600 hover:underline">
+          Kembali ke Dashboard
+>>>>>>> 263e32c (feat: SICAKEP v2.0 - Integrasi Supabase & fitur lengkap)
         </button>
       </div>
     );
@@ -461,6 +621,7 @@ export default function EmployeeDetail() {
         Kembali
       </button>
 
+<<<<<<< HEAD
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Kolom Kiri - Info Pegawai */}
         <div className="lg:col-span-1">
@@ -494,8 +655,18 @@ export default function EmployeeDetail() {
                   : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300"
                 }`}>
                 {employee.status === "aktif" ? "🟢 Aktif" : "🟡 Cuti"}
+=======
+      {/* Header */}
+      <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-mono bg-teal-100 text-teal-700 px-2 py-0.5 rounded">
+                {String(kategori.id).padStart(2, "0")}
+>>>>>>> 263e32c (feat: SICAKEP v2.0 - Integrasi Supabase & fitur lengkap)
               </span>
             </div>
+<<<<<<< HEAD
 
             <div className="border-t dark:border-gray-700 pt-4 space-y-3">
               {/* BIODATA UTAMA */}
@@ -645,6 +816,91 @@ export default function EmployeeDetail() {
                         </div>
                         <div className="flex gap-2">
                           {/* 👁️ TOMBOL PREVIEW - MATA */}
+=======
+            <p className="text-gray-500 text-sm mt-1">
+              {stats.total} dokumen terupload
+            </p>
+          </div>
+          <button
+            onClick={handleUpload}
+            className="bg-gradient-to-r from-teal-600 to-blue-600 text-white px-4 py-2 rounded-lg hover:shadow-lg transition flex items-center gap-2"
+          >
+            <Upload className="w-4 h-4" />
+            Unggah Dokumen
+          </button>
+        </div>
+      </div>
+
+      {/* Statistik */}
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        <div className="bg-white rounded-xl shadow-sm p-4 border-l-4 border-teal-600">
+          <p className="text-xs text-gray-500">Total Dokumen</p>
+          <p className="text-2xl font-bold text-gray-800">{stats.total}</p>
+        </div>
+        <div className="bg-white rounded-xl shadow-sm p-4 border-l-4 border-green-600">
+          <p className="text-xs text-gray-500">Terverifikasi</p>
+          <p className="text-2xl font-bold text-green-700">{stats.verified}</p>
+        </div>
+        <div className="bg-white rounded-xl shadow-sm p-4 border-l-4 border-yellow-600">
+          <p className="text-xs text-gray-500">Menunggu</p>
+          <p className="text-2xl font-bold text-yellow-700">{stats.pending}</p>
+        </div>
+        <div className="bg-white rounded-xl shadow-sm p-4 border-l-4 border-red-600">
+          <p className="text-xs text-gray-500">Perlu Revisi</p>
+          <p className="text-2xl font-bold text-red-700">{stats.rejected}</p>
+        </div>
+      </div>
+
+      {/* Tabel Dokumen */}
+      <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
+        {documents.length === 0 ? (
+          <div className="p-12 text-center text-gray-500">
+            <FileText className="w-16 h-16 mx-auto text-gray-300 mb-4" />
+            <p className="text-lg font-medium">Belum ada dokumen</p>
+            <p className="text-sm mt-1">Pada kategori <strong>{kategori.nama}</strong></p>
+            <p className="text-sm">Gunakan tombol <strong>Unggah Dokumen</strong> untuk menambahkan berkas pertama.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Dokumen</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pegawai</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">NIP</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tanggal</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {documents.map((doc) => {
+                  const status = STATUS_MAP[doc.status] || STATUS_MAP.pending;
+                  return (
+                    <tr key={doc.id} className="hover:bg-gray-50 transition">
+                      <td className="px-4 py-3">
+                        <div className="font-medium text-gray-800">{doc.type?.toUpperCase() || "FILE"}</div>
+                        <div className="text-xs text-gray-400 truncate max-w-[200px]">{doc.name}</div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <button
+                          onClick={() => handleViewEmployee(doc)}
+                          className="font-medium text-blue-600 hover:text-blue-800 hover:underline text-left cursor-pointer"
+                        >
+                          {doc.employee}
+                        </button>
+                        <div className="text-xs text-gray-400">{doc.unit}</div>
+                      </td>
+                      <td className="px-4 py-3 font-mono text-sm text-gray-600">{doc.nip}</td>
+                      <td className="px-4 py-3 text-sm text-gray-600">{doc.uploaded_at}</td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-1 text-xs rounded-full ${status.cls}`}>
+                          {status.lbl}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex gap-2">
+>>>>>>> 263e32c (feat: SICAKEP v2.0 - Integrasi Supabase & fitur lengkap)
                           <button
                             onClick={() => handlePreviewDoc(doc)}
                             className="p-2 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/30 rounded transition"
@@ -652,7 +908,6 @@ export default function EmployeeDetail() {
                           >
                             <Eye className="w-4 h-4" />
                           </button>
-                          {/* 📥 TOMBOL DOWNLOAD */}
                           <button
                             onClick={() => handleDownload(doc)}
                             className="p-2 text-teal-600 hover:bg-teal-50 dark:text-teal-400 dark:hover:bg-teal-900/30 rounded transition"
@@ -660,13 +915,22 @@ export default function EmployeeDetail() {
                           >
                             <Download className="w-4 h-4" />
                           </button>
-                          {/* 🗑️ TOMBOL HAPUS */}
                           <button
+<<<<<<< HEAD
                             onClick={() => handleDeleteDoc(doc.id, doc.name, filePath)}
                             className="p-2 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30 rounded transition"
+=======
+                            onClick={() => handleDeleteDoc(doc.id, doc.name)}
+                            disabled={deleting === doc.id}
+                            className="p-1 text-red-600 hover:bg-red-50 rounded transition disabled:opacity-50"
+>>>>>>> 263e32c (feat: SICAKEP v2.0 - Integrasi Supabase & fitur lengkap)
                             title="Hapus"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            {deleting === doc.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="w-4 h-4" />
+                            )}
                           </button>
                         </div>
                       </div>
@@ -679,6 +943,7 @@ export default function EmployeeDetail() {
         </div>
       </div>
 
+<<<<<<< HEAD
       {/* Modal Upload */}
       <UploadModal
         isOpen={isUploadModalOpen}
@@ -698,6 +963,12 @@ export default function EmployeeDetail() {
           animation: fadeIn 0.25s ease-out;
         }
       `}</style>
+=======
+      {/* Footer Info */}
+      <div className="text-xs text-gray-400 text-center">
+        Menampilkan {documents.length} dokumen dari kategori {kategori.nama}
+      </div>
+>>>>>>> 263e32c (feat: SICAKEP v2.0 - Integrasi Supabase & fitur lengkap)
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { 
   Users, FileText, UserCheck, UserX, Clock, Building, Briefcase, 
 <<<<<<< HEAD
+<<<<<<< HEAD
   Upload, Plus, FileUp 
 } from "lucide-react";
 import { supabase } from "../supabase";
@@ -20,6 +21,12 @@ import {
 import dummyEmployees from "../data/dummyEmployees";
 import SearchBar from "../components/SearchBar"; 
 >>>>>>> 280cfd6ad0c3277b26a2895209b81185c46b7dfd
+=======
+  Upload, Plus, FileUp, Loader2
+} from "lucide-react";
+import { supabase } from "../supabase";
+import SearchBar from "../components/SearchBar";
+>>>>>>> 263e32c (feat: SICAKEP v2.0 - Integrasi Supabase & fitur lengkap)
 
 const KATEGORI = [
   { id: 1, nama: "SK Pangkat (Mulai CPNS)" },
@@ -51,8 +58,12 @@ export default function Dashboard() {
     recentEmployees: [],
     documentByType: {},
     unitDistribution: {},
+    completeEmployees: 0,
+    incompleteEmployees: 0,
   });
-
+  const [pegawai, setPegawai] = useState([]);
+  const [dokumen, setDokumen] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 <<<<<<< HEAD
   const [pegawaiList, setPegawaiList] = useState([]);
@@ -62,6 +73,7 @@ export default function Dashboard() {
 
   // Ambil data dari Supabase
   useEffect(() => {
+<<<<<<< HEAD
     const fetchStats = async () => {
       try {
         // 1. Ambil pegawai
@@ -127,6 +139,76 @@ export default function Dashboard() {
 =======
   const filteredEmployees = dummyEmployees.filter((emp) => {
 >>>>>>> 280cfd6ad0c3277b26a2895209b81185c46b7dfd
+=======
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      // ✅ FETCH PEGAWAI
+      const { data: pegawaiData, error: pegawaiError } = await supabase
+        .from("pegawai")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (pegawaiError) throw pegawaiError;
+
+      // ✅ FETCH DOKUMEN
+      const { data: dokumenData, error: dokumenError } = await supabase
+        .from("dokumen")
+        .select("*");
+
+      if (dokumenError) throw dokumenError;
+
+      setPegawai(pegawaiData || []);
+      setDokumen(dokumenData || []);
+
+      // ✅ HITUNG STATISTIK
+      const total = pegawaiData?.length || 0;
+      const active = pegawaiData?.filter(p => p.status?.toLowerCase() === "aktif").length || 0;
+      const inactive = pegawaiData?.filter(p => p.status?.toLowerCase() === "cuti").length || 0;
+      const totalDocs = dokumenData?.length || 0;
+
+      // ✅ DISTRIBUSI PER UNIT
+      const unitCount = {};
+      pegawaiData?.forEach(emp => {
+        if (emp.work_unit) {
+          unitCount[emp.work_unit] = (unitCount[emp.work_unit] || 0) + 1;
+        }
+      });
+
+      // ✅ 5 PEGAWAI TERBARU
+      const recent = pegawaiData?.slice(0, 5) || [];
+
+      // ✅ KELENGKAPAN (asumsi: pegawai lengkap kalau punya minimal 3 dokumen)
+      const complete = pegawaiData?.filter(p => {
+        const docCount = dokumenData?.filter(d => d.employee_id === p.id).length || 0;
+        return docCount >= 3;
+      }).length || 0;
+
+      setStats({
+        totalEmployees: total,
+        totalDocuments: totalDocs,
+        activeEmployees: active,
+        inactiveEmployees: inactive,
+        recentEmployees: recent,
+        documentByType: {},
+        unitDistribution: unitCount,
+        completeEmployees: complete,
+        incompleteEmployees: total - complete,
+      });
+
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ SEARCH
+  const filteredEmployees = pegawai.filter((emp) => {
+>>>>>>> 263e32c (feat: SICAKEP v2.0 - Integrasi Supabase & fitur lengkap)
     return (
       emp.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (emp.nip && emp.nip.includes(searchTerm))
@@ -137,6 +219,7 @@ export default function Dashboard() {
     window.location.href = `/employees/${employee.id}`;
   };
 
+<<<<<<< HEAD
   // Data untuk diagram
   const statusData = [
     { name: 'Aktif', value: stats.activeEmployees, fill: '#10B981' },
@@ -184,12 +267,31 @@ export default function Dashboard() {
       fullName: kat.nama
     };
   });
+=======
+  // ✅ HITUNG KATEGORI
+  const getCategoryCount = (categoryId) => {
+    return dokumen.filter(d => d.category === categoryId).length;
+  };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-3">
+        <Loader2 className="w-8 h-8 text-teal-600 animate-spin" />
+        <p className="text-gray-500 text-sm">Memuat dashboard...</p>
+      </div>
+    );
+  }
+>>>>>>> 263e32c (feat: SICAKEP v2.0 - Integrasi Supabase & fitur lengkap)
 
   return (
     <div className="space-y-6">
       
 <<<<<<< HEAD
+<<<<<<< HEAD
       {/* HEADER DENGAN SEARCH BAR */}
+=======
+      {/* HEADER */}
+>>>>>>> 263e32c (feat: SICAKEP v2.0 - Integrasi Supabase & fitur lengkap)
       <div className="bg-gradient-to-r from-teal-700 to-teal-800 rounded-xl p-6 text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
 =======
       {/* --- HEADER DENGAN SEARCH BAR TERINTEGRASI --- */}
@@ -213,6 +315,9 @@ export default function Dashboard() {
       {/* Stats Cards dengan Icon lebih menarik */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 263e32c (feat: SICAKEP v2.0 - Integrasi Supabase & fitur lengkap)
         <div className="bg-white rounded-xl shadow-sm p-5 border-l-4 border-teal-600">
 =======
         <div className="bg-gradient-to-br from-white to-teal-50 rounded-xl shadow-sm p-5 border border-teal-100 hover:shadow-md transition-all duration-300 transform hover:-translate-y-1">
@@ -233,6 +338,9 @@ export default function Dashboard() {
         </div>
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 263e32c (feat: SICAKEP v2.0 - Integrasi Supabase & fitur lengkap)
         <div className="bg-white rounded-xl shadow-sm p-5 border-l-4 border-green-600">
 =======
         <div className="bg-gradient-to-br from-white to-emerald-50 rounded-xl shadow-sm p-5 border border-emerald-100 hover:shadow-md transition-all duration-300 transform hover:-translate-y-1">
@@ -242,6 +350,7 @@ export default function Dashboard() {
               <p className="text-gray-500 text-sm font-medium">Berkas lengkap</p>
               <p className="text-3xl font-bold text-gray-800">{stats.completeEmployees}</p>
 <<<<<<< HEAD
+<<<<<<< HEAD
               <p className="text-xs text-gray-400 mt-1">{stats.totalEmployees > 0 ? Math.round(stats.completeEmployees / stats.totalEmployees * 100) : 0}% dari total pegawai</p>
 =======
               <p className="text-xs text-emerald-600 mt-1">{Math.round(stats.completeEmployees / stats.totalEmployees * 100)}% dari total pegawai</p>
@@ -249,11 +358,17 @@ export default function Dashboard() {
             <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-200">
               <UserCheck className="w-6 h-6 text-white" />
 >>>>>>> 280cfd6ad0c3277b26a2895209b81185c46b7dfd
+=======
+              <p className="text-xs text-gray-400 mt-1">{stats.totalEmployees ? Math.round(stats.completeEmployees / stats.totalEmployees * 100) : 0}% dari total pegawai</p>
+>>>>>>> 263e32c (feat: SICAKEP v2.0 - Integrasi Supabase & fitur lengkap)
             </div>
           </div>
         </div>
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 263e32c (feat: SICAKEP v2.0 - Integrasi Supabase & fitur lengkap)
         <div className="bg-white rounded-xl shadow-sm p-5 border-l-4 border-amber-600">
 =======
         <div className="bg-gradient-to-br from-white to-amber-50 rounded-xl shadow-sm p-5 border border-amber-100 hover:shadow-md transition-all duration-300 transform hover:-translate-y-1">
@@ -271,12 +386,16 @@ export default function Dashboard() {
         </div>
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 263e32c (feat: SICAKEP v2.0 - Integrasi Supabase & fitur lengkap)
         <div className="bg-white rounded-xl shadow-sm p-5 border-l-4 border-red-600">
 =======
         <div className="bg-gradient-to-br from-white to-rose-50 rounded-xl shadow-sm p-5 border border-rose-100 hover:shadow-md transition-all duration-300 transform hover:-translate-y-1">
 >>>>>>> 280cfd6ad0c3277b26a2895209b81185c46b7dfd
           <div className="flex items-center justify-between">
             <div>
+<<<<<<< HEAD
               <p className="text-gray-500 text-sm font-medium">KGB jatuh tempo</p>
               <p className="text-3xl font-bold text-gray-800">18</p>
               <p className="text-xs text-rose-600 mt-1 flex items-center gap-1">
@@ -287,6 +406,13 @@ export default function Dashboard() {
             <div className="w-12 h-12 bg-gradient-to-br from-rose-500 to-rose-600 rounded-lg flex items-center justify-center shadow-lg shadow-rose-200">
               <Clock className="w-6 h-6 text-white" />
             </div>
+=======
+              <p className="text-gray-500 text-sm">Total Dokumen</p>
+              <p className="text-3xl font-bold text-gray-800">{stats.totalDocuments}</p>
+              <p className="text-xs text-gray-400 mt-1">Terupload</p>
+            </div>
+            <FileText className="w-10 h-10 text-red-600 opacity-70" />
+>>>>>>> 263e32c (feat: SICAKEP v2.0 - Integrasi Supabase & fitur lengkap)
           </div>
         </div>
       </div>
@@ -515,6 +641,7 @@ export default function Dashboard() {
         <div className="p-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {KATEGORI.map((kat) => {
+<<<<<<< HEAD
               // Hitung jumlah pegawai yang punya dokumen dengan type = kat.nama
               const count = pegawaiList.filter(emp => 
                 emp.documents?.some(doc => doc.type === kat.nama)
@@ -541,6 +668,10 @@ export default function Dashboard() {
               }
               
 >>>>>>> 280cfd6ad0c3277b26a2895209b81185c46b7dfd
+=======
+              const count = getCategoryCount(kat.id);
+              const pct = stats.totalEmployees ? Math.round((count / stats.totalEmployees) * 100) : 0;
+>>>>>>> 263e32c (feat: SICAKEP v2.0 - Integrasi Supabase & fitur lengkap)
               return (
                 <button
                   key={kat.id}
@@ -557,6 +688,7 @@ export default function Dashboard() {
                     </span>
                     <span className="text-sm font-medium text-gray-800 line-clamp-1">{kat.nama}</span>
                   </div>
+<<<<<<< HEAD
                   <div className="mt-2 h-2 bg-gray-200 rounded-full overflow-hidden">
                     <div 
                       className={`h-full rounded-full transition-all duration-500 ${
@@ -577,6 +709,12 @@ export default function Dashboard() {
                       {pct}%
                     </span>
                   </p>
+=======
+                  <div className="mt-2 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                    <div className="h-full bg-teal-600 rounded-full" style={{ width: `${Math.min(pct, 100)}%` }} />
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1">{count} dokumen</p>
+>>>>>>> 263e32c (feat: SICAKEP v2.0 - Integrasi Supabase & fitur lengkap)
                 </button>
               );
             })}
@@ -596,6 +734,7 @@ export default function Dashboard() {
             </h2>
           </div>
           <div className="divide-y">
+<<<<<<< HEAD
             {stats.recentEmployees.map((emp, index) => (
               <div key={emp.id} className="px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
                 <div className="flex items-center gap-3">
@@ -607,10 +746,16 @@ export default function Dashboard() {
                   }`}>
                     {emp.full_name.charAt(0)}
                   </div>
+=======
+            {stats.recentEmployees.length > 0 ? (
+              stats.recentEmployees.map((emp) => (
+                <div key={emp.id} className="px-6 py-4 flex items-center justify-between hover:bg-gray-50">
+>>>>>>> 263e32c (feat: SICAKEP v2.0 - Integrasi Supabase & fitur lengkap)
                   <div>
                     <p className="font-medium text-gray-800">{emp.full_name}</p>
                     <p className="text-sm text-gray-500">{emp.position} • {emp.work_unit}</p>
                   </div>
+<<<<<<< HEAD
                 </div>
                 <span className={`px-3 py-1 text-xs rounded-full ${
                   emp.status === "aktif" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
@@ -620,6 +765,16 @@ export default function Dashboard() {
               </div>
             ))}
             {stats.recentEmployees.length === 0 && (
+=======
+                  <span className={`px-2 py-1 text-xs rounded-full ${
+                    emp.status === "aktif" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
+                  }`}>
+                    {emp.status === "aktif" ? "Aktif" : "Cuti"}
+                  </span>
+                </div>
+              ))
+            ) : (
+>>>>>>> 263e32c (feat: SICAKEP v2.0 - Integrasi Supabase & fitur lengkap)
               <div className="p-6 text-center text-gray-500">Belum ada data pegawai</div>
             )}
           </div>
@@ -635,6 +790,7 @@ export default function Dashboard() {
           </div>
           <div className="p-6">
             <div className="grid grid-cols-2 gap-3">
+<<<<<<< HEAD
               {Object.entries(stats.unitDistribution).sort((a, b) => b[1] - a[1]).map(([unit, count], index) => (
                 <div key={unit} className={`bg-gradient-to-br from-white to-${COLORS[index % COLORS.length].replace('#', '')}50 rounded-lg p-3 text-center hover:shadow-md transition-all duration-200 hover:-translate-y-1 border border-${COLORS[index % COLORS.length].replace('#', '')}100`}>
                   <Briefcase className={`w-5 h-5 mx-auto text-${COLORS[index % COLORS.length].replace('#', '')} mb-1`} />
@@ -643,24 +799,51 @@ export default function Dashboard() {
                   <p className="text-xs text-gray-400">pegawai</p>
                 </div>
               ))}
+=======
+              {Object.entries(stats.unitDistribution).length > 0 ? (
+                Object.entries(stats.unitDistribution).map(([unit, count]) => (
+                  <div key={unit} className="bg-gray-50 rounded-lg p-3 text-center hover:shadow transition">
+                    <Briefcase className="w-5 h-5 mx-auto text-teal-600 mb-1" />
+                    <p className="font-semibold text-gray-800 text-sm truncate">{unit}</p>
+                    <p className="text-xl font-bold text-teal-600">{count}</p>
+                    <p className="text-xs text-gray-400">pegawai</p>
+                  </div>
+                ))
+              ) : (
+                <div className="col-span-2 text-center text-gray-500 py-4">Belum ada data unit</div>
+              )}
+>>>>>>> 263e32c (feat: SICAKEP v2.0 - Integrasi Supabase & fitur lengkap)
             </div>
           </div>
         </div>
       </div>
 
+<<<<<<< HEAD
       {/* Upload Dokumen */}
       <div className="mt-4">
         <div
           className="bg-gradient-to-br from-white to-teal-50 rounded-xl shadow-sm border-2 border-dashed border-teal-300 hover:border-teal-500 hover:bg-teal-50/50 transition-all duration-300 p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:shadow-lg"
           onClick={() => window.location.href = "/kategori/1/upload"}
+=======
+      {/* Upload Button */}
+      <div className="mt-4">
+        <div
+          className="bg-white rounded-xl shadow-sm border border-dashed border-2 border-gray-300 hover:border-teal-400 hover:bg-teal-50 transition-colors p-8 flex flex-col items-center justify-center text-center cursor-pointer"
+          onClick={() => window.location.href = "/dokumen/upload"}
+>>>>>>> 263e32c (feat: SICAKEP v2.0 - Integrasi Supabase & fitur lengkap)
         >
           <div className="w-16 h-16 bg-gradient-to-br from-teal-500 to-teal-600 rounded-full flex items-center justify-center mb-4 shadow-lg shadow-teal-200 animate-pulse">
             <Upload className="w-8 h-8 text-white" />
           </div>
           <h3 className="text-lg font-semibold text-gray-800">Unggah Dokumen Baru</h3>
           <p className="text-sm text-gray-500 mt-1">Klik di sini untuk memilih kategori dan unggah dokumen pegawai</p>
+<<<<<<< HEAD
           <button className="mt-4 bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white px-6 py-2 rounded-lg font-medium transition-all shadow-md shadow-teal-200 flex items-center gap-2">
             <Plus className="w-4 h-4" /> Pilih Kategori
+=======
+          <button className="mt-4 bg-teal-700 hover:bg-teal-800 text-white px-6 py-2 rounded-lg font-medium transition-colors flex items-center gap-2">
+            <Plus className="w-4 h-4" /> Upload Sekarang
+>>>>>>> 263e32c (feat: SICAKEP v2.0 - Integrasi Supabase & fitur lengkap)
           </button>
         </div>
       </div>
