@@ -1,12 +1,12 @@
 // src/pages/EmployeeDetail.jsx
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { supabase } from "../supabase";
 import { 
   ArrowLeft, Upload, FileText, Download, Trash2, User, Briefcase, 
   Calendar, Phone, Mail, MapPin, X, Loader2, Eye, EyeOff,
-  Award, GraduationCap, CreditCard, Users, Building2
+  Award, GraduationCap, CreditCard, Users, Building2 
 } from "lucide-react";
+import { supabase } from "../supabase";
 
 // 14 Kategori Dokumen
 const KATEGORI = [
@@ -215,11 +215,12 @@ export default function EmployeeDetail() {
   const [isLoading, setIsLoading] = useState(true);
   const [showAllBio, setShowAllBio] = useState(false);
 
-  // Ambil data pegawai dari Supabase
+  // Ambil data pegawai & dokumen dari Supabase
   useEffect(() => {
     const fetchEmployee = async () => {
       setIsLoading(true);
       try {
+        // 1. Ambil data pegawai
         const { data: empData, error: empError } = await supabase
           .from("pegawai")
           .select("*")
@@ -229,11 +230,12 @@ export default function EmployeeDetail() {
         if (empError) throw empError;
         setEmployee(empData);
 
+        // 2. Ambil dokumen pegawai
         const { data: docData, error: docError } = await supabase
           .from("dokumen")
           .select("*")
-          .eq("pegawai_id", id)
-          .order("tgl_upload", { ascending: false });
+          .eq("employee_id", id)
+          .order("uploaded_at", { ascending: false });
 
         if (docError) throw docError;
         setDocuments(docData || []);
@@ -260,8 +262,8 @@ export default function EmployeeDetail() {
       const fileName = `${Date.now()}-${employee.id}.${fileExt}`;
       const filePath = `pegawai/${employee.id}/${fileName}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from('documents')
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('dokumen')
         .upload(filePath, file);
 
       if (uploadError) {
@@ -272,19 +274,23 @@ export default function EmployeeDetail() {
       }
 
       const { data: urlData } = supabase.storage
-        .from('documents')
+        .from('dokumen')
         .getPublicUrl(filePath);
 
       const newDoc = {
-        pegawai_id: employee.id,
-        nama: formData.name,
+        id: Date.now(),
+        employee_id: employee.id,
         type: formData.type,
-        kategori_id: parseInt(formData.category) || 1,
-        nomor: formData.number || "-",
-        tgl_upload: new Date().toISOString().split('T')[0],
+        name: formData.name,
+        category: parseInt(formData.category) || 1,
+        number: formData.number || "-",
+        uploaded_at: new Date().toISOString().split('T')[0],
         status: "tunggu",
         file_url: urlData.publicUrl,
         file_path: filePath,
+        file_name: fileName,
+        file_size: file.size,
+        file_type: file.type
       };
 
       const { error: dbError } = await supabase
@@ -298,14 +304,7 @@ export default function EmployeeDetail() {
         return;
       }
 
-      // Refresh data
-      const { data: updatedDocs } = await supabase
-        .from("dokumen")
-        .select("*")
-        .eq("pegawai_id", id)
-        .order("tgl_upload", { ascending: false });
-
-      setDocuments(updatedDocs || []);
+      setDocuments(prev => [newDoc, ...prev]);
       alert("✅ Dokumen berhasil diupload!");
 
     } catch (error) {
@@ -325,7 +324,7 @@ export default function EmployeeDetail() {
     try {
       if (filePath) {
         const { error: deleteError } = await supabase.storage
-          .from('documents')
+          .from('dokumen')
           .remove([filePath]);
 
         if (deleteError) {
@@ -360,7 +359,7 @@ export default function EmployeeDetail() {
     if (doc.file_url) {
       window.open(doc.file_url, '_blank');
     } else {
-      alert(`📥 Download file: ${doc.nama}`);
+      alert(`📥 Download file: ${doc.name}`);
     }
   };
 
@@ -374,19 +373,21 @@ export default function EmployeeDetail() {
       alert(
         `📄 Detail Dokumen\n\n` +
         `Jenis: ${doc.type}\n` +
-        `Nama: ${doc.nama}\n` +
-        `Nomor: ${doc.nomor || '-'}\n` +
-        `Upload: ${doc.tgl_upload}\n` +
+        `Nama: ${doc.name}\n` +
+        `Nomor: ${doc.number || '-'}\n` +
+        `Upload: ${doc.uploaded_at}\n` +
         `Status: ${doc.status || 'Belum diverifikasi'}`
       );
     }
   };
 
+  // ============================================
+  // RENDER
+  // ============================================
   if (isLoading) {
     return (
       <div className="p-6 text-center">
-        <Loader2 className="w-8 h-8 animate-spin text-teal-600 mx-auto" />
-        <p className="text-gray-500 mt-2">Loading...</p>
+        <p className="text-gray-500">Loading...</p>
       </div>
     );
   }
@@ -452,8 +453,8 @@ export default function EmployeeDetail() {
               <div className="w-24 h-24 bg-gradient-to-r from-teal-500 to-blue-500 rounded-full flex items-center justify-center mx-auto">
                 <User className="w-12 h-12 text-white" />
               </div>
-              <h2 className="text-xl font-bold text-gray-800 dark:text-white mt-3">{employee.nama}</h2>
-              <p className="text-gray-500 dark:text-gray-400 text-sm">{employee.jabatan}</p>
+              <h2 className="text-xl font-bold text-gray-800 dark:text-white mt-3">{employee.full_name}</h2>
+              <p className="text-gray-500 dark:text-gray-400 text-sm">{employee.position}</p>
               <span className={`inline-block px-2 py-1 text-xs rounded-full mt-2 ${
                 employee.status === "aktif" 
                   ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300" 
@@ -475,21 +476,21 @@ export default function EmployeeDetail() {
                 <Building2 className="w-4 h-4 text-gray-400 dark:text-gray-500 mt-0.5" />
                 <div>
                   <p className="text-xs text-gray-400 dark:text-gray-500">Unit Kerja</p>
-                  <p className="text-sm text-gray-700 dark:text-gray-300">{employee.unit_kerja}</p>
+                  <p className="text-sm text-gray-700 dark:text-gray-300">{employee.work_unit}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
                 <Calendar className="w-4 h-4 text-gray-400 dark:text-gray-500 mt-0.5" />
                 <div>
                   <p className="text-xs text-gray-400 dark:text-gray-500">Tempat, Tanggal Lahir</p>
-                  <p className="text-sm text-gray-700 dark:text-gray-300">{employee.tempat_lahir}, {employee.tanggal_lahir}</p>
+                  <p className="text-sm text-gray-700 dark:text-gray-300">{employee.birthplace}, {employee.birth_date}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
                 <Phone className="w-4 h-4 text-gray-400 dark:text-gray-500 mt-0.5" />
                 <div>
                   <p className="text-xs text-gray-400 dark:text-gray-500">No. Telepon</p>
-                  <p className="text-sm text-gray-700 dark:text-gray-300">{employee.no_telepon}</p>
+                  <p className="text-sm text-gray-700 dark:text-gray-300">{employee.phone}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -503,7 +504,7 @@ export default function EmployeeDetail() {
                 <MapPin className="w-4 h-4 text-gray-400 dark:text-gray-500 mt-0.5" />
                 <div>
                   <p className="text-xs text-gray-400 dark:text-gray-500">Alamat</p>
-                  <p className="text-sm text-gray-700 dark:text-gray-300">{employee.alamat}</p>
+                  <p className="text-sm text-gray-700 dark:text-gray-300">{employee.address}</p>
                 </div>
               </div>
 
@@ -595,44 +596,41 @@ export default function EmployeeDetail() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {documents.map((doc) => {
-                    const filePath = doc.file_url ? doc.file_url.split('/').pop() : null;
-                    return (
-                      <div key={doc.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                        <div className="flex items-center gap-3">
-                          <FileText className="w-8 h-8 text-blue-500 dark:text-blue-400" />
-                          <div>
-                            <p className="font-medium text-gray-800 dark:text-white">{doc.type}</p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">{doc.nama}</p>
-                            <p className="text-xs text-gray-400 dark:text-gray-500">Upload: {doc.tgl_upload}</p>
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handlePreviewDoc(doc)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/30 rounded transition"
-                            title="Preview Dokumen"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDownload(doc)}
-                            className="p-2 text-teal-600 hover:bg-teal-50 dark:text-teal-400 dark:hover:bg-teal-900/30 rounded transition"
-                            title="Download"
-                          >
-                            <Download className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteDoc(doc.id, doc.nama, doc.file_path)}
-                            className="p-2 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30 rounded transition"
-                            title="Hapus"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                  {documents.map((doc) => (
+                    <div key={doc.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                      <div className="flex items-center gap-3">
+                        <FileText className="w-8 h-8 text-blue-500 dark:text-blue-400" />
+                        <div>
+                          <p className="font-medium text-gray-800 dark:text-white">{doc.type}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{doc.name}</p>
+                          <p className="text-xs text-gray-400 dark:text-gray-500">Upload: {doc.uploaded_at}</p>
                         </div>
                       </div>
-                    );
-                  })}
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handlePreviewDoc(doc)}
+                          className="p-2 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/30 rounded transition"
+                          title="Preview Dokumen"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDownload(doc)}
+                          className="p-2 text-teal-600 hover:bg-teal-50 dark:text-teal-400 dark:hover:bg-teal-900/30 rounded transition"
+                          title="Download"
+                        >
+                          <Download className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteDoc(doc.id, doc.name, doc.file_path)}
+                          className="p-2 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30 rounded transition"
+                          title="Hapus"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
@@ -645,7 +643,7 @@ export default function EmployeeDetail() {
         isOpen={isUploadModalOpen}
         onClose={() => setIsUploadModalOpen(false)}
         onUpload={handleUpload}
-        employeeName={employee.nama}
+        employeeName={employee.full_name}
         isLoading={isLoading}
       />
 
