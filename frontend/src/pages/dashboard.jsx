@@ -15,6 +15,33 @@ import { supabase } from "../supabase";
 import SearchBar from "../components/SearchBar";
 import { useLanguage } from "../context/LanguageContext";
 
+// ✅ TAMBAHAN: KOMPONEN QUICKSTATS
+function QuickStats({ stats }) {
+  const items = [
+    { label: 'Total Pegawai', value: stats.totalEmployees, icon: Users, color: 'bg-teal-500' },
+    { label: 'Dokumen Terupload', value: stats.totalDocuments, icon: FileText, color: 'bg-blue-500' },
+    { label: 'Berkas Lengkap', value: stats.completeEmployees, icon: UserCheck, color: 'bg-green-500' },
+  ];
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {items.map((item, idx) => (
+        <div key={idx} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-gray-100 dark:border-gray-700">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{item.label}</p>
+              <p className="text-2xl font-bold text-gray-800 dark:text-white">{item.value}</p>
+            </div>
+            <div className={`${item.color} p-3 rounded-lg`}>
+              <item.icon className="w-5 h-5 text-white" />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 const KATEGORI = [
   { id: 1, nama: "SK Pangkat (Mulai CPNS)" },
   { id: 2, nama: "SK Fungsional" },
@@ -274,6 +301,9 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* ✅ QUICK STATS (Kartu Ringkasan Cepat) */}
+      <QuickStats stats={stats} />
 
       {/* Chart Selector */}
       <div className="flex flex-wrap gap-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border border-gray-100 dark:border-gray-700">

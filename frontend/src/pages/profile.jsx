@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { User, Mail, Phone, MapPin, Building, Badge, Calendar, Edit2, Save, X, Camera } from "lucide-react";
+import { User, Mail, Phone, MapPin, Building, Badge, Calendar, Edit2, Save, X, Camera, Settings } from "lucide-react";
 import { supabase } from "../supabase";
 
 export default function Profile() {
@@ -172,18 +172,21 @@ export default function Profile() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      {/* Header Card */}
-      <div className="bg-gradient-to-r from-teal-500 to-teal-600 rounded-lg shadow-lg p-8 text-white">
-        <div className="flex items-start justify-between">
+      {/* HEADER CARD - DISAMAKAN DENGAN SETTINGSPAGE */}
+      <div className="bg-gradient-to-r from-gray-700 via-gray-800 to-gray-900 dark:from-gray-800 dark:via-gray-900 dark:to-gray-950 rounded-2xl shadow-xl p-8 text-white relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2"></div>
+        
+        <div className="relative flex items-start justify-between">
           <div className="flex items-center gap-6">
             <div className="relative">
-              <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center text-5xl shadow-lg overflow-hidden">
+              <div className="w-24 h-24 bg-white/10 backdrop-blur border border-white/10 rounded-full flex items-center justify-center text-5xl shadow-lg overflow-hidden">
                 {renderAvatar(isEditing ? editData.avatar : profileData.avatar)}
               </div>
               {isEditing && (
                 <label
                   htmlFor="profile-image-upload"
-                  className="absolute bottom-0 right-0 bg-white text-teal-600 p-2 rounded-full shadow-lg hover:bg-gray-100 transition cursor-pointer"
+                  className="absolute bottom-0 right-0 bg-white text-gray-800 p-2 rounded-full shadow-lg hover:bg-gray-100 transition cursor-pointer"
                   title="Pilih foto profil"
                 >
                   <Camera className="w-4 h-4" />
@@ -199,14 +202,15 @@ export default function Profile() {
             </div>
             <div>
               <h1 className="text-3xl font-bold">{profileData.fullName}</h1>
-              <p className="text-teal-100 text-lg">{profileData.position}</p>
-              <p className="text-teal-100 text-sm mt-1">Rumah Sakit Hardjono</p>
+              <p className="text-gray-300 text-lg">{profileData.position}</p>
+              <p className="text-gray-400 text-sm mt-1">Rumah Sakit Hardjono</p>
             </div>
           </div>
+          
           {!isEditing && (
             <button
               onClick={handleEditToggle}
-              className="flex items-center gap-2 bg-white text-teal-600 px-4 py-2 rounded-lg font-semibold hover:bg-teal-50 transition"
+              className="flex items-center gap-2 bg-white text-gray-800 px-4 py-2 rounded-lg font-semibold hover:bg-gray-100 transition"
             >
               <Edit2 className="w-4 h-4" />
               Edit Profil

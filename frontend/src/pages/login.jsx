@@ -11,10 +11,17 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // ✅ PERBAIKAN: Cek role user yang sudah login agar tidak salah redirect
   useEffect(() => {
     const user = localStorage.getItem('user');
+    const role = localStorage.getItem('role');
+    
     if (user) {
-      navigate('/dashboard');
+      if (role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/dashboard');
+      }
     }
   }, [navigate]);
 
@@ -63,8 +70,12 @@ export default function Login() {
       localStorage.setItem("role", role);
       localStorage.setItem("email", email);
 
-      // 4. Redirect ke dashboard
-      window.location.href = "/dashboard";
+      // 4. ✅ REDIRECT BERDASARKAN ROLE
+      if (role === 'admin') {
+        window.location.href = "/admin"; // Admin langsung ke halaman admin
+      } else {
+        window.location.href = "/dashboard"; // User biasa ke dashboard
+      }
 
     } catch (err) {
       console.error("Login error:", err);

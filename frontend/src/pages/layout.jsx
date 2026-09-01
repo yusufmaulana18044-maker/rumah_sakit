@@ -1,8 +1,10 @@
-// src/components/Layout.jsx (atau src/pages/layout.jsx)
+// src/components/Layout.jsx
 import React from "react";
 import { LogOut, Menu, X, Users, Settings, User, ChevronDown, FileText } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "../supabase";
 
 // 14 Kategori Dokumen
 const KATEGORI = [
@@ -22,14 +24,72 @@ const KATEGORI = [
   { id: 14, nama: "Lain-lain" },
 ];
 
+// Page Transition Component
+const PageTransition = ({ children }) => {
+  const location = useLocation();
+  
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={location.pathname}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ duration: 0.3, ease: "easeInOut" }}
+        className="flex-1"
+      >
+        {children}
+      </motion.div>
+    </AnimatePresence>
+  );
+};
+
 const Layout = ({ children, title = "Dashboard" }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // ✅ State untuk Mobile
+  const [profilePhoto, setProfilePhoto] = useState(null);
+  const [isLoadingPhoto, setIsLoadingPhoto] = useState(true);
   const userMenuRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
   const role = localStorage.getItem("role");
   const username = localStorage.getItem("username");
+  const userId = JSON.parse(localStorage.getItem("user") || "{}")?.id;
+
+  // Ambil foto profil dari Supabase
+  useEffect(() => {
+    const fetchProfilePhoto = async () => {
+      if (!userId) {
+        setIsLoadingPhoto(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("avatar")
+          .eq("user_id", userId)
+          .single();
+
+        if (error) {
+          console.error("Error fetching profile photo:", error);
+          setIsLoadingPhoto(false);
+          return;
+        }
+
+        if (data?.avatar) {
+          setProfilePhoto(data.avatar);
+        }
+      } catch (error) {
+        console.error("Error:", error);
+      } finally {
+        setIsLoadingPhoto(false);
+      }
+    };
+
+    fetchProfilePhoto();
+  }, [userId]);
 
   // Close user menu when clicking outside
   useEffect(() => {
@@ -55,13 +115,53 @@ const Layout = ({ children, title = "Dashboard" }) => {
   const isActive = (path) => location.pathname === path;
   const isKategoriActive = (id) => location.pathname === `/kategori/${id}`;
 
+  // Render Avatar
+  const renderAvatar = () => {
+    if (isLoadingPhoto) {
+      return (
+        <div className="w-10 h-10 bg-gradient-to-r from-teal-500 to-blue-500 rounded-full flex items-center justify-center text-white font-semibold animate-pulse">
+          {username?.[0]?.toUpperCase() || "U"}
+        </div>
+      );
+    }
+
+    if (profilePhoto && profilePhoto.startsWith("data:image/")) {
+      return (
+        <img
+          src={profilePhoto}
+          alt="Profile"
+          className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-md"
+        />
+      );
+    }
+
+    if (profilePhoto && profilePhoto.startsWith("http")) {
+      return (
+        <img
+          src={profilePhoto}
+          alt="Profile"
+          className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-md"
+        />
+      );
+    }
+
+    // Default avatar dengan inisial
+    return (
+      <div className="w-10 h-10 bg-gradient-to-r from-teal-500 to-blue-500 rounded-full flex items-center justify-center text-white font-semibold shadow-md">
+        {username?.[0]?.toUpperCase() || "U"}
+      </div>
+    );
+  };
+
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Sidebar */}
       <aside
         className={`${
           sidebarOpen ? "w-72" : "w-20"
-        } bg-gradient-to-b from-gray-900 to-gray-800 text-white flex flex-col transition-all duration-300 shadow-lg overflow-y-auto`}
+        } bg-gradient-to-b from-gray-900 to-gray-800 text-white flex flex-col transition-all duration-300 shadow-lg overflow-y-auto ${
+          isMobileMenuOpen ? "fixed z-50 h-full" : "hidden md:flex"
+        }`}
       >
         {/* Logo */}
         <div className="p-6 flex items-center gap-3 border-b border-gray-700 hover:bg-gray-800 transition cursor-pointer">
@@ -187,15 +287,32 @@ const Layout = ({ children, title = "Dashboard" }) => {
         </div>
       </aside>
 
+      {/* Overlay untuk Mobile */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <header className="bg-white shadow-sm sticky top-0 z-40 border-b border-gray-200">
+        <header className="bg-white shadow-sm sticky top-0 z-30 border-b border-gray-200">
           <div className="flex items-center justify-between px-6 py-4">
             <div className="flex items-center gap-4">
+              {/* Tombol Hamburger untuk Mobile */}
+              <button 
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="md:hidden p-2 hover:bg-gray-100 rounded-lg"
+              >
+                {isMobileMenuOpen ? <X /> : <Menu />}
+              </button>
+
+              {/* Tombol Hamburger untuk Desktop */}
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition"
+                className="hidden md:block p-2 hover:bg-gray-100 rounded-lg transition"
               >
                 {sidebarOpen ? (
                   <X className="w-6 h-6 text-gray-700" />
@@ -206,7 +323,7 @@ const Layout = ({ children, title = "Dashboard" }) => {
               <h1 className="text-xl font-semibold text-gray-800 truncate">{title}</h1>
             </div>
 
-            {/* User Profile Dropdown */}
+            {/* User Profile Dropdown DENGAN FOTO */}
             <div className="relative" ref={userMenuRef}>
               <button
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
@@ -216,9 +333,10 @@ const Layout = ({ children, title = "Dashboard" }) => {
                   <p className="font-semibold text-gray-800 capitalize">{username || "User"}</p>
                   <p className="text-gray-600 text-xs capitalize">{role || "role"}</p>
                 </div>
-                <div className="w-10 h-10 bg-gradient-to-r from-teal-500 to-blue-500 rounded-full flex items-center justify-center text-white font-semibold group-hover:shadow-lg transition">
-                  {username?.[0]?.toUpperCase() || "U"}
-                </div>
+                
+                {/* AVATAR DENGAN FOTO PROFIL */}
+                {renderAvatar()}
+                
                 <ChevronDown className={`w-4 h-4 text-gray-600 transition ${userMenuOpen ? "rotate-180" : ""}`} />
               </button>
 
@@ -258,7 +376,11 @@ const Layout = ({ children, title = "Dashboard" }) => {
         </header>
 
         {/* Content */}
-        <main className="flex-1 p-6 overflow-auto">{children}</main>
+        <main className="flex-1 p-6 overflow-auto">
+          <PageTransition>
+            {children}
+          </PageTransition>
+        </main>
       </div>
     </div>
   );
