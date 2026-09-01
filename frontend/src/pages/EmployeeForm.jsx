@@ -1,13 +1,5 @@
 // src/pages/EmployeeForm.jsx
-import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Save, User } from "lucide-react";
-import { supabase } from "../supabase";
-
-<<<<<<< HEAD
-// Data untuk dropdown
-=======
->>>>>>> 14a75ead446c98c9f0616176254dd6317dd3cb14
+import { useState, useEffect } from "react";import { useParams, useNavigate } from "react-router-dom";import { ArrowLeft, Save, User } from "lucide-react";import { supabase } from "../supabase";// Data untuk dropdown
 const workUnits = [
   "Instalasi Rawat Inap",
   "Instalasi Rawat Jalan",
@@ -51,14 +43,7 @@ export default function EmployeeForm() {
   const [fetchLoading, setFetchLoading] = useState(false);
 
   const [formData, setFormData] = useState({
-    nip: "",
-    full_name: "",
-    birthplace: "",
-    birth_date: "",
-<<<<<<< HEAD
-    gender: "L",
-=======
->>>>>>> 14a75ead446c98c9f0616176254dd6317dd3cb14
+    nip: "",    full_name: "",    birthplace: "",    birth_date: "",    gender: "L",
     address: "",
     phone: "",
     email: "",
@@ -71,14 +56,7 @@ export default function EmployeeForm() {
   useEffect(() => {
     if (isEdit) {
       fetchEmployee();
-    }
-  }, [isEdit, id]);
-
-  const fetchEmployee = async () => {
-<<<<<<< HEAD
-    setFetchLoading(true);
-=======
->>>>>>> 14a75ead446c98c9f0616176254dd6317dd3cb14
+    }  }, [isEdit, id]);  const fetchEmployee = async () => {    setFetchLoading(true);
     try {
       const { data, error } = await supabase
         .from("pegawai")
@@ -90,14 +68,7 @@ export default function EmployeeForm() {
 
       if (data) {
         setFormData({
-          nip: data.nip || "",
-          full_name: data.full_name || "",
-          birthplace: data.birthplace || "",
-          birth_date: data.birth_date || "",
-<<<<<<< HEAD
-          gender: data.gender || "L",
-=======
->>>>>>> 14a75ead446c98c9f0616176254dd6317dd3cb14
+          nip: data.nip || "",          full_name: data.full_name || "",          birthplace: data.birthplace || "",          birth_date: data.birth_date || "",          gender: data.gender || "L",
           address: data.address || "",
           phone: data.phone || "",
           email: data.email || "",
@@ -106,14 +77,7 @@ export default function EmployeeForm() {
           status: data.status || "aktif"
         });
       }
-    } catch (error) {
-      console.error("Error fetching employee:", error);
-      alert("Gagal memuat data pegawai");
-<<<<<<< HEAD
-    } finally {
-      setFetchLoading(false);
-=======
->>>>>>> 14a75ead446c98c9f0616176254dd6317dd3cb14
+    } catch (error) {      console.error("Error fetching employee:", error);      alert("Gagal memuat data pegawai");    } finally {      setFetchLoading(false);
     }
   };
 
@@ -151,22 +115,13 @@ export default function EmployeeForm() {
       console.error("Error saving employee:", error);
       alert("❌ Gagal menyimpan data: " + error.message);
     } finally {
-      setLoading(false);
-    }
-  };
-
-<<<<<<< HEAD
+      setLoading(false)    }  };
   if (fetchLoading && isEdit) {
     return (
       <div className="p-6 text-center">
         <Loader2 className="w-8 h-8 animate-spin text-teal-600 mx-auto" />
         <p className="text-gray-500 mt-2">Memuat data...</p>
-      </div>
-    );
-  }
-
-=======
->>>>>>> 14a75ead446c98c9f0616176254dd6317dd3cb14
+      </div  >  );  }
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <button
@@ -250,11 +205,7 @@ export default function EmployeeForm() {
                 value={formData.birth_date}
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-teal-400 focus:outline-none"
-              />
-            </div>
-
-<<<<<<< HEAD
-            {/* Jenis Kelamin */}
+              />            </div>          {/* Jenis Kelamin */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Jenis Kelamin
@@ -265,13 +216,7 @@ export default function EmployeeForm() {
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:border-teal-400 focus:outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
               >
-                <option value="L">Laki-laki</option>
-                <option value="P">Perempuan</option>
-              </select>
-            </div>
-
-=======
->>>>>>> 14a75ead446c98c9f0616176254dd6317dd3cb14
+                <option value="L">Laki-laki</option>                <option value="P">Perempuan</option>              </select>            </div>
             {/* No. Telepon */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
