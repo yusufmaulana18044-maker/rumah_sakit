@@ -17,15 +17,11 @@ export default function Profile() {
   });
 
   const [editData, setEditData] = useState(profileData);
-<<<<<<< HEAD
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState(null);
-=======
->>>>>>> 280cfd6ad0c3277b26a2895209b81185c46b7dfd
 
   // Ambil data dari Supabase
   useEffect(() => {
-<<<<<<< HEAD
     const fetchProfile = async () => {
       const user = JSON.parse(localStorage.getItem("user") || "{}");
       const username = localStorage.getItem("username") || "";
@@ -69,28 +65,6 @@ export default function Profile() {
     };
 
     fetchProfile();
-=======
-    const savedProfile = localStorage.getItem("profileData");
-    const userData = localStorage.getItem("user");
-
-    if (savedProfile) {
-      const parsedProfile = JSON.parse(savedProfile);
-      setProfileData(prev => ({ ...prev, ...parsedProfile }));
-      setEditData(prev => ({ ...prev, ...parsedProfile }));
-    }
-
-    if (userData) {
-      const parsed = JSON.parse(userData);
-      const updatedProfile = {
-        fullName: parsed.username || "Nama Pengguna",
-        email: parsed.email || "user@example.com",
-        position: localStorage.getItem("role") || "User"
-      };
-
-      setProfileData(prev => ({ ...prev, ...updatedProfile }));
-      setEditData(prev => ({ ...prev, ...updatedProfile }));
-    }
->>>>>>> 280cfd6ad0c3277b26a2895209b81185c46b7dfd
   }, []);
 
   const handleEditToggle = () => {
@@ -100,7 +74,6 @@ export default function Profile() {
     setIsEditing(!isEditing);
   };
 
-<<<<<<< HEAD
   const handleSaveProfile = async () => {
     try {
       const { error } = await supabase
@@ -132,14 +105,6 @@ export default function Profile() {
       console.error("Save error:", error);
       alert("❌ Gagal menyimpan profil: " + error.message);
     }
-=======
-  const handleSaveProfile = () => {
-    const profileToSave = { ...editData };
-    localStorage.setItem("profileData", JSON.stringify(profileToSave));
-    setProfileData(profileToSave);
-    setIsEditing(false);
-    alert("Profil berhasil diperbarui!");
->>>>>>> 280cfd6ad0c3277b26a2895209b81185c46b7dfd
   };
 
   const handleInputChange = (e) => {
@@ -393,10 +358,10 @@ export default function Profile() {
               />
             ) : (
               <p className="text-gray-800 px-4 py-2 bg-gray-50 rounded-lg">{profileData.bio}</p>
-            )}
+              )}
+            </div>
           </div>
         </div>
-      </div>
 
       {/* Informasi Pekerjaan */}
       <div className="bg-white rounded-lg shadow-lg overflow-hidden">
