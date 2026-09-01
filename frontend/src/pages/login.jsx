@@ -30,7 +30,6 @@ export default function Login() {
     }
 
     try {
-      // 1. Cari user di profiles berdasarkan username
       const { data: userData, error: userError } = await supabase
         .from("profiles")
         .select("email, role, username")
@@ -46,7 +45,6 @@ export default function Login() {
       const email = userData.email;
       const role = userData.role;
 
-      // 2. Login pake email & password
       const { data, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -58,13 +56,11 @@ export default function Login() {
         return;
       }
 
-      // 3. Simpan ke localStorage
       localStorage.setItem("user", JSON.stringify(data.user));
       localStorage.setItem("username", username);
       localStorage.setItem("role", role);
       localStorage.setItem("email", email);
 
-      // 4. Redirect ke dashboard
       window.location.href = "/dashboard";
 
     } catch (err) {
@@ -80,14 +76,25 @@ export default function Login() {
     }
   };
 
+  // ✅ ANIMASI BACKGROUND HALUS (TIDAK LIAR)
   const animationStyle = `
     @keyframes slowZoom {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-      100% { transform: scale(1); }
+      0% { 
+        transform: scale(1) translateX(0);
+      }
+      50% { 
+        transform: scale(1.08) translateX(-10px);
+      }
+      100% { 
+        transform: scale(1) translateX(0);
+      }
     }
     .animate-slow-zoom {
-      animation: slowZoom 10s ease-in-out infinite;
+      animation: slowZoom 17s ease-in-out infinite;
+    }
+    /* Efek blur halus untuk background */
+    .bg-blur-custom {
+      filter: blur(4px) brightness(0.90) saturate(1.1);
     }
   `;
 
@@ -95,47 +102,44 @@ export default function Login() {
     <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
       <style>{animationStyle}</style>
 
-      {/* Background RSUD */}
+      {/* Background RSUD - GERAK, BLUR, TAPI HALUS */}
       <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat blur-sm scale-105"
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat animate-slow-zoom bg-blur-custom"
         style={{ backgroundImage: "url('/halamanrs2.jpeg')" }}
       />
 
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-black/40" />
+      {/* Overlay gelap biar teks jelas */}
+      <div className="absolute inset-0 bg-black/30" />
 
       {/* Dekorasi Blob */}
       <div className="absolute top-0 -right-40 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl"></div>
       <div className="absolute bottom-0 -left-40 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
 
-      {/* Card */}
+      {/* Card - DIAM, TIDAK GERAK */}
       <div className="relative z-10 w-full max-w-sm px-4">
         <div className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden border border-white/20">
-          
+
           {/* Header */}
           <div className="relative bg-gradient-to-r from-teal-700 via-teal-600 to-blue-700 px-6 pt-6 pb-5 overflow-hidden">
             <div className="absolute -right-20 -top-20 w-64 h-64 bg-white/5 rounded-full"></div>
             <div className="absolute -left-20 -bottom-20 w-48 h-48 bg-white/5 rounded-full"></div>
-            
+
             <div className="relative flex flex-col items-center">
-              {/* Logo */}
-              <div className="w-16 h-16 bg-white/20 backdrop-blur rounded-2xl flex items-center justify-center shadow-lg mb-3 border border-white/10 p-1.5">
+              <div className="w-16 h-16 bg-white/20 backdrop-blur rounded-2xl flex items-center justify-center shadow-lg mb-3 border border-white/10 overflow-hidden">
                 <img
                   src="/logo-rsud-harjonos.png"
                   alt="Logo RSUD Dr. Harjono"
-                  className="w-full h-full object-contain"
+                  className="w-full h-full object-cover"
                 />
               </div>
-              
-              {/* Title */}
+
               <h1 className="text-3xl font-bold text-white tracking-tight drop-shadow-lg font-display">
                 SICAKEP
               </h1>
               <p className="text-teal-100/90 text-xs mt-0.5 font-medium tracking-wider">
                 Sistem Informasi Catat Kepegawaian
               </p>
-              
-              {/* RS Name Badge */}
+
               <div className="flex items-center gap-2 mt-2 px-4 py-1.5 bg-white/15 rounded-full backdrop-blur border border-white/15 shadow-inner">
                 <Hospital className="w-3 h-3 text-teal-200" />
                 <span className="text-[10px] text-white/90 font-semibold tracking-wider">
@@ -219,7 +223,7 @@ export default function Login() {
                   ) : (
                     <>
                       <LogIn className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-                      Masuk ke SICAKEP
+                      MASUK
                     </>
                   )}
                 </span>

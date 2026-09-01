@@ -41,7 +41,6 @@ export default function Register() {
     }
 
     try {
-      // CEK USERNAME & EMAIL
       const { data: existingUsername, error: userErr } = await supabase
         .from("profiles")
         .select("username")
@@ -73,7 +72,6 @@ export default function Register() {
         return;
       }
 
-      // REGISTER KE SUPABASE AUTH
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -104,9 +102,6 @@ export default function Register() {
         return;
       }
 
-      // PROFILES OTOMATIS TERISI OLEH TRIGGER
-      // Trigger sudah handle insert ke profiles + role berdasarkan email
-      // Kita tunggu sebentar biar trigger selesai
       await new Promise(resolve => setTimeout(resolve, 500));
 
       const { data: profileCheck, error: checkError } = await supabase
@@ -119,7 +114,6 @@ export default function Register() {
         console.error("Check profile error:", checkError);
       }
 
-      // Kalau trigger gagal, kita insert manual
       if (!profileCheck) {
         const isAdmin = email.toLowerCase().includes('admin');
         const role = isAdmin ? 'admin' : 'pegawai';
@@ -141,7 +135,6 @@ export default function Register() {
           return;
         }
       } else {
-        // Trigger jalan, update role-nya
         const isAdmin = email.toLowerCase().includes('admin');
         const role = isAdmin ? 'admin' : 'pegawai';
 
@@ -182,49 +175,59 @@ export default function Register() {
     }
   };
 
+  // ✅ ANIMASI BACKGROUND HALUS (SAMA KAYAK LOGIN)
   const animationStyle = `
     @keyframes slowZoom {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-      100% { transform: scale(1); }
+      0% { 
+        transform: scale(1) translateX(0);
+      }
+      50% { 
+        transform: scale(1.08) translateX(-10px);
+      }
+      100% { 
+        transform: scale(1) translateX(0);
+      }
     }
     .animate-slow-zoom {
-      animation: slowZoom 10s ease-in-out infinite;
+      animation: slowZoom 17s ease-in-out infinite;
+    }
+    .bg-blur-custom {
+      filter: blur(4px) brightness(0.90) saturate(1.1);
     }
   `;
 
   return (
     <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
       <style>{animationStyle}</style>
-      
-      {/* Background RSUD */}
+
+      {/* Background RSUD - GERAK, BLUR, TAPI HALUS */}
       <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat blur-sm scale-105"
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat animate-slow-zoom bg-blur-custom"
         style={{ backgroundImage: "url('/halamanrs2.jpeg')" }}
       />
-      
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-black/40" />
+
+      {/* Overlay gelap */}
+      <div className="absolute inset-0 bg-black/30" />
 
       {/* Dekorasi Blob */}
       <div className="absolute top-0 -right-40 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl"></div>
       <div className="absolute bottom-0 -left-40 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
 
-      {/* Card */}
+      {/* Card - DIAM, TIDAK GERAK */}
       <div className="relative z-10 w-full max-w-sm px-4">
         <div className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden border border-white/20">
-          
+
           {/* Header */}
           <div className="relative bg-gradient-to-r from-teal-700 via-teal-600 to-blue-700 px-6 pt-6 pb-5 overflow-hidden">
             <div className="absolute -right-20 -top-20 w-64 h-64 bg-white/5 rounded-full"></div>
             <div className="absolute -left-20 -bottom-20 w-48 h-48 bg-white/5 rounded-full"></div>
-            
+
             <div className="relative flex flex-col items-center">
-              <div className="w-16 h-16 bg-white/20 backdrop-blur rounded-2xl flex items-center justify-center shadow-lg mb-3 border border-white/10 p-1.5">
+              <div className="w-16 h-16 bg-white/20 backdrop-blur rounded-2xl flex items-center justify-center shadow-lg mb-3 border border-white/10 overflow-hidden">
                 <img
                   src="/logo-rsud-harjonos.png"
                   alt="Logo RSUD Dr. Harjono"
-                  className="w-12 h-12 object-contain"
+                  className="w-full h-full object-cover"
                 />
               </div>
               <h1 className="text-3xl font-bold text-white text-center tracking-tight drop-shadow-lg font-display">
