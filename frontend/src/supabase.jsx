@@ -1,7 +1,11 @@
-import { createClient } from '@supabase/supabase-js';
-// ✅ PAKAI URL YANG BENAR!
-const supabaseUrl = "https://pafvrjrclvarsgwwhwbx.supabase.co";
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhZnZyanJjbHZhcnNnd3dod2J4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcyMzA3NTksImV4cCI6MjEwMjgwNjc1OX0.MwJyFqn_sWIommyMAqF57_Qbl1dHdD6Le2rPefmuU3M";
+import { createClient } from '@supabase/supabase-js'
 
+// Ambil dari environment variables
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Debug: cek apakah terbaca (hapus setelah berhasil)
+console.log('Supabase URL:', supabaseUrl)
+console.log('Supabase Anon Key:', supabaseAnonKey ? '✅ Ada' : '❌ Tidak ada')
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey)
