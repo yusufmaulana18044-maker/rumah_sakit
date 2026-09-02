@@ -8,17 +8,9 @@ import {
   FileText, 
   LogOut, 
   ChevronRight,
-  Briefcase,
   GraduationCap,
-  Calendar,
-  CheckCircle,
-  Clock,
-  AlertCircle,
-  Home,
   Stethoscope,
   HeartPulse,
-  UserCheck,
-  UserX,
   UserCog
 } from 'lucide-react';
 
@@ -32,17 +24,21 @@ export default function AdminDashboard() {
     cuti: 0,
     dokumen: 0
   });
+  const [profileData, setProfileData] = useState({
+    fullName: '',
+    avatar: '👤'
+  });
 
   useEffect(() => {
     const user = localStorage.getItem('username');
     setUsername(user || 'Admin');
     fetchStats();
+    fetchProfile();
     setLoading(false);
   }, []);
 
   const fetchStats = async () => {
     try {
-      // Ambil data pegawai
       const { data: pegawaiData, error: pegawaiError } = await supabase
         .from('pegawai')
         .select('status');
@@ -50,7 +46,6 @@ export default function AdminDashboard() {
       if (!pegawaiError && pegawaiData) {
         const total = pegawaiData.length;
         
-        // ✅ CASE-INSENSITIVE: pakai .toLowerCase()
         const aktif = pegawaiData.filter(p => 
           p.status?.toLowerCase() === 'aktif'
         ).length;
@@ -59,7 +54,6 @@ export default function AdminDashboard() {
           p.status?.toLowerCase() === 'cuti'
         ).length;
         
-        // Ambil data dokumen
         const { data: dokumenData, error: dokumenError } = await supabase
           .from('dokumen')
           .select('id');
@@ -76,6 +70,43 @@ export default function AdminDashboard() {
     } catch (error) {
       console.error('Error fetching stats:', error);
     }
+  };
+
+  const fetchProfile = async () => {
+    try {
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      if (!user.id) return;
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("full_name, avatar")
+        .eq("user_id", user.id)
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        setProfileData({
+          fullName: data.full_name || username,
+          avatar: data.avatar || "👤"
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+    }
+  };
+
+  const renderAvatar = (avatarValue) => {
+    if (typeof avatarValue === "string" && avatarValue.startsWith("data:image/")) {
+      return (
+        <img
+          src={avatarValue}
+          alt="Foto profil"
+          className="w-full h-full object-cover rounded-full"
+        />
+      );
+    }
+    return <span className="text-lg">{avatarValue || "👤"}</span>;
   };
 
   const menuItems = [
@@ -173,8 +204,8 @@ export default function AdminDashboard() {
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-xl border border-white/10">
-                <div className="w-8 h-8 bg-gradient-to-r from-teal-400 to-blue-400 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                  {username.charAt(0).toUpperCase()}
+                <div className="w-8 h-8 bg-gradient-to-r from-teal-400 to-blue-400 rounded-full flex items-center justify-center text-white font-bold text-sm overflow-hidden">
+                  {renderAvatar(profileData.avatar)}
                 </div>
                 <span className="text-white font-medium text-sm">{username}</span>
               </div>
