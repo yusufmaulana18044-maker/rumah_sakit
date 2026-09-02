@@ -1,8 +1,11 @@
 // src/pages/EmployeeList.jsx
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Plus, Eye, Edit, Trash2, Users, Loader2 } from "lucide-react";
+import { Search, Plus, Eye, Edit, Trash2, Users, Loader2, Download, FileSpreadsheet, FileText } from "lucide-react";
 import { supabase } from "../supabase";
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 // 14 Kategori Dokumen
 const KATEGORI = [
@@ -22,6 +25,149 @@ const KATEGORI = [
   "Lain-lain"
 ];
 
+// ============================================
+// KOMPONEN EXPORT BUTTON (TERINTEGRASI)
+// ============================================
+function ExportButton({ data, filename = 'laporan-pegawai', className = '' }) {
+  const [loading, setLoading] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+
+  const columns = [
+    { key: 'nip', label: 'NIP' },
+    { key: 'full_name', label: 'Nama Lengkap' },
+    { key: 'position', label: 'Jabatan' },
+    { key: 'work_unit', label: 'Unit Kerja' },
+    { key: 'status', label: 'Status' },
+    { key: 'phone', label: 'Telepon' },
+    { key: 'email', label: 'Email' },
+    { key: 'address', label: 'Alamat' },
+    { key: 'dokumenCount', label: 'Jumlah Dokumen' },
+  ];
+
+  const exportToExcel = () => {
+    setLoading(true);
+    try {
+      const excelData = data.map(row => {
+        const obj = {};
+        columns.forEach(col => {
+          let value = row[col.key] !== undefined && row[col.key] !== null ? row[col.key] : '-';
+          obj[col.label] = value;
+        });
+        return obj;
+      });
+
+      const ws = XLSX.utils.json_to_sheet(excelData);
+      const colWidths = columns.map(col => ({
+        wch: Math.max(col.label.length * 2, 12)
+      }));
+      ws['!cols'] = colWidths;
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Pegawai');
+      XLSX.writeFile(wb, `${filename}.xlsx`);
+      
+      setLoading(false);
+      setShowMenu(false);
+      alert('✅ Export Excel berhasil!');
+    } catch (error) {
+      console.error('Export Excel error:', error);
+      alert('❌ Gagal export Excel: ' + error.message);
+      setLoading(false);
+    }
+  };
+
+  const exportToPDF = () => {
+    setLoading(true);
+    try {
+      const doc = new jsPDF('landscape', 'mm', 'a4');
+      
+      doc.setFontSize(16);
+      doc.text('Laporan Data Pegawai', 14, 22);
+      doc.setFontSize(10);
+      doc.text(`Dicetak: ${new Date().toLocaleDateString('id-ID')}`, 14, 30);
+      
+      const tableData = data.map(row => {
+        return columns.map(col => {
+          const value = row[col.key] !== undefined && row[col.key] !== null ? row[col.key] : '-';
+          return String(value);
+        });
+      });
+
+      const tableHeaders = columns.map(col => col.label);
+
+      autoTable(doc, {
+        head: [tableHeaders],
+        body: tableData,
+        startY: 38,
+        styles: { fontSize: 7, cellPadding: 1.5 },
+        headStyles: { fillColor: [13, 148, 136], textColor: [255, 255, 255], fontSize: 8, fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: [240, 240, 240] },
+        didDrawPage: function(data) {
+          doc.setFontSize(8);
+          doc.text(
+            `Halaman ${data.pageNumber} - SICAKEP v2.0`,
+            doc.internal.pageSize.getWidth() / 2,
+            doc.internal.pageSize.getHeight() - 10,
+            { align: 'center' }
+          );
+        },
+      });
+
+      doc.save(`${filename}.pdf`);
+      setLoading(false);
+      setShowMenu(false);
+      alert('✅ Export PDF berhasil!');
+    } catch (error) {
+      console.error('Export PDF error:', error);
+      alert('❌ Gagal export PDF: ' + error.message);
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <button className={`flex items-center gap-2 bg-gray-400 text-white px-4 py-2 rounded-lg ${className}`} disabled>
+        <Loader2 className="w-4 h-4 animate-spin" />
+        Loading...
+      </button>
+    );
+  }
+
+  return (
+    <div className="relative inline-block">
+      <button
+        onClick={() => setShowMenu(!showMenu)}
+        className={`flex items-center gap-2 bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 text-white px-4 py-2 rounded-lg transition shadow-md ${className}`}
+      >
+        <Download className="w-4 h-4" />
+        Ekspor Data
+      </button>
+
+      {showMenu && (
+        <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 z-50 overflow-hidden">
+          <button
+            onClick={exportToExcel}
+            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-green-50 dark:hover:bg-green-900/20 transition text-left text-sm text-gray-700 dark:text-gray-300"
+          >
+            <FileSpreadsheet className="w-4 h-4 text-green-600" />
+            <span>Export ke Excel</span>
+          </button>
+          <button
+            onClick={exportToPDF}
+            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 dark:hover:bg-red-900/20 transition text-left text-sm text-gray-700 dark:text-gray-300 border-t border-gray-100 dark:border-gray-700"
+          >
+            <FileText className="w-4 h-4 text-red-600" />
+            <span>Export ke PDF</span>
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================
+// MAIN COMPONENT EMPLOYEE LIST
+// ============================================
 export default function EmployeeList() {
   const navigate = useNavigate();
   const [employees, setEmployees] = useState([]);
@@ -147,13 +293,20 @@ export default function EmployeeList() {
           <h1 className="text-2xl font-bold text-gray-800 dark:text-white">📋 Data Pegawai</h1>
           <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Kelola data pegawai RSUD Dr. Harjono S. Ponorogo</p>
         </div>
-        <button
-          onClick={() => navigate("/employees/new")}
-          className="bg-teal-700 hover:bg-teal-800 text-white px-4 py-2 rounded-lg transition flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Tambah Pegawai
-        </button>
+        <div className="flex flex-wrap items-center gap-3">
+          {/* EXPORT BUTTON - SUDAH TERINTEGRASI */}
+          <ExportButton 
+            data={employees}
+            filename="laporan-pegawai"
+          />
+          <button
+            onClick={() => navigate("/employees/new")}
+            className="bg-teal-700 hover:bg-teal-800 text-white px-4 py-2 rounded-lg transition flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Tambah Pegawai
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -196,10 +349,10 @@ export default function EmployeeList() {
           <option value="cuti">Cuti</option>
         </select>
         <button 
-          onClick={() => alert("Fitur Export Excel akan segera hadir!")}
-          className="border border-gray-200 dark:border-gray-600 px-4 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition"
+          onClick={() => setSearch("")}
+          className="px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition text-gray-700 dark:text-gray-300"
         >
-          Ekspor Excel
+          Reset
         </button>
       </div>
 
