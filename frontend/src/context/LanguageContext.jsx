@@ -73,11 +73,11 @@ export const translations = {
     settingsVersion: "SICAKEP v2.0",
     
     // Settings - Tabs
-    tabTampilan: "🎨 Tampilan",
-    tabNotifikasi: "🔔 Notifikasi",
-    tabKeamanan: "🔒 Keamanan",
-    tabSuara: "🔊 Suara",
-    tabLanjutan: "⚡ Lanjutan",
+    tabTampilan: "Tampilan",
+    tabNotifikasi: "Notifikasi",
+    tabKeamanan: "Keamanan",
+    tabSuara: "Suara",
+    tabLanjutan: "Lanjutan",
     
     // Settings - Tampilan
     tampilanTitle: "Tampilan & Tema",

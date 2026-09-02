@@ -73,7 +73,7 @@ const Layout = ({ children, title = "Dashboard" }) => {
         const { data, error } = await supabase
           .from("profiles")
           .select("avatar")
-          .eq("user_id", userId)
+          .eq("user_id", userId)  // ✅ PAKAI user_id (sesuai tabel)
           .single();
 
         if (error) {

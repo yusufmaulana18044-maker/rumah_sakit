@@ -1,6 +1,6 @@
 // src/pages/Profile.jsx
 import { useState, useEffect } from "react";
-import { User, Mail, Phone, MapPin, Building, Badge, Calendar, Edit2, Save, X, Camera, Settings } from "lucide-react";
+import { User, Mail, Phone, MapPin, Building, Badge, Calendar, Edit2, Save, X, Camera } from "lucide-react";
 import { supabase } from "../supabase";
 import Breadcrumb from "../components/Breadcrumb";
 
@@ -24,10 +24,10 @@ export default function Profile() {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      const user = JSON.parse(localStorage.getItem("user") || "{}");
-      const username = localStorage.getItem("username") || "";
+      // Ambil user dari Supabase Auth
+      const { data: { user } } = await supabase.auth.getUser();
       
-      if (!user.id) {
+      if (!user) {
         setLoading(false);
         return;
       }
@@ -38,18 +38,18 @@ export default function Profile() {
         const { data, error } = await supabase
           .from("profiles")
           .select("*")
-          .eq("user_id", user.id)
+          .eq("user_id", user.id)  // ✅ PAKAI user_id (sesuai tabel)
           .single();
 
-        if (error) throw error;
+        if (error && error.code !== 'PGRST116') throw error;
 
         if (data) {
           const profile = {
-            fullName: data.full_name || username,
+            fullName: data.full_name || "",
             email: data.email || user.email || "",
             phone: data.phone || "",
             department: data.department || "",
-            position: data.role || "User",
+            position: data.role || "Pegawai",
             joinDate: data.join_date || "",
             bio: data.bio || "",
             address: data.address || "",
@@ -57,6 +57,21 @@ export default function Profile() {
           };
           setProfileData(profile);
           setEditData(profile);
+        } else {
+          // Fallback jika data tidak ada
+          const fallbackProfile = {
+            fullName: user.user_metadata?.full_name || "",
+            email: user.email || "",
+            phone: "",
+            department: "",
+            position: user.user_metadata?.role || "Pegawai",
+            joinDate: "",
+            bio: "",
+            address: "",
+            avatar: "👤"
+          };
+          setProfileData(fallbackProfile);
+          setEditData(fallbackProfile);
         }
       } catch (error) {
         console.error("Error fetching profile:", error);
@@ -85,21 +100,18 @@ export default function Profile() {
           phone: editData.phone,
           department: editData.department,
           role: editData.position,
-          join_date: editData.joinDate,
+          join_date: editData.joinDate === "" ? null : editData.joinDate,
           bio: editData.bio,
           address: editData.address,
           avatar: editData.avatar
         })
-        .eq("user_id", userId);
+        .eq("user_id", userId);  // ✅ PAKAI user_id (sesuai tabel)
 
       if (error) throw error;
 
       setProfileData(editData);
       setIsEditing(false);
       alert("✅ Profil berhasil diperbarui!");
-
-      localStorage.setItem("username", editData.fullName);
-      localStorage.setItem("role", editData.position);
 
     } catch (error) {
       console.error("Save error:", error);
@@ -291,7 +303,7 @@ export default function Profile() {
         <div className="p-6 space-y-6">
           <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Nama Lengkap</label>
+              <label className="text-sm font-semibold text-gray-700 mb-2">Nama Lengkap</label>
               {isEditing ? (
                 <input
                   type="text"
@@ -306,7 +318,7 @@ export default function Profile() {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+              <label className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                 <Mail className="w-4 h-4 text-teal-600" />
                 Email
               </label>
@@ -324,7 +336,7 @@ export default function Profile() {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+              <label className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                 <Phone className="w-4 h-4 text-teal-600" />
                 Nomor Telepon
               </label>
@@ -342,7 +354,7 @@ export default function Profile() {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+              <label className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-teal-600" />
                 Alamat
               </label>
@@ -361,7 +373,7 @@ export default function Profile() {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Bio / Deskripsi</label>
+            <label className="text-sm font-semibold text-gray-700 mb-2">Bio / Deskripsi</label>
             {isEditing ? (
               <textarea
                 name="bio"
@@ -389,7 +401,7 @@ export default function Profile() {
         <div className="p-6 space-y-6">
           <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+              <label className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                 <Building className="w-4 h-4 text-blue-600" />
                 Departemen
               </label>
@@ -407,7 +419,7 @@ export default function Profile() {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+              <label className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                 <Badge className="w-4 h-4 text-blue-600" />
                 Posisi
               </label>
@@ -426,7 +438,7 @@ export default function Profile() {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+              <label className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-blue-600" />
                 Tanggal Bergabung
               </label>

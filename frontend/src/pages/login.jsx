@@ -12,7 +12,6 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // ✅ PERBAIKAN: Cek role user yang sudah login agar tidak salah redirect
   useEffect(() => {
     const user = localStorage.getItem('user');
     const role = localStorage.getItem('role');
@@ -39,7 +38,7 @@ export default function Login() {
     try {
       const { data: userData, error: userError } = await supabase
         .from("profiles")
-        .select("email, role")
+        .select("id, email, role, full_name")
         .eq("username", username.trim())
         .single();
 
@@ -63,16 +62,25 @@ export default function Login() {
         return;
       }
 
-      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("user", JSON.stringify({ 
+        id: data.user.id,
+        email: data.user.email, 
+        username: username,
+        role: role,
+        full_name: userData.full_name
+      }));
+      
+      localStorage.setItem("userId", data.user.id);
       localStorage.setItem("username", username);
       localStorage.setItem("role", role);
       localStorage.setItem("email", email);
+      localStorage.setItem("full_name", userData.full_name);
 
-      // 4. ✅ REDIRECT BERDASARKAN ROLE
+      // Redirect berdasarkan role
       if (role === 'admin') {
-        window.location.href = "/admin"; // Admin langsung ke halaman admin
+        window.location.href = "/admin";
       } else {
-        window.location.href = "/dashboard"; // User biasa ke dashboard
+        window.location.href = "/dashboard";
       }
 
     } catch (err) {

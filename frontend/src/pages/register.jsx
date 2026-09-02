@@ -1,3 +1,4 @@
+// src/pages/Register.jsx
 import { supabase } from "../supabase";
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
@@ -77,6 +78,9 @@ export default function Register() {
       // ========================
       // 2. REGISTER KE SUPABASE AUTH
       // ========================
+      const isAdmin = email.toLowerCase().includes('admin');
+      const role = isAdmin ? 'admin' : 'pegawai';
+
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -84,6 +88,7 @@ export default function Register() {
           data: {
             username: username,
             full_name: nama,
+            role: role,             // ✅ Tambahkan role di metadata!
           },
         },
       });
@@ -111,13 +116,10 @@ export default function Register() {
       // ========================
       // 3. SIMPAN KE PROFILES (MANUAL)
       // ========================
-      const isAdmin = email.toLowerCase().includes('admin');
-      const role = isAdmin ? 'admin' : 'pegawai';
-
       const { error: insertError } = await supabase
         .from("profiles")
         .insert([{
-          id: authUserId,  // ← PAKAI id (bukan user_id)
+          user_id: authUserId,  // ✅ PAKAI user_id!
           username: username.trim(),
           email: email.trim().toLowerCase(),
           role: role,
