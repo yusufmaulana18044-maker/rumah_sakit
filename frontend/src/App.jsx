@@ -30,12 +30,10 @@ import RekapDokumen from "./pages/RekapDokumen";
 // ✅ IMPORT LANGUAGE PROVIDER
 import { LanguageProvider } from "./context/LanguageContext";
 
-// ✅ IMPORT THEME PROVIDER
-import { ThemeProvider } from "./context/ThemeContext";
+
 
 function App() {
   return (
-    <ThemeProvider>
       <LanguageProvider>
         <BrowserRouter>
           <Routes>
@@ -79,7 +77,6 @@ function App() {
           </Routes>
         </BrowserRouter>
       </LanguageProvider>
-    </ThemeProvider>
   );
 }
 
