@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { 
   Users, FileText, UserCheck, UserX, Clock, Building, Briefcase, 
-  Upload, Plus, TrendingUp, Loader2
+  Upload, Plus, TrendingUp, Loader2, RefreshCw
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, 
@@ -14,33 +14,7 @@ import {
 import { supabase } from "../supabase";
 import SearchBar from "../components/SearchBar";
 import { useLanguage } from "../context/LanguageContext";
-
-// ✅ TAMBAHAN: KOMPONEN QUICKSTATS
-function QuickStats({ stats }) {
-  const items = [
-    { label: 'Total Pegawai', value: stats.totalEmployees, icon: Users, color: 'bg-teal-500' },
-    { label: 'Dokumen Terupload', value: stats.totalDocuments, icon: FileText, color: 'bg-blue-500' },
-    { label: 'Berkas Lengkap', value: stats.completeEmployees, icon: UserCheck, color: 'bg-green-500' },
-  ];
-
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      {items.map((item, idx) => (
-        <div key={idx} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-gray-100 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">{item.label}</p>
-              <p className="text-2xl font-bold text-gray-800 dark:text-white">{item.value}</p>
-            </div>
-            <div className={`${item.color} p-3 rounded-lg`}>
-              <item.icon className="w-5 h-5 text-white" />
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
+import SkeletonLoader from "../components/SkeletonLoader";
 
 const KATEGORI = [
   { id: 1, nama: "SK Pangkat (Mulai CPNS)" },
@@ -81,9 +55,20 @@ export default function Dashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedChart, setSelectedChart] = useState('status');
 
-  // Ambil data dari Supabase
+  // ✅ Ambil data dari Supabase + AUTO-REFRESH
   useEffect(() => {
     fetchData();
+
+    // Auto-refresh ketika tab/window di-fokuskan
+    const handleFocus = () => {
+      fetchData();
+    };
+
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+    };
   }, []);
 
   const fetchData = async () => {
@@ -215,36 +200,80 @@ export default function Dashboard() {
     };
   });
 
+  // ✅ SKELETON LOADING
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 gap-3">
-        <Loader2 className="w-8 h-8 text-teal-600 animate-spin" />
-        <p className="text-gray-500 text-sm">{language === 'id' ? 'Memuat dashboard...' : 'Loading dashboard...'}</p>
+      <div className="space-y-6 p-6">
+        <div className="bg-gradient-to-r from-teal-700 to-teal-800 rounded-xl p-6 h-24 animate-pulse"></div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border-l-4 border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                  <div className="h-8 w-12 bg-gray-200 dark:bg-gray-700 rounded mt-2 animate-pulse"></div>
+                </div>
+                <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-gray-100 dark:border-gray-700">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                  <div className="h-8 w-12 bg-gray-200 dark:bg-gray-700 rounded mt-2 animate-pulse"></div>
+                </div>
+                <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="flex flex-wrap gap-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border border-gray-100 dark:border-gray-700">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="h-10 w-28 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
+          ))}
+        </div>
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
+          <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* HEADER DENGAN SEARCH BAR */}
+      {/* HEADER DENGAN SEARCH BAR + TOMBOL REFRESH */}
       <div className="bg-gradient-to-r from-teal-700 to-teal-800 rounded-xl p-6 text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-lg">
         <div>
           <h1 className="text-2xl font-bold">{t.welcome || "Selamat Datang"} {localStorage.getItem("username") || "Admin"}!</h1>
           <p className="text-teal-100 mt-1">{t.welcomeDesc || "Kelola data pegawai dan dokumen penting RSUD Dr. Harjono S. Ponorogo"}</p>
         </div>
-        <div className="w-full md:w-auto">
-          <SearchBar 
-            searchTerm={searchTerm} 
-            setSearchTerm={setSearchTerm}
-            filteredData={filteredEmployees} 
-            onResultClick={handleResultClick}
-          />
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <div className="w-full md:w-64">
+            <SearchBar 
+              searchTerm={searchTerm} 
+              setSearchTerm={setSearchTerm}
+              filteredData={filteredEmployees} 
+              onResultClick={handleResultClick}
+            />
+          </div>
+          {/* ✅ TOMBOL REFRESH */}
+          <button
+            onClick={fetchData}
+            className="p-2.5 bg-white/20 hover:bg-white/30 rounded-lg transition flex-shrink-0"
+            title="Refresh Data"
+          >
+            <RefreshCw className="w-5 h-5 text-white" />
+          </button>
         </div>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border-l-4 border-teal-600">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border-l-4 border-teal-600 hover:scale-[1.02] transition-transform duration-200">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">{t.totalEmployees || "Total Pegawai"}</p>
@@ -260,7 +289,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border-l-4 border-green-600">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border-l-4 border-green-600 hover:scale-[1.02] transition-transform duration-200">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">{t.completeDocuments || "Berkas Lengkap"}</p>
@@ -273,7 +302,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border-l-4 border-amber-600">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border-l-4 border-amber-600 hover:scale-[1.02] transition-transform duration-200">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">{t.incompleteDocuments || "Belum Lengkap"}</p>
@@ -286,7 +315,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border-l-4 border-blue-600">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border-l-4 border-blue-600 hover:scale-[1.02] transition-transform duration-200">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">{t.totalDocuments || "Total Dokumen"}</p>
@@ -299,9 +328,6 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-
-      {/* ✅ QUICK STATS (Kartu Ringkasan Cepat) */}
-      <QuickStats stats={stats} />
 
       {/* Chart Selector */}
       <div className="flex flex-wrap gap-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border border-gray-100 dark:border-gray-700">
@@ -349,7 +375,6 @@ export default function Dashboard() {
 
       {/* Chart Display */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
-        {/* Chart 1: Status Pegawai */}
         {selectedChart === 'status' && (
           <div>
             <h3 className="font-semibold text-gray-800 dark:text-white mb-4 text-lg flex items-center gap-2">
@@ -384,7 +409,6 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Chart 2: Unit Kerja */}
         {selectedChart === 'unit' && (
           <div>
             <h3 className="font-semibold text-gray-800 dark:text-white mb-4 text-lg flex items-center gap-2">
@@ -418,7 +442,6 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Chart 3: Tren Data */}
         {selectedChart === 'trend' && (
           <div>
             <h3 className="font-semibold text-gray-800 dark:text-white mb-4 text-lg flex items-center gap-2">
@@ -462,7 +485,6 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Chart 4: Radar Chart */}
         {selectedChart === 'radar' && (
           <div>
             <h3 className="font-semibold text-gray-800 dark:text-white mb-4 text-lg flex items-center gap-2">
@@ -572,7 +594,6 @@ export default function Dashboard() {
 
       {/* Two Columns Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Employees */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden border border-gray-100 dark:border-gray-700">
           <div className="px-6 py-4 border-b bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-800 dark:to-blue-900/20">
             <h2 className="font-semibold text-gray-800 dark:text-white flex items-center gap-2">
@@ -602,7 +623,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Unit Distribution */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden border border-gray-100 dark:border-gray-700">
           <div className="px-6 py-4 border-b bg-gradient-to-r from-gray-50 to-purple-50 dark:from-gray-800 dark:to-purple-900/20">
             <h2 className="font-semibold text-gray-800 dark:text-white flex items-center gap-2">

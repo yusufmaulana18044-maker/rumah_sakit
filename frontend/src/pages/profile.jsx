@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { User, Mail, Phone, MapPin, Building, Badge, Calendar, Edit2, Save, X, Camera, Settings } from "lucide-react";
 import { supabase } from "../supabase";
+import Breadcrumb from "../components/Breadcrumb";
 
 export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
@@ -161,14 +162,33 @@ export default function Profile() {
 
   if (loading) {
     return (
-      <div className="p-6 text-center">
-        <p className="text-gray-500">Loading profil...</p>
+      <div className="max-w-4xl mx-auto space-y-6 p-4">
+        <div className="bg-gradient-to-r from-gray-700 via-gray-800 to-gray-900 rounded-2xl shadow-xl p-8 h-32 animate-pulse"></div>
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+          <div className="bg-gradient-to-r from-teal-500 to-teal-600 px-6 py-4 h-14 animate-pulse"></div>
+          <div className="p-6 space-y-6">
+            <div className="grid md:grid-cols-2 gap-6">
+              {[...Array(4)].map((_, i) => (
+                <div key={i}>
+                  <div className="h-4 w-24 bg-gray-200 rounded animate-pulse mb-2"></div>
+                  <div className="h-10 bg-gray-200 rounded animate-pulse"></div>
+                </div>
+              ))}
+            </div>
+            <div>
+              <div className="h-4 w-24 bg-gray-200 rounded animate-pulse mb-2"></div>
+              <div className="h-20 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 p-4">
+      <Breadcrumb />
+      
       {/* HEADER CARD */}
       <div className="bg-gradient-to-r from-gray-700 via-gray-800 to-gray-900 dark:from-gray-800 dark:via-gray-900 dark:to-gray-950 rounded-2xl shadow-xl p-8 text-white relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2"></div>

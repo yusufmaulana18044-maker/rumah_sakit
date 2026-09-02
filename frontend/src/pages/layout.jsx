@@ -1,10 +1,11 @@
 // src/components/Layout.jsx
 import React from "react";
-import { LogOut, Menu, X, Users, Settings, User, ChevronDown, FileText } from "lucide-react";
+import { LogOut, Menu, X, Users, Settings, User, ChevronDown, FileText, Moon, Sun, ClipboardList } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../supabase";
+import { useTheme } from "../context/ThemeContext";
 
 // 14 Kategori Dokumen
 const KATEGORI = [
@@ -47,7 +48,7 @@ const PageTransition = ({ children }) => {
 const Layout = ({ children, title = "Dashboard" }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // ✅ State untuk Mobile
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState(null);
   const [isLoadingPhoto, setIsLoadingPhoto] = useState(true);
   const userMenuRef = useRef(null);
@@ -56,6 +57,9 @@ const Layout = ({ children, title = "Dashboard" }) => {
   const role = localStorage.getItem("role");
   const username = localStorage.getItem("username");
   const userId = JSON.parse(localStorage.getItem("user") || "{}")?.id;
+
+  // ✅ AMBIL THEME DARI CONTEXT
+  const { theme, toggleTheme } = useTheme();
 
   // Ambil foto profil dari Supabase
   useEffect(() => {
@@ -114,6 +118,7 @@ const Layout = ({ children, title = "Dashboard" }) => {
 
   const isActive = (path) => location.pathname === path;
   const isKategoriActive = (id) => location.pathname === `/kategori/${id}`;
+  const isRekapActive = () => location.pathname === "/rekap-dokumen";
 
   // Render Avatar
   const renderAvatar = () => {
@@ -154,12 +159,12 @@ const Layout = ({ children, title = "Dashboard" }) => {
   };
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
       {/* Sidebar */}
       <aside
         className={`${
           sidebarOpen ? "w-72" : "w-20"
-        } bg-gradient-to-b from-gray-900 to-gray-800 text-white flex flex-col transition-all duration-300 shadow-lg overflow-y-auto ${
+        } bg-gradient-to-b from-gray-900 to-gray-800 dark:from-gray-950 dark:to-gray-900 text-white flex flex-col transition-all duration-300 shadow-lg overflow-y-auto ${
           isMobileMenuOpen ? "fixed z-50 h-full" : "hidden md:flex"
         }`}
       >
@@ -203,6 +208,21 @@ const Layout = ({ children, title = "Dashboard" }) => {
                 </Link>
               </li>
             )}
+
+            {/* ✅ Menu Rekap Dokumen */}
+            <li>
+              <Link
+                to="/rekap-dokumen"
+                className={`flex items-center gap-4 px-4 py-2.5 rounded-lg transition ${
+                  isRekapActive()
+                    ? "bg-gradient-to-r from-teal-600 to-teal-700 text-white shadow-md"
+                    : "text-gray-200 hover:bg-gray-700"
+                }`}
+              >
+                <ClipboardList className="w-5 h-5" />
+                {sidebarOpen && <span className="font-medium text-sm">Rekap Dokumen</span>}
+              </Link>
+            </li>
 
             {/* Divider - Kategori Dokumen */}
             {sidebarOpen && (
@@ -298,13 +318,13 @@ const Layout = ({ children, title = "Dashboard" }) => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <header className="bg-white shadow-sm sticky top-0 z-30 border-b border-gray-200">
+        <header className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-30 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between px-6 py-4">
             <div className="flex items-center gap-4">
               {/* Tombol Hamburger untuk Mobile */}
               <button 
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="md:hidden p-2 hover:bg-gray-100 rounded-lg"
+                className="md:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
               >
                 {isMobileMenuOpen ? <X /> : <Menu />}
               </button>
@@ -312,65 +332,77 @@ const Layout = ({ children, title = "Dashboard" }) => {
               {/* Tombol Hamburger untuk Desktop */}
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="hidden md:block p-2 hover:bg-gray-100 rounded-lg transition"
+                className="hidden md:block p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
               >
                 {sidebarOpen ? (
-                  <X className="w-6 h-6 text-gray-700" />
+                  <X className="w-6 h-6 text-gray-700 dark:text-gray-300" />
                 ) : (
-                  <Menu className="w-6 h-6 text-gray-700" />
+                  <Menu className="w-6 h-6 text-gray-700 dark:text-gray-300" />
                 )}
               </button>
-              <h1 className="text-xl font-semibold text-gray-800 truncate">{title}</h1>
+              <h1 className="text-xl font-semibold text-gray-800 dark:text-white truncate">{title}</h1>
             </div>
 
-            {/* User Profile Dropdown DENGAN FOTO */}
-            <div className="relative" ref={userMenuRef}>
+            {/* Right Side - Dark Mode Toggle + User Profile */}
+            <div className="flex items-center gap-3">
+              {/* ✅ TOMBOL DARK MODE */}
               <button
-                onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 rounded-lg transition group"
+                onClick={toggleTheme}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition text-gray-600 dark:text-gray-300"
+                title={theme === 'dark' ? 'Mode Terang' : 'Mode Gelap'}
               >
-                <div className="text-right text-sm hidden sm:block">
-                  <p className="font-semibold text-gray-800 capitalize">{username || "User"}</p>
-                  <p className="text-gray-600 text-xs capitalize">{role || "role"}</p>
-                </div>
-                
-                {/* AVATAR DENGAN FOTO PROFIL */}
-                {renderAvatar()}
-                
-                <ChevronDown className={`w-4 h-4 text-gray-600 transition ${userMenuOpen ? "rotate-180" : ""}`} />
+                {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
               </button>
 
-              {/* Dropdown Menu */}
-              {userMenuOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50 overflow-hidden">
-                  <Link
-                    to="/profile"
-                    onClick={() => setUserMenuOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-teal-50 transition"
-                  >
-                    <User className="w-4 h-4 text-teal-600" />
-                    <span>Profil Saya</span>
-                  </Link>
-                  <Link
-                    to="/settings"
-                    onClick={() => setUserMenuOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-teal-50 transition border-t border-gray-100"
-                  >
-                    <Settings className="w-4 h-4 text-teal-600" />
-                    <span>Pengaturan</span>
-                  </Link>
-                  <button
-                    onClick={() => {
-                      setUserMenuOpen(false);
-                      handleLogout();
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 transition border-t border-gray-100 font-medium"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    <span>Logout</span>
-                  </button>
-                </div>
-              )}
+              {/* User Profile Dropdown */}
+              <div className="relative" ref={userMenuRef}>
+                <button
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition group"
+                >
+                  <div className="text-right text-sm hidden sm:block">
+                    <p className="font-semibold text-gray-800 dark:text-white capitalize">{username || "User"}</p>
+                    <p className="text-gray-600 dark:text-gray-400 text-xs capitalize">{role || "role"}</p>
+                  </div>
+                  
+                  {/* AVATAR DENGAN FOTO PROFIL */}
+                  {renderAvatar()}
+                  
+                  <ChevronDown className={`w-4 h-4 text-gray-600 dark:text-gray-400 transition ${userMenuOpen ? "rotate-180" : ""}`} />
+                </button>
+
+                {/* Dropdown Menu */}
+                {userMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-50 overflow-hidden">
+                    <Link
+                      to="/profile"
+                      onClick={() => setUserMenuOpen(false)}
+                      className="flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-teal-50 dark:hover:bg-teal-900/30 transition"
+                    >
+                      <User className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                      <span>Profil Saya</span>
+                    </Link>
+                    <Link
+                      to="/settings"
+                      onClick={() => setUserMenuOpen(false)}
+                      className="flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-teal-50 dark:hover:bg-teal-900/30 transition border-t border-gray-100 dark:border-gray-700"
+                    >
+                      <Settings className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                      <span>Pengaturan</span>
+                    </Link>
+                    <button
+                      onClick={() => {
+                        setUserMenuOpen(false);
+                        handleLogout();
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 transition border-t border-gray-100 dark:border-gray-700 font-medium"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span>Logout</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </header>

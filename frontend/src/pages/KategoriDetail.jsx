@@ -6,6 +6,8 @@ import {
   CheckCircle, Clock, AlertCircle, Loader2, X
 } from "lucide-react";
 import { supabase } from "../supabase";
+import SkeletonLoader from "../components/SkeletonLoader";
+import Breadcrumb from "../components/Breadcrumb";
 
 const KATEGORI_LIST = [
   { id: 1, nama: "SK Pangkat (Mulai CPNS)" },
@@ -424,11 +426,34 @@ export default function KategoriDetail() {
     }
   };
 
+  // ✅ SKELETON LOADING
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 gap-3">
-        <Loader2 className="w-8 h-8 text-teal-600 animate-spin" />
-        <p className="text-gray-500 text-sm">Memuat dokumen...</p>
+      <div className="p-6 max-w-7xl mx-auto space-y-6">
+        <div className="h-6 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <div className="h-6 w-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                <div className="h-8 w-48 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+              </div>
+              <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded mt-2 animate-pulse"></div>
+            </div>
+            <div className="h-10 w-36 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border-l-4 border-gray-200 dark:border-gray-700">
+              <div className="h-3 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+              <div className="h-7 w-10 bg-gray-200 dark:bg-gray-700 rounded mt-1 animate-pulse"></div>
+            </div>
+          ))}
+        </div>
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden border border-gray-100 dark:border-gray-700 p-4">
+          <SkeletonLoader type="table" />
+        </div>
       </div>
     );
   }
@@ -447,6 +472,12 @@ export default function KategoriDetail() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
+      <Breadcrumb 
+        customItems={[
+          { label: 'Kategori', url: '/dashboard' },
+          { label: kategori?.nama || 'Detail', isLast: true }
+        ]}
+      />
       <button
         onClick={() => navigate("/dashboard")}
         className="flex items-center gap-2 text-gray-600 hover:text-teal-600 transition"
@@ -478,19 +509,19 @@ export default function KategoriDetail() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border-l-4 border-teal-600">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border-l-4 border-teal-600 hover:scale-[1.02] transition-transform duration-200">
           <p className="text-xs text-gray-500 dark:text-gray-400">Total Dokumen</p>
           <p className="text-2xl font-bold text-gray-800 dark:text-white">{stats.total}</p>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border-l-4 border-green-600">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border-l-4 border-green-600 hover:scale-[1.02] transition-transform duration-200">
           <p className="text-xs text-gray-500 dark:text-gray-400">Terverifikasi</p>
           <p className="text-2xl font-bold text-green-700 dark:text-green-400">{stats.verified}</p>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border-l-4 border-yellow-600">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border-l-4 border-yellow-600 hover:scale-[1.02] transition-transform duration-200">
           <p className="text-xs text-gray-500 dark:text-gray-400">Menunggu</p>
           <p className="text-2xl font-bold text-yellow-700 dark:text-yellow-400">{stats.pending}</p>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border-l-4 border-red-600">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border-l-4 border-red-600 hover:scale-[1.02] transition-transform duration-200">
           <p className="text-xs text-gray-500 dark:text-gray-400">Perlu Revisi</p>
           <p className="text-2xl font-bold text-red-700 dark:text-red-400">{stats.rejected}</p>
         </div>
@@ -527,10 +558,7 @@ export default function KategoriDetail() {
                         <div className="text-xs text-gray-400 dark:text-gray-500 truncate max-w-[200px]">{doc.name}</div>
                       </td>
                       <td className="px-4 py-3">
-                        <button
-                          onClick={() => handleViewEmployee(doc)}
-                          className="font-medium text-blue-600 hover:text-blue-800 hover:underline text-left cursor-pointer dark:text-blue-400 dark:hover:text-blue-300"
-                        >
+                        <button onClick={() => handleViewEmployee(doc)} className="font-medium text-blue-600 hover:text-blue-800 hover:underline text-left cursor-pointer dark:text-blue-400 dark:hover:text-blue-300">
                           {doc.employee}
                         </button>
                         <div className="text-xs text-gray-400 dark:text-gray-500">{doc.unit}</div>
@@ -538,37 +566,18 @@ export default function KategoriDetail() {
                       <td className="px-4 py-3 font-mono text-sm text-gray-600 dark:text-gray-400">{doc.nip}</td>
                       <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{doc.uploaded_at}</td>
                       <td className="px-4 py-3">
-                        <span className={`px-2 py-1 text-xs rounded-full ${status.cls}`}>
-                          {status.lbl}
-                        </span>
+                        <span className={`px-2 py-1 text-xs rounded-full ${status.cls}`}>{status.lbl}</span>
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex gap-2">
-                          <button
-                            onClick={() => handlePreviewDoc(doc)}
-                            className="p-1 text-blue-600 hover:bg-blue-50 rounded transition dark:text-blue-400 dark:hover:bg-blue-900/30"
-                            title="Preview Dokumen"
-                          >
+                          <button onClick={() => handlePreviewDoc(doc)} className="p-1 text-blue-600 hover:bg-blue-50 rounded transition dark:text-blue-400 dark:hover:bg-blue-900/30" title="Preview Dokumen">
                             <Eye className="w-4 h-4" />
                           </button>
-                          <button
-                            onClick={() => handleDownload(doc)}
-                            className="p-1 text-teal-600 hover:bg-teal-50 rounded transition dark:text-teal-400 dark:hover:bg-teal-900/30"
-                            title="Download"
-                          >
+                          <button onClick={() => handleDownload(doc)} className="p-1 text-teal-600 hover:bg-teal-50 rounded transition dark:text-teal-400 dark:hover:bg-teal-900/30" title="Download">
                             <Download className="w-4 h-4" />
                           </button>
-                          <button
-                            onClick={() => handleDeleteDoc(doc.id, doc.name, doc.file_path)}
-                            disabled={deleting === doc.id}
-                            className="p-1 text-red-600 hover:bg-red-50 rounded transition disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-900/30"
-                            title="Hapus"
-                          >
-                            {deleting === doc.id ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                              <Trash2 className="w-4 h-4" />
-                            )}
+                          <button onClick={() => handleDeleteDoc(doc.id, doc.name, doc.file_path)} disabled={deleting === doc.id} className="p-1 text-red-600 hover:bg-red-50 rounded transition disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-900/30" title="Hapus">
+                            {deleting === doc.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                           </button>
                         </div>
                       </td>

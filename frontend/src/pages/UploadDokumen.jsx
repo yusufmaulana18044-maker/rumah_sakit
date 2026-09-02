@@ -5,8 +5,6 @@ import { supabase } from "../supabase";
 import { 
   ArrowLeft, 
   Upload, 
-  File, 
-  FileImage, 
   FileText, 
   CheckCircle,
   AlertCircle,
@@ -14,25 +12,8 @@ import {
   Trash2
 } from "lucide-react";
 
-const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
-
-const ALLOWED_TYPES = {
-  'SK Pangkat (Mulai CPNS)': ['image/jpeg', 'image/png', 'application/pdf'],
-  'SK Fungsional': ['image/jpeg', 'image/png', 'application/pdf'],
-  'Data Pribadi': ['image/jpeg', 'image/png', 'application/pdf'],
-  'Riwayat Pendidikan': ['image/jpeg', 'image/png', 'application/pdf'],
-  'Uraian Tugas': ['image/jpeg', 'image/png', 'application/pdf'],
-  'SPK RKK (Khusus Nakes)': ['image/jpeg', 'image/png', 'application/pdf'],
-  'Penilaian Kinerja (SKP)': ['image/jpeg', 'image/png', 'application/pdf'],
-  'SPMT': ['image/jpeg', 'image/png', 'application/pdf'],
-  'Orientasi': ['image/jpeg', 'image/png', 'application/pdf'],
-  'KGB': ['image/jpeg', 'image/png', 'application/pdf'],
-  'Pengembangan Kompetensi': ['image/jpeg', 'image/png', 'application/pdf'],
-  'Riwayat Jabatan': ['image/jpeg', 'image/png', 'application/pdf'],
-  'Check Up': ['image/jpeg', 'image/png', 'application/pdf'],
-  'Lain-lain': ['image/jpeg', 'image/png', 'application/pdf'],
-  'default': ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf']
-};
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const ALLOWED_TYPES = ['application/pdf'];
 
 const KATEGORI_LIST = [
   { id: 1, name: 'SK Pangkat (Mulai CPNS)', folder: 'sk_pangkat' },
@@ -59,7 +40,6 @@ export default function UploadDokumen() {
   const [selectedKategori, setSelectedKategori] = useState('');
   const [nomorSurat, setNomorSurat] = useState('');
   const [file, setFile] = useState(null);
-  const [filePreview, setFilePreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -99,25 +79,12 @@ export default function UploadDokumen() {
       return;
     }
 
-    const kategori = KATEGORI_LIST.find(k => k.id === parseInt(selectedKategori));
-    const allowedTypes = kategori ? ALLOWED_TYPES[kategori.name] : ALLOWED_TYPES['default'];
-    
-    if (!allowedTypes.includes(selectedFile.type)) {
-      setError(`Format file tidak didukung! Gunakan: ${allowedTypes.join(', ')}`);
+    if (selectedFile.type !== 'application/pdf') {
+      setError(`Format file tidak didukung! Hanya PDF yang diizinkan.`);
       return;
     }
 
     setFile(selectedFile);
-    
-    if (selectedFile.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setFilePreview(e.target.result);
-      };
-      reader.readAsDataURL(selectedFile);
-    } else {
-      setFilePreview(null);
-    }
   };
 
   const handleFileChange = (e) => {
@@ -144,19 +111,7 @@ export default function UploadDokumen() {
 
   const handleRemoveFile = () => {
     setFile(null);
-    setFilePreview(null);
     setError('');
-  };
-
-  const getFileIcon = () => {
-    if (!file) return <File className="w-12 h-12 text-gray-300" />;
-    if (file.type.startsWith('image/')) {
-      return <FileImage className="w-12 h-12 text-blue-500" />;
-    }
-    if (file.type === 'application/pdf') {
-      return <FileText className="w-12 h-12 text-red-500" />;
-    }
-    return <File className="w-12 h-12 text-gray-300" />;
   };
 
   const getFileSize = (bytes) => {
@@ -186,14 +141,15 @@ export default function UploadDokumen() {
 
     try {
       const kategoriObj = KATEGORI_LIST.find(k => k.id === parseInt(selectedKategori));
-      const fileExt = file.name.split('.').pop();
+      const fileExt = 'pdf';
       const fileName = `${selectedPegawai}_${Date.now()}.${fileExt}`;
       const filePath = `pegawai/${kategoriObj.folder}/${fileName}`;
 
       setUploadProgress(20);
 
+      // 1. UPLOAD KE STORAGE - PAKAI BUCKET 'documents'
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('documents')
+        .from('documents')  // ✅ SUDAH DIPERBAIKI
         .upload(filePath, file, {
           cacheControl: '3600',
           upsert: false
@@ -203,39 +159,47 @@ export default function UploadDokumen() {
 
       if (uploadError) throw uploadError;
 
+      // 2. DAPATKAN PUBLIC URL
       const { data: urlData } = supabase.storage
-        .from('documents')
+        .from('documents')  // ✅ SUDAH DIPERBAIKI
         .getPublicUrl(filePath);
 
       setUploadProgress(80);
 
-      const { data: docData, error: docError } = await supabase
-        .from('dokumen')
-        .insert({
-          employee_id: selectedPegawai,
-          name: file.name,
-          type: kategoriObj.name,
-          number: nomorSurat || '-',
-          file_path: filePath,
-          file_url: urlData.publicUrl,
-          category: parseInt(selectedKategori),
-          status: 'pending',
-          uploaded_at: new Date().toISOString()
-        })
+      // 3. INSERT KE DATABASE
+      const docData = {
+        employee_id: selectedPegawai,
+        name: file.name,
+        type: kategoriObj.name,
+  
+        file_path: filePath,
+        file_url: urlData.publicUrl,
+        category: parseInt(selectedKategori),
+        uploaded_at: new Date().toISOString().split('T')[0]
+      };
+
+      console.log('📤 Data dikirim:', docData);
+
+      const { data, error: docError } = await supabase
+        .from('dokumen')  // ✅ PAKAI TABEL 'dokumen'
+        .insert([docData])
         .select();
 
-      if (docError) throw docError;
+      if (docError) {
+        console.error('❌ Database error:', docError);
+        await supabase.storage.from('documents').remove([filePath]);  // ✅ SUDAH DIPERBAIKI
+        throw docError;
+      }
 
       setUploadProgress(100);
-      setSuccess('✅ Dokumen berhasil diupload!');
+      setSuccess('✅ Dokumen PDF berhasil diupload!');
       
       setTimeout(() => {
         setFile(null);
-        setFilePreview(null);
         setNomorSurat('');
         setSelectedKategori('');
         setUploadProgress(0);
-        navigate(`/kategori/${selectedKategori}`);
+        navigate(`/employees/${selectedPegawai}`);
       }, 2000);
 
     } catch (error) {
@@ -257,8 +221,8 @@ export default function UploadDokumen() {
       </button>
 
       <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-        <h1 className="text-2xl font-bold text-gray-800">📤 Upload Dokumen</h1>
-        <p className="text-gray-500 text-sm mt-1">Upload dokumen pegawai ke sistem SICAKEP</p>
+        <h1 className="text-2xl font-bold text-gray-800">📤 Upload Dokumen PDF</h1>
+        <p className="text-gray-500 text-sm mt-1">Upload dokumen PDF pegawai (Maksimal 5MB)</p>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 space-y-6">
@@ -309,11 +273,9 @@ export default function UploadDokumen() {
               </option>
             ))}
           </select>
-          {selectedKategori && (
-            <p className="text-xs text-gray-400 mt-1">
-              Format yang didukung: {ALLOWED_TYPES[KATEGORI_LIST.find(k => k.id === parseInt(selectedKategori))?.name || 'default'].join(', ')}
-            </p>
-          )}
+          <p className="text-xs text-gray-400 mt-1">
+            📄 Format: <strong>PDF</strong> (Maksimal 5MB)
+          </p>
         </div>
 
         <div>
@@ -331,7 +293,7 @@ export default function UploadDokumen() {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Upload File <span className="text-red-500">*</span>
+            Upload File PDF <span className="text-red-500">*</span>
           </label>
           <div
             onDragOver={handleDragOver}
@@ -348,21 +310,13 @@ export default function UploadDokumen() {
             {file ? (
               <div className="space-y-4">
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                  {filePreview ? (
-                    <img
-                      src={filePreview}
-                      alt="Preview"
-                      className="w-32 h-32 object-cover rounded-lg border border-gray-200"
-                    />
-                  ) : (
-                    <div className="w-16 h-16 flex items-center justify-center">
-                      {getFileIcon()}
-                    </div>
-                  )}
+                  <div className="w-16 h-16 flex items-center justify-center">
+                    <FileText className="w-12 h-12 text-red-500" />
+                  </div>
                   <div className="text-left">
                     <p className="font-medium text-gray-800">{file.name}</p>
                     <p className="text-sm text-gray-500">{getFileSize(file.size)}</p>
-                    <p className="text-sm text-gray-500">{file.type}</p>
+                    <p className="text-sm text-green-600">✅ PDF</p>
                   </div>
                 </div>
                 <button
@@ -375,29 +329,30 @@ export default function UploadDokumen() {
               </div>
             ) : (
               <div className="space-y-3">
-                <Upload className="w-12 h-12 text-gray-300 mx-auto" />
+                <FileText className="w-12 h-12 text-gray-300 mx-auto" />
                 <div>
-                  <p className="text-gray-500">Seret & drop file di sini</p>
-                  <p className="text-sm text-gray-400">atau klik untuk memilih file</p>
+                  <p className="text-gray-500">Seret & drop file PDF di sini</p>
+                  <p className="text-sm text-gray-400">atau klik untuk memilih file PDF</p>
                 </div>
                 <input
                   type="file"
                   onChange={handleFileChange}
                   className="hidden"
                   id="fileInput"
-                  accept=".jpg,.jpeg,.png,.pdf"
+                  accept=".pdf"
                 />
                 <label
                   htmlFor="fileInput"
                   className="inline-block px-6 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition cursor-pointer"
                 >
-                  Pilih File
+                  Pilih File PDF
                 </label>
               </div>
             )}
           </div>
-          <p className="text-xs text-gray-400 mt-2">
-            Maksimal ukuran file: {MAX_FILE_SIZE / 1024 / 1024}MB (PDF, JPG, PNG)
+          <p className="text-xs text-gray-400 mt-2 flex items-center gap-2">
+            <FileText className="w-3 h-3" />
+            Hanya file <strong>PDF</strong> yang diterima. Maksimal <strong>5MB</strong>.
           </p>
         </div>
 
@@ -429,7 +384,7 @@ export default function UploadDokumen() {
           ) : (
             <span className="flex items-center justify-center gap-2">
               <Upload className="w-5 h-5" />
-              Upload Dokumen
+              Upload Dokumen PDF
             </span>
           )}
         </button>
@@ -437,8 +392,8 @@ export default function UploadDokumen() {
 
       <div className="bg-teal-50 rounded-lg p-4 border border-teal-200">
         <p className="text-sm text-teal-800">
-          💡 File yang sudah diupload akan tersimpan di Supabase Storage dan bisa diakses melalui link publik.
-          Status dokumen akan otomatis menjadi <strong>"Menunggu"</strong> sampai diverifikasi.
+          📄 <strong>Hanya PDF</strong> - Maksimal 5MB.
+          Status dokumen otomatis <strong>"Menunggu"</strong>.
         </p>
       </div>
     </div>

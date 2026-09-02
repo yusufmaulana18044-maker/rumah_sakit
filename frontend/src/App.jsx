@@ -24,50 +24,62 @@ import SettingsPage from "./pages/settings";
 import KategoriDetail from "./pages/KategoriDetail";
 import UploadDokumen from "./pages/UploadDokumen";
 
+// 📦 IMPORT HALAMAN REKAP DOKUMEN
+import RekapDokumen from "./pages/RekapDokumen";
+
 // ✅ IMPORT LANGUAGE PROVIDER
 import { LanguageProvider } from "./context/LanguageContext";
 
+// ✅ IMPORT THEME PROVIDER
+import { ThemeProvider } from "./context/ThemeContext";
+
 function App() {
   return (
-    <LanguageProvider>
-      <BrowserRouter>
-        <Routes>
-          {/* Route tanpa Layout (halaman login/register) */}
-          <Route path="/" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          
-          {/* ROUTE ADMIN */}
-          <Route path="/admin" element={<AdminDashboard />} />
-          
-          {/* Route dengan Layout */}
-          <Route path="/dashboard" element={<Layout title="Dashboard Utama"><Dashboard /></Layout>} />
-          
-          {/* ROUTE UNTUK PEGAWAI & DOKUMEN */}
-          <Route path="/employees" element={<Layout><EmployeeList /></Layout>} />
-          <Route path="/employees/new" element={<Layout><EmployeeForm /></Layout>} />
-          <Route path="/employees/:id" element={<Layout><EmployeeDetail /></Layout>} />
-          <Route path="/employees/:id/edit" element={<Layout><EmployeeForm /></Layout>} />
-          
-          {/* ROUTE DOKUMEN */}
-          <Route path="/dokumen" element={<Layout><Dokumen /></Layout>} />
-          <Route path="/dokumen/upload" element={<Layout><UploadDokumen /></Layout>} />
-          
-          {/* ROUTE RIWAYAT PENDIDIKAN */}
-          <Route path="/riwayat-pendidikan" element={<Layout><RiwayatPendidikan /></Layout>} />
-          <Route path="/riwayat-pendidikan/new" element={<Layout><RiwayatPendidikan /></Layout>} />
-          
-          {/* ROUTE STATUS PEGAWAI */}
-          <Route path="/status-pegawai" element={<Layout><StatusPegawai /></Layout>} />
-          
-          <Route path="/kategori/:id" element={<Layout><KategoriDetail /></Layout>} />
-          <Route path="/kategori/:id/upload" element={<Layout><UploadDokumen /></Layout>} />
-          
-          {/* ROUTE UNTUK PROFILE & SETTINGS */}
-          <Route path="/profile" element={<Layout><Profile /></Layout>} />
-          <Route path="/settings" element={<Layout><SettingsPage /></Layout>} />
-        </Routes>
-      </BrowserRouter>
-    </LanguageProvider>
+    <ThemeProvider>
+      <LanguageProvider>
+        <BrowserRouter>
+          <Routes>
+            {/* Route tanpa Layout (halaman login/register) */}
+            <Route path="/" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            
+            {/* ROUTE ADMIN */}
+            <Route path="/admin" element={<AdminDashboard />} />
+            
+            {/* Route dengan Layout */}
+            <Route path="/dashboard" element={<Layout title="Dashboard Utama"><Dashboard /></Layout>} />
+            
+            {/* ROUTE UNTUK PEGAWAI & DOKUMEN */}
+            <Route path="/employees" element={<Layout><EmployeeList /></Layout>} />
+            <Route path="/employees/new" element={<Layout><EmployeeForm /></Layout>} />
+            <Route path="/employees/:id" element={<Layout><EmployeeDetail /></Layout>} />
+            <Route path="/employees/:id/edit" element={<Layout><EmployeeForm /></Layout>} />
+            
+            {/* ROUTE DOKUMEN */}
+            <Route path="/dokumen" element={<Layout><Dokumen /></Layout>} />
+            <Route path="/dokumen/upload" element={<Layout><UploadDokumen /></Layout>} />
+            
+            {/* ROUTE RIWAYAT PENDIDIKAN */}
+            <Route path="/riwayat-pendidikan" element={<Layout><RiwayatPendidikan /></Layout>} />
+            <Route path="/riwayat-pendidikan/new" element={<Layout><RiwayatPendidikan /></Layout>} />
+            
+            {/* ROUTE STATUS PEGAWAI */}
+            <Route path="/status-pegawai" element={<Layout><StatusPegawai /></Layout>} />
+            
+            {/* ROUTE KATEGORI */}
+            <Route path="/kategori/:id" element={<Layout><KategoriDetail /></Layout>} />
+            <Route path="/kategori/:id/upload" element={<Layout><UploadDokumen /></Layout>} />
+            
+            {/* ROUTE REKAP DOKUMEN */}
+            <Route path="/rekap-dokumen" element={<Layout><RekapDokumen /></Layout>} />
+            
+            {/* ROUTE UNTUK PROFILE & SETTINGS */}
+            <Route path="/profile" element={<Layout><Profile /></Layout>} />
+            <Route path="/settings" element={<Layout><SettingsPage /></Layout>} />
+          </Routes>
+        </BrowserRouter>
+      </LanguageProvider>
+    </ThemeProvider>
   );
 }
 

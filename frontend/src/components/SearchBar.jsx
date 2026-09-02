@@ -1,7 +1,7 @@
 // src/components/SearchBar.jsx
 import React, { useState, useRef, useEffect } from 'react';
 
-const SearchBar = ({ searchTerm, setSearchTerm, filteredData, onResultClick }) => {
+const SearchBar = ({ searchTerm, setSearchTerm, filteredData = [], onResultClick }) => {
   const [isFocused, setIsFocused] = useState(false);
   const wrapperRef = useRef(null);
 
@@ -31,7 +31,7 @@ const SearchBar = ({ searchTerm, setSearchTerm, filteredData, onResultClick }) =
         {/* Input Field */}
         <input
           type="text"
-          className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-xl leading-5 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-teal-600 sm:text-sm transition-all duration-200 shadow-sm"
+          className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-xl leading-5 bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-teal-600 sm:text-sm transition-all duration-200 shadow-sm"
           placeholder="Cari nama pegawai atau NIP..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
@@ -42,7 +42,7 @@ const SearchBar = ({ searchTerm, setSearchTerm, filteredData, onResultClick }) =
       {/* -- DROPDOWN HASIL PENCARIAN (Modal Melayang) -- */}
       {isFocused && searchTerm.length > 0 && (
         <div className="absolute z-50 mt-2 w-full bg-white rounded-xl shadow-lg border border-gray-100 max-h-60 overflow-y-auto">
-          {filteredData.length > 0 ? (
+          {filteredData && filteredData.length > 0 ? (
             <ul className="py-1">
               {filteredData.map((emp) => (
                 <li 
@@ -50,7 +50,7 @@ const SearchBar = ({ searchTerm, setSearchTerm, filteredData, onResultClick }) =
                   onClick={() => {
                     if(onResultClick) onResultClick(emp);
                     setIsFocused(false);
-                    setSearchTerm(""); // Kosongkan search setelah klik
+                    setSearchTerm("");
                   }}
                   className="px-4 py-3 flex items-center justify-between hover:bg-teal-50 cursor-pointer transition-colors border-b border-gray-50 last:border-0"
                 >
@@ -65,7 +65,7 @@ const SearchBar = ({ searchTerm, setSearchTerm, filteredData, onResultClick }) =
               ))}
             </ul>
           ) : (
-            <div className="px-4 py-4 text-center text-sm text-gray-400">
+            <div className="px-4 py-4 text-center text-sm text-gray-500">
               Pegawai tidak ditemukan.
             </div>
           )}

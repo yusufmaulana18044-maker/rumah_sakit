@@ -6,6 +6,8 @@ import { supabase } from "../supabase";
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import SkeletonLoader from "../components/SkeletonLoader";
+import Breadcrumb from "../components/Breadcrumb";
 
 // 14 Kategori Dokumen
 const KATEGORI = [
@@ -277,28 +279,50 @@ export default function EmployeeList() {
     dokumen: employees.reduce((sum, e) => sum + (e.dokumenCount || 0), 0)
   };
 
+  // ✅ SKELETON LOADING
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 text-teal-600 animate-spin" />
-        <p className="text-gray-500 ml-3">Loading data pegawai...</p>
+      <div className="space-y-6 p-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <div className="h-8 w-48 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+            <div className="h-4 w-64 bg-gray-200 dark:bg-gray-700 rounded mt-2 animate-pulse"></div>
+          </div>
+          <div className="flex gap-3">
+            <div className="h-10 w-32 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
+            <div className="h-10 w-36 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-3 border-l-4 border-gray-200 dark:border-gray-700">
+              <div className="h-3 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+              <div className="h-6 w-8 bg-gray-200 dark:bg-gray-700 rounded mt-1 animate-pulse"></div>
+            </div>
+          ))}
+        </div>
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex-1 h-10 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
+          <div className="h-10 w-40 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
+          <div className="h-10 w-20 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
+        </div>
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden p-4">
+          <SkeletonLoader type="table" />
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6 p-6">
+      <Breadcrumb />
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-800 dark:text-white">📋 Data Pegawai</h1>
           <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Kelola data pegawai RSUD Dr. Harjono S. Ponorogo</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          {/* EXPORT BUTTON - SUDAH TERINTEGRASI */}
-          <ExportButton 
-            data={employees}
-            filename="laporan-pegawai"
-          />
+          <ExportButton data={employees} filename="laporan-pegawai" />
           <button
             onClick={() => navigate("/employees/new")}
             className="bg-teal-700 hover:bg-teal-800 text-white px-4 py-2 rounded-lg transition flex items-center gap-2"
@@ -310,19 +334,19 @@ export default function EmployeeList() {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-3 border-l-4 border-teal-600">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-3 border-l-4 border-teal-600 hover:scale-[1.02] transition-transform duration-200">
           <p className="text-xs text-gray-500 dark:text-gray-400">Total Pegawai</p>
           <p className="text-xl font-bold text-gray-800 dark:text-white">{stats.total}</p>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-3 border-l-4 border-green-600">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-3 border-l-4 border-green-600 hover:scale-[1.02] transition-transform duration-200">
           <p className="text-xs text-gray-500 dark:text-gray-400">Aktif</p>
           <p className="text-xl font-bold text-gray-800 dark:text-white">{stats.aktif}</p>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-3 border-l-4 border-yellow-600">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-3 border-l-4 border-yellow-600 hover:scale-[1.02] transition-transform duration-200">
           <p className="text-xs text-gray-500 dark:text-gray-400">Cuti</p>
           <p className="text-xl font-bold text-gray-800 dark:text-white">{stats.cuti}</p>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-3 border-l-4 border-blue-600">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-3 border-l-4 border-blue-600 hover:scale-[1.02] transition-transform duration-200">
           <p className="text-xs text-gray-500 dark:text-gray-400">Dokumen</p>
           <p className="text-xl font-bold text-gray-800 dark:text-white">{stats.dokumen}</p>
         </div>
@@ -396,11 +420,7 @@ export default function EmployeeList() {
                       <td className="px-4 py-3">
                         <div className="flex gap-0.5">
                           {emp.kelengkapan?.map((s, i) => (
-                            <div 
-                              key={i}
-                              className={`w-2.5 h-3.5 rounded-sm ${s === "isi" ? "bg-teal-600" : "bg-gray-200 dark:bg-gray-600"}`}
-                              title={KATEGORI[i]}
-                            />
+                            <div key={i} className={`w-2.5 h-3.5 rounded-sm ${s === "isi" ? "bg-teal-600" : "bg-gray-200 dark:bg-gray-600"}`} title={KATEGORI[i]} />
                           ))}
                         </div>
                         <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{filled} dari 14 kategori terisi</p>
@@ -408,25 +428,13 @@ export default function EmployeeList() {
                       <td className="px-4 py-3">{getStatusBadge(emp.status)}</td>
                       <td className="px-4 py-3">
                         <div className="flex gap-2">
-                          <button
-                            onClick={() => navigate(`/employees/${emp.id}`)}
-                            className="p-1 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/30 rounded transition"
-                            title="Lihat Detail"
-                          >
+                          <button onClick={() => navigate(`/employees/${emp.id}`)} className="p-1 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/30 rounded transition" title="Lihat Detail">
                             <Eye className="w-4 h-4" />
                           </button>
-                          <button
-                            onClick={() => navigate(`/employees/${emp.id}/edit`)}
-                            className="p-1 text-teal-600 hover:bg-teal-50 dark:text-teal-400 dark:hover:bg-teal-900/30 rounded transition"
-                            title="Edit"
-                          >
+                          <button onClick={() => navigate(`/employees/${emp.id}/edit`)} className="p-1 text-teal-600 hover:bg-teal-50 dark:text-teal-400 dark:hover:bg-teal-900/30 rounded transition" title="Edit">
                             <Edit className="w-4 h-4" />
                           </button>
-                          <button
-                            onClick={() => handleDelete(emp.id, emp.full_name)}
-                            className="p-1 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30 rounded transition"
-                            title="Hapus"
-                          >
+                          <button onClick={() => handleDelete(emp.id, emp.full_name)} className="p-1 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30 rounded transition" title="Hapus">
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
