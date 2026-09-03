@@ -11,7 +11,9 @@ import {
   Loader2,
   CheckCircle,
   Clock,
-  XCircle
+  XCircle,
+  X,
+  File
 } from 'lucide-react';
 import { supabase } from '../supabase';
 
@@ -46,8 +48,20 @@ export default function Dokumen() {
   const [search, setSearch] = useState('');
   const [filterKategori, setFilterKategori] = useState('semua');
   const [error, setError] = useState('');
+  const [role, setRole] = useState('');
+  const [userId, setUserId] = useState('');
+  const [previewFile, setPreviewFile] = useState(null);
+  const [showPreview, setShowPreview] = useState(false);
+  const [verifying, setVerifying] = useState(null);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [selectedDoc, setSelectedDoc] = useState(null);
+  const [rejectReason, setRejectReason] = useState('');
 
   useEffect(() => {
+    const userRole = localStorage.getItem('role');
+    const user = JSON.parse(localStorage.getItem('user'));
+    setRole(userRole);
+    setUserId(user?.id || '');
     fetchDokumen();
   }, []);
 
@@ -84,7 +98,9 @@ export default function Dokumen() {
         status: STATUS_MAP[doc.status] || doc.status || 'Pending',
         file_url: doc.file_url || '#',
         file_path: doc.file_path || '',
-        type: doc.type || 'pdf'
+        type: doc.type || 'pdf',
+        employee_id: doc.employee_id,
+        catatan_revisi: doc.catatan_revisi || ''
       }));
 
       setDokumen(formattedData);
@@ -96,7 +112,53 @@ export default function Dokumen() {
     }
   };
 
-  const handleDelete = async (id, nama) => {
+  // ✅ FUNGSI VERIFIKASI DENGAN KONFIRMASI
+  const handleVerifikasi = async (docId, newStatus, catatan = '') => {
+    const statusLabels = {
+      verified: 'Terverifikasi',
+      pending: 'Pending',
+      rejected: 'Ditolak'
+    };
+    
+    // ✅ TAMPILKAN KONFIRMASI
+    const confirmMessage = `Ubah status dokumen menjadi "${statusLabels[newStatus]}"?`;
+    if (!window.confirm(confirmMessage)) {
+      return; // Batal
+    }
+
+    setVerifying(docId);
+    try {
+      const updateData = { status: newStatus };
+      if (newStatus === 'rejected' && catatan) {
+        updateData.catatan_revisi = catatan;
+      }
+      
+      const { error } = await supabase
+        .from('dokumen')
+        .update(updateData)
+        .eq('id', docId);
+
+      if (error) throw error;
+      
+      await fetchDokumen();
+      alert(`✅ Status dokumen berhasil diubah menjadi "${statusLabels[newStatus]}"!`);
+    } catch (error) {
+      console.error('Error verifying document:', error);
+      alert('❌ Gagal mengubah status: ' + error.message);
+    } finally {
+      setVerifying(null);
+      setShowRejectModal(false);
+      setSelectedDoc(null);
+      setRejectReason('');
+    }
+  };
+
+  const handleDelete = async (id, nama, employee_id) => {
+    if (role !== 'admin' && employee_id !== userId) {
+      alert('Anda hanya bisa menghapus dokumen milik sendiri!');
+      return;
+    }
+
     if (!window.confirm(`Yakin ingin menghapus dokumen "${nama}"?`)) return;
     
     try {
@@ -111,6 +173,11 @@ export default function Dokumen() {
       console.error('Error deleting dokumen:', error);
       alert('Gagal menghapus dokumen');
     }
+  };
+
+  const handlePreview = (fileUrl) => {
+    setPreviewFile(fileUrl);
+    setShowPreview(true);
   };
 
   const filteredDokumen = dokumen.filter(doc => {
@@ -177,7 +244,9 @@ export default function Dokumen() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">📁 Kelola Dokumen</h1>
-          <p className="text-gray-500 text-sm mt-1">Upload dan kelola dokumen pegawai</p>
+          <p className="text-gray-500 text-sm mt-1">
+            {role === 'admin' ? 'Upload dan kelola dokumen pegawai' : 'Dokumen Anda sendiri'}
+          </p>
         </div>
         <button
           onClick={() => navigate('/dokumen/upload')}
@@ -252,7 +321,6 @@ export default function Dokumen() {
           <div className="p-8 text-center text-gray-500">
             <FolderOpen className="w-12 h-12 mx-auto text-gray-300 mb-3" />
             <p>Belum ada dokumen</p>
-            <p className="text-sm mt-1">Upload dokumen pertama Anda</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -266,6 +334,10 @@ export default function Dokumen() {
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tanggal</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th>
+                  {/* ✅ KOLOM VERIFIKASI UNTUK ADMIN */}
+                  {role === 'admin' && (
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Verifikasi</th>
+                  )}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -284,33 +356,73 @@ export default function Dokumen() {
                         {doc.kategori}
                       </span>
                     </td>
-                    <td className="px-4 py-3">{getStatusBadge(doc.status)}</td>
+                    <td className="px-4 py-3">
+                      {getStatusBadge(doc.status)}
+                      {doc.catatan_revisi && doc.status === 'Ditolak' && (
+                        <div className="text-xs text-red-500 mt-1 truncate max-w-[150px]" title={doc.catatan_revisi}>
+                          📝 {doc.catatan_revisi}
+                        </div>
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-sm text-gray-500">
                       {new Date(doc.tanggal).toLocaleDateString('id-ID')}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex gap-2">
-                        {doc.file_url && doc.file_url !== '#' && (
-                          <a 
-                            href={doc.file_url} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="p-1 text-blue-600 hover:bg-blue-50 rounded transition"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </a>
-                        )}
-                        <button className="p-1 text-teal-600 hover:bg-teal-50 rounded transition">
+                        <button 
+                          onClick={() => handlePreview(doc.file_url)}
+                          className="p-1 text-blue-600 hover:bg-blue-50 rounded transition"
+                          title="Preview"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button className="p-1 text-teal-600 hover:bg-teal-50 rounded transition" title="Download">
                           <Download className="w-4 h-4" />
                         </button>
                         <button 
-                          onClick={() => handleDelete(doc.id, doc.nama)}
+                          onClick={() => handleDelete(doc.id, doc.nama, doc.employee_id)}
                           className="p-1 text-red-600 hover:bg-red-50 rounded transition"
+                          title="Hapus"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </td>
+                    {/* ✅ TOMBOL VERIFIKASI UNTUK ADMIN */}
+                    {role === 'admin' && (
+                      <td className="px-4 py-3">
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() => handleVerifikasi(doc.id, 'verified')}
+                            disabled={verifying === doc.id || doc.status === 'Terverifikasi'}
+                            className={`p-1 rounded transition ${doc.status === 'Terverifikasi' ? 'text-green-300 cursor-not-allowed' : 'text-green-600 hover:bg-green-50'}`}
+                            title="Terverifikasi"
+                          >
+                            <CheckCircle className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedDoc(doc);
+                              setShowRejectModal(true);
+                            }}
+                            disabled={verifying === doc.id || doc.status === 'Ditolak'}
+                            className={`p-1 rounded transition ${doc.status === 'Ditolak' ? 'text-red-300 cursor-not-allowed' : 'text-red-600 hover:bg-red-50'}`}
+                            title="Tolak"
+                          >
+                            <XCircle className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleVerifikasi(doc.id, 'pending')}
+                            disabled={verifying === doc.id || doc.status === 'Pending'}
+                            className={`p-1 rounded transition ${doc.status === 'Pending' ? 'text-yellow-300 cursor-not-allowed' : 'text-yellow-600 hover:bg-yellow-50'}`}
+                            title="Pending"
+                          >
+                            <Clock className="w-4 h-4" />
+                          </button>
+                        </div>
+                        {verifying === doc.id && <Loader2 className="w-4 h-4 animate-spin text-teal-600" />}
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -323,50 +435,76 @@ export default function Dokumen() {
       <div className="text-xs text-gray-400 text-center">
         Menampilkan {filteredDokumen.length} dari {dokumen.length} dokumen
       </div>
-    </div>
-  );
-  // Di Dokumen.jsx, tambahkan state:
-const [previewFile, setPreviewFile] = useState(null);
-const [showPreview, setShowPreview] = useState(false);
 
-// Fungsi untuk preview:
-const handlePreview = (fileUrl) => {
-  setPreviewFile(fileUrl);
-  setShowPreview(true);
-};
+      {/* Modal Preview */}
+      {showPreview && previewFile && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-auto p-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-semibold">Preview Dokumen</h3>
+              <button onClick={() => setShowPreview(false)} className="p-1 hover:bg-gray-100 rounded">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            {previewFile.match(/\.(jpg|jpeg|png|gif)$/i) ? (
+              <img src={previewFile} alt="Preview" className="w-full rounded-lg" />
+            ) : previewFile.match(/\.pdf$/i) ? (
+              <iframe src={previewFile} className="w-full h-[500px] rounded-lg" />
+            ) : (
+              <div className="text-center py-10 text-gray-500">
+                <File className="w-16 h-16 mx-auto text-gray-300" />
+                <p>File tidak bisa dipreview</p>
+                <a href={previewFile} target="_blank" rel="noopener noreferrer" className="text-teal-600 hover:underline">
+                  Download File
+                </a>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
-// Tambahkan modal preview di bagian bawah:
-{showPreview && previewFile && (
-  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-    <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-auto p-4">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="font-semibold">Preview Dokumen</h3>
-        <button onClick={() => setShowPreview(false)} className="p-1 hover:bg-gray-100 rounded">
-          <X className="w-5 h-5" />
-        </button>
-      </div>
-      {previewFile.match(/\.(jpg|jpeg|png|gif)$/i) ? (
-        <img src={previewFile} alt="Preview" className="w-full rounded-lg" />
-      ) : previewFile.match(/\.pdf$/i) ? (
-        <iframe src={previewFile} className="w-full h-[500px] rounded-lg" />
-      ) : (
-        <div className="text-center py-10 text-gray-500">
-          <File className="w-16 h-16 mx-auto text-gray-300" />
-          <p>File tidak bisa dipreview</p>
-          <a href={previewFile} target="_blank" className="text-teal-600 hover:underline">
-            Download File
-          </a>
+      {/* ✅ MODAL TOLAK DENGAN CATATAN */}
+      {showRejectModal && selectedDoc && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-bold text-gray-800 dark:text-white">Tolak Dokumen</h3>
+              <button onClick={() => setShowRejectModal(false)} className="p-1 hover:bg-gray-100 rounded">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+              Berikan alasan penolakan untuk dokumen <strong>"{selectedDoc.nama}"</strong>
+            </p>
+            <textarea
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              placeholder="Contoh: Dokumen tidak lengkap, mohon upload ulang dengan data yang benar."
+              className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:border-teal-400 focus:outline-none dark:bg-gray-700 dark:text-white min-h-[100px]"
+            />
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={() => setShowRejectModal(false)}
+                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+              >
+                Batal
+              </button>
+              <button
+                onClick={() => {
+                  if (!rejectReason.trim()) {
+                    alert('Silakan isi alasan penolakan!');
+                    return;
+                  }
+                  handleVerifikasi(selectedDoc.id, 'rejected', rejectReason);
+                }}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+              >
+                Tolak
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
-  </div>
-)}
-
-// Di tombol preview:
-<button 
-  onClick={() => handlePreview(doc.file_url)}
-  className="p-1 text-blue-600 hover:bg-blue-50 rounded transition"
->
-  <Eye className="w-4 h-4" />
-</button>
+  );
 }
