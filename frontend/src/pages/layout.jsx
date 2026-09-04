@@ -1,6 +1,6 @@
 // src/components/Layout.jsx
 import React from "react";
-import { LogOut, Menu, X, Users, Settings, User, ChevronDown, FileText, Moon, Sun, ClipboardList } from "lucide-react";
+import { LogOut, Menu, X, Users, Settings, User, ChevronDown, FileText, Moon, Sun, ClipboardList, ArrowLeft } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -150,7 +150,6 @@ const Layout = ({ children, title = "Dashboard" }) => {
       );
     }
 
-    // Default avatar dengan inisial
     return (
       <div className="w-10 h-10 bg-gradient-to-r from-teal-500 to-blue-500 rounded-full flex items-center justify-center text-white font-semibold shadow-md">
         {username?.[0]?.toUpperCase() || "U"}
@@ -192,7 +191,20 @@ const Layout = ({ children, title = "Dashboard" }) => {
               </Link>
             </li>
 
-            {/* Menu Data Pegawai */}
+            {/* ✅ TOMBOL KEMBALI KE ADMIN - HANYA UNTUK ADMIN */}
+            {role === 'admin' && location.pathname === '/dashboard' && (
+              <li>
+                <Link
+                  to="/admin"
+                  className="flex items-center gap-4 px-4 py-2.5 rounded-lg transition bg-teal-600/20 text-teal-300 hover:bg-teal-600/30 border border-teal-600/30"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                  {sidebarOpen && <span className="font-medium text-sm">Kembali ke Admin</span>}
+                </Link>
+              </li>
+            )}
+
+            {/* Menu Data Pegawai - HANYA ADMIN */}
             {role === "admin" && (
               <li>
                 <Link
@@ -209,7 +221,7 @@ const Layout = ({ children, title = "Dashboard" }) => {
               </li>
             )}
 
-            {/* ✅ Menu Rekap Dokumen */}
+            {/* Menu Rekap Dokumen - SEMUA USER */}
             <li>
               <Link
                 to="/rekap-dokumen"
@@ -224,46 +236,50 @@ const Layout = ({ children, title = "Dashboard" }) => {
               </Link>
             </li>
 
-            {/* Divider - Kategori Dokumen */}
-            {sidebarOpen && (
-              <li className="pt-3 pb-1">
-                <div className="flex items-center gap-2 px-4">
-                  <FileText className="w-4 h-4 text-gray-500" />
-                  <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Kategori Dokumen</span>
-                </div>
-              </li>
-            )}
-            {!sidebarOpen && (
-              <li className="pt-3 pb-1">
-                <div className="border-t border-gray-700"></div>
-              </li>
-            )}
+            {/* Divider - Kategori Dokumen - HANYA ADMIN */}
+            {role === "admin" && (
+              <>
+                {sidebarOpen && (
+                  <li className="pt-3 pb-1">
+                    <div className="flex items-center gap-2 px-4">
+                      <FileText className="w-4 h-4 text-gray-500" />
+                      <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Kategori Dokumen</span>
+                    </div>
+                  </li>
+                )}
+                {!sidebarOpen && (
+                  <li className="pt-3 pb-1">
+                    <div className="border-t border-gray-700"></div>
+                  </li>
+                )}
 
-            {/* 14 Kategori */}
-            {KATEGORI.map((kat) => (
-              <li key={kat.id}>
-                <Link
-                  to={`/kategori/${kat.id}`}
-                  className={`flex items-center gap-4 px-4 py-2 rounded-lg transition ${
-                    isKategoriActive(kat.id)
-                      ? "bg-gradient-to-r from-teal-600 to-teal-700 text-white shadow-md"
-                      : "text-gray-200 hover:bg-gray-700"
-                  }`}
-                >
-                  <span className="text-xs font-mono bg-gray-700 text-gray-300 w-6 h-6 rounded flex items-center justify-center">
-                    {String(kat.id).padStart(2, "0")}
-                  </span>
-                  {sidebarOpen && (
-                    <span className="font-medium text-sm truncate">{kat.nama}</span>
-                  )}
-                </Link>
-              </li>
-            ))}
+                {/* 14 Kategori */}
+                {KATEGORI.map((kat) => (
+                  <li key={kat.id}>
+                    <Link
+                      to={`/kategori/${kat.id}`}
+                      className={`flex items-center gap-4 px-4 py-2 rounded-lg transition ${
+                        isKategoriActive(kat.id)
+                          ? "bg-gradient-to-r from-teal-600 to-teal-700 text-white shadow-md"
+                          : "text-gray-200 hover:bg-gray-700"
+                      }`}
+                    >
+                      <span className="text-xs font-mono bg-gray-700 text-gray-300 w-6 h-6 rounded flex items-center justify-center">
+                        {String(kat.id).padStart(2, "0")}
+                      </span>
+                      {sidebarOpen && (
+                        <span className="font-medium text-sm truncate">{kat.nama}</span>
+                      )}
+                    </Link>
+                  </li>
+                ))}
+              </>
+            )}
 
             {/* Divider */}
             {sidebarOpen && <li className="py-2"><div className="border-t border-gray-700"></div></li>}
 
-            {/* Menu Profil */}
+            {/* Menu Profil - SEMUA USER */}
             <li>
               <Link
                 to="/profile"
@@ -278,7 +294,7 @@ const Layout = ({ children, title = "Dashboard" }) => {
               </Link>
             </li>
 
-            {/* Menu Pengaturan */}
+            {/* Menu Pengaturan - SEMUA USER */}
             <li>
               <Link
                 to="/settings"
@@ -345,7 +361,7 @@ const Layout = ({ children, title = "Dashboard" }) => {
 
             {/* Right Side - Dark Mode Toggle + User Profile */}
             <div className="flex items-center gap-3">
-              {/* ✅ TOMBOL DARK MODE */}
+              {/* Tombol Dark Mode */}
               <button
                 onClick={toggleTheme}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition text-gray-600 dark:text-gray-300"

@@ -2,7 +2,8 @@
 import { useState, useEffect } from "react";
 import { 
   Users, FileText, UserCheck, UserX, Clock, Building, Briefcase, 
-  Upload, Plus, FileUp, TrendingUp, TrendingDown, Activity
+  Upload, Plus, FileUp, TrendingUp, TrendingDown, Activity,
+  ArrowLeft // ✅ TAMBAHKAN INI!
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, 
@@ -13,6 +14,7 @@ import {
 } from 'recharts';
 import { supabase } from "../supabase";
 import SearchBar from "../components/SearchBar";
+import { useNavigate } from "react-router-dom"; // ✅ TAMBAHKAN INI!
 
 const KATEGORI = [
   { id: 1, nama: "SK Pangkat (Mulai CPNS)" },
@@ -34,6 +36,7 @@ const KATEGORI = [
 const COLORS = ['#10B981', '#F59E0B', '#EF4444', '#3B82F6', '#8B5CF6', '#EC4899', '#14B8A6', '#F97316'];
 
 export default function Dashboard() {
+  const navigate = useNavigate(); // ✅ TAMBAHKAN INI!
   const [stats, setStats] = useState({
     totalEmployees: 0,
     totalDocuments: 0,
@@ -54,7 +57,6 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        // 1. Ambil pegawai
         const { data: pegawai, error: pegawaiError } = await supabase
           .from("pegawai")
           .select("*");
@@ -66,7 +68,6 @@ export default function Dashboard() {
         const aktif = pegawai.filter(e => e.status === "aktif").length;
         const cuti = pegawai.filter(e => e.status === "cuti").length;
 
-        // 2. Ambil dokumen
         const { data: dokumen, error: dokumenError } = await supabase
           .from("dokumen")
           .select("*");
@@ -75,19 +76,16 @@ export default function Dashboard() {
 
         const totalDocs = dokumen.length;
 
-        // 3. Hitung unit distribution
         const unitCount = {};
         pegawai.forEach(emp => {
           unitCount[emp.work_unit] = (unitCount[emp.work_unit] || 0) + 1;
         });
 
-        // 4. Hitung document by type
         const docTypeCount = {};
         dokumen.forEach(doc => {
           docTypeCount[doc.type] = (docTypeCount[doc.type] || 0) + 1;
         });
 
-        // 5. Kelengkapan (sementara 0, nanti dihitung dari dokumen)
         const completeEmployees = 0;
         const incompleteEmployees = total - completeEmployees;
 
@@ -148,7 +146,6 @@ export default function Dashboard() {
     };
   }).sort((a, b) => b.persentase - a.persentase);
 
-  // Data tren (simulasi 6 bulan terakhir)
   const trendData = [
     { bulan: 'Apr', pegawai: 112, dokumen: 245 },
     { bulan: 'Mei', pegawai: 115, dokumen: 267 },
@@ -158,7 +155,6 @@ export default function Dashboard() {
     { bulan: 'Sep', pegawai: stats.totalEmployees, dokumen: stats.totalDocuments },
   ];
 
-  // Data untuk radar chart (kelengkapan per kategori utama)
   const radarData = KATEGORI.slice(0, 8).map(kat => {
     const count = pegawaiList.filter(emp => 
       emp.documents?.some(doc => doc.category === kat.id)
@@ -173,20 +169,23 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       
-      {/* HEADER DENGAN SEARCH BAR */}
+      {/* HEADER DENGAN SEARCH BAR & TOMBOL KEMBALI */}
       <div className="bg-gradient-to-r from-teal-700 to-teal-800 rounded-xl p-6 text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-lg">
         <div>
           <h1 className="text-2xl font-bold">Selamat Datang, {localStorage.getItem("username") || "Admin"}!</h1>
           <p className="text-teal-100 mt-1">Kelola data pegawai dan dokumen penting RSUD Dr. Harjono S. Ponorogo</p>
         </div>
         
-        <div className="w-full md:w-auto">
-          <SearchBar 
-            searchTerm={searchTerm} 
-            setSearchTerm={setSearchTerm}
-            filteredData={filteredEmployees} 
-            onResultClick={handleResultClick}
-          />
+        <div className="flex items-center gap-3 flex-wrap">
+          
+          <div className="w-full md:w-auto">
+            <SearchBar 
+              searchTerm={searchTerm} 
+              setSearchTerm={setSearchTerm}
+              filteredData={filteredEmployees} 
+              onResultClick={handleResultClick}
+            />
+          </div>
         </div>
       </div>
 
@@ -251,8 +250,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* ========== DIAGRAM SECTION YANG LEBIH MENARIK ========== */}
-      
       {/* Chart Selector */}
       <div className="flex flex-wrap gap-2 bg-white rounded-xl shadow-sm p-4 border border-gray-100">
         <button
@@ -299,7 +296,6 @@ export default function Dashboard() {
 
       {/* Chart Display */}
       <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-        {/* Chart 1: Status Pegawai */}
         {selectedChart === 'status' && (
           <div>
             <h3 className="font-semibold text-gray-800 mb-4 text-lg flex items-center gap-2">
@@ -328,17 +324,12 @@ export default function Dashboard() {
                   formatter={(value) => [`${value} pegawai`, 'Jumlah']}
                   contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                 />
-                <Legend 
-                  verticalAlign="bottom" 
-                  height={36}
-                  iconType="circle"
-                />
+                <Legend verticalAlign="bottom" height={36} iconType="circle" />
               </PieChart>
             </ResponsiveContainer>
           </div>
         )}
 
-        {/* Chart 2: Unit Kerja */}
         {selectedChart === 'unit' && (
           <div>
             <h3 className="font-semibold text-gray-800 mb-4 text-lg flex items-center gap-2">
@@ -346,11 +337,7 @@ export default function Dashboard() {
               Distribusi Pegawai per Unit Kerja
             </h3>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart
-                data={unitData}
-                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                layout="vertical"
-              >
+              <BarChart data={unitData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                 <XAxis type="number" domain={[0, 'dataMax + 2']} />
                 <YAxis type="category" dataKey="unit" fontSize={12} width={80} />
@@ -362,12 +349,7 @@ export default function Dashboard() {
                   }}
                   contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                 />
-                <Bar 
-                  dataKey="count" 
-                  fill="url(#unitGradient)" 
-                  radius={[0, 8, 8, 0]}
-                  barSize={20}
-                >
+                <Bar dataKey="count" fill="url(#unitGradient)" radius={[0, 8, 8, 0]} barSize={20}>
                   {unitData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
@@ -383,7 +365,6 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Chart 3: Tren Data */}
         {selectedChart === 'trend' && (
           <div>
             <h3 className="font-semibold text-gray-800 mb-4 text-lg flex items-center gap-2">
@@ -396,28 +377,10 @@ export default function Dashboard() {
                 <XAxis dataKey="bulan" />
                 <YAxis yAxisId="left" domain={[0, 'dataMax + 20']} />
                 <YAxis yAxisId="right" orientation="right" domain={[0, 'dataMax + 50']} />
-                <Tooltip 
-                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                />
+                <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
                 <Legend />
-                <Area 
-                  yAxisId="left"
-                  type="monotone" 
-                  dataKey="pegawai" 
-                  fill="url(#pegawaiGradient)" 
-                  stroke="#0D9488" 
-                  strokeWidth={2}
-                  name="Pegawai"
-                />
-                <Line 
-                  yAxisId="right"
-                  type="monotone" 
-                  dataKey="dokumen" 
-                  stroke="#8B5CF6" 
-                  strokeWidth={3}
-                  dot={{ fill: '#8B5CF6', strokeWidth: 2, r: 5 }}
-                  name="Dokumen"
-                />
+                <Area yAxisId="left" type="monotone" dataKey="pegawai" fill="url(#pegawaiGradient)" stroke="#0D9488" strokeWidth={2} name="Pegawai" />
+                <Line yAxisId="right" type="monotone" dataKey="dokumen" stroke="#8B5CF6" strokeWidth={3} dot={{ fill: '#8B5CF6', strokeWidth: 2, r: 5 }} name="Dokumen" />
                 <defs>
                   <linearGradient id="pegawaiGradient" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#0D9488" stopOpacity={0.3}/>
@@ -429,7 +392,6 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Chart 4: Radar Chart */}
         {selectedChart === 'radar' && (
           <div>
             <h3 className="font-semibold text-gray-800 mb-4 text-lg flex items-center gap-2">
@@ -441,13 +403,7 @@ export default function Dashboard() {
                 <PolarGrid stroke="#E5E7EB" />
                 <PolarAngleAxis dataKey="kategori" fontSize={11} />
                 <PolarRadiusAxis domain={[0, 100]} fontSize={11} />
-                <Radar
-                  name="Kelengkapan"
-                  dataKey="persentase"
-                  stroke="#0D9488"
-                  fill="#0D9488"
-                  fillOpacity={0.6}
-                />
+                <Radar name="Kelengkapan" dataKey="persentase" stroke="#0D9488" fill="#0D9488" fillOpacity={0.6} />
                 <Tooltip 
                   formatter={(value) => [`${value}% terisi`, 'Kelengkapan']}
                   labelFormatter={(label) => {
@@ -475,7 +431,6 @@ export default function Dashboard() {
         <div className="p-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {KATEGORI.map((kat) => {
-              // Hitung jumlah pegawai yang punya dokumen dengan type = kat.nama
               const count = pegawaiList.filter(emp => 
                 emp.documents?.some(doc => doc.type === kat.nama)
               ).length;
