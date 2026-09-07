@@ -126,17 +126,19 @@ export default function UploadDokumen() {
         .from("documents")
         .getPublicUrl(filePath);
 
-      // 3. Simpan ke database
+      // ✅ 3. Simpan ke database (TANPA kolom 'number'!)
       const { error: dbError } = await supabase
         .from("dokumen")
         .insert([{
           employee_id: selectedEmployeeId,
           name: selectedFile.name,
           type: category.nama,
-          number: nomorSurat || "-",
+          // ❌ HAPUS: number: nomorSurat || "-",
           file_path: filePath,
           file_url: urlData.publicUrl,
-          status: "tunggu"
+          status: "pending",
+          uploaded_at: new Date().toISOString(),
+          category: selectedCategory
         }]);
 
       if (dbError) throw dbError;
@@ -218,7 +220,7 @@ export default function UploadDokumen() {
               </select>
             </div>
 
-            {/* Nomor Surat */}
+            {/* Nomor Surat (OPSIONAL - Ga wajib) */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Nomor Surat / Dokumen</label>
               <input
@@ -228,6 +230,7 @@ export default function UploadDokumen() {
                 placeholder="Contoh: 823/412/405.14/2026"
                 className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-gray-800 placeholder:text-gray-400 focus:border-teal-500 focus:outline-none"
               />
+              <p className="text-xs text-gray-400 mt-1">⚠️ Nomor surat tidak akan disimpan (fitur opsional)</p>
             </div>
 
             {/* Tanggal Unggah */}

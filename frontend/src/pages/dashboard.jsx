@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { 
   Users, FileText, UserCheck, UserX, Clock, Building, Briefcase, 
   Upload, Plus, FileUp, TrendingUp, TrendingDown, Activity,
-  ArrowLeft // ✅ TAMBAHKAN INI!
+  ArrowLeft
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, 
@@ -14,7 +14,7 @@ import {
 } from 'recharts';
 import { supabase } from "../supabase";
 import SearchBar from "../components/SearchBar";
-import { useNavigate } from "react-router-dom"; // ✅ TAMBAHKAN INI!
+import { useNavigate } from "react-router-dom";
 
 const KATEGORI = [
   { id: 1, nama: "SK Pangkat (Mulai CPNS)" },
@@ -36,7 +36,7 @@ const KATEGORI = [
 const COLORS = ['#10B981', '#F59E0B', '#EF4444', '#3B82F6', '#8B5CF6', '#EC4899', '#14B8A6', '#F97316'];
 
 export default function Dashboard() {
-  const navigate = useNavigate(); // ✅ TAMBAHKAN INI!
+  const navigate = useNavigate();
   const [stats, setStats] = useState({
     totalEmployees: 0,
     totalDocuments: 0,
@@ -47,16 +47,19 @@ export default function Dashboard() {
     recentEmployees: [],
     documentByType: {},
     unitDistribution: {},
+    kgbJatuhTempo: 0,
   });
 
   const [searchTerm, setSearchTerm] = useState("");
   const [pegawaiList, setPegawaiList] = useState([]);
+  const [dokumenList, setDokumenList] = useState([]);
   const [selectedChart, setSelectedChart] = useState('status');
 
   // Ambil data dari Supabase
   useEffect(() => {
     const fetchStats = async () => {
       try {
+        // 1. Ambil pegawai
         const { data: pegawai, error: pegawaiError } = await supabase
           .from("pegawai")
           .select("*");
@@ -68,26 +71,49 @@ export default function Dashboard() {
         const aktif = pegawai.filter(e => e.status === "aktif").length;
         const cuti = pegawai.filter(e => e.status === "cuti").length;
 
+        // 2. Ambil dokumen
         const { data: dokumen, error: dokumenError } = await supabase
           .from("dokumen")
           .select("*");
 
         if (dokumenError) throw dokumenError;
+        setDokumenList(dokumen || []);
 
         const totalDocs = dokumen.length;
 
+        // 3. Unit distribution
         const unitCount = {};
         pegawai.forEach(emp => {
           unitCount[emp.work_unit] = (unitCount[emp.work_unit] || 0) + 1;
         });
 
+        // 4. Document by type
         const docTypeCount = {};
         dokumen.forEach(doc => {
           docTypeCount[doc.type] = (docTypeCount[doc.type] || 0) + 1;
         });
 
-        const completeEmployees = 0;
+        // ✅ 5. HITUNG BERKAS LENGKAP (pegawai dengan minimal 3 dokumen)
+        const completeEmployees = pegawai.filter(p => {
+          const docCount = dokumen.filter(d => d.employee_id === p.id).length;
+          return docCount >= 3;
+        }).length;
+
         const incompleteEmployees = total - completeEmployees;
+
+        // ✅ 6. HITUNG KGB JATUH TEMPO (dari kolom kgb_berakhir)
+        const today = new Date();
+        const sixtyDaysFromNow = new Date();
+        sixtyDaysFromNow.setDate(today.getDate() + 60);
+
+        const todayStr = today.toISOString().split('T')[0];
+        const sixtyDaysStr = sixtyDaysFromNow.toISOString().split('T')[0];
+
+        const kgbJatuhTempo = pegawai.filter(p => {
+          if (!p.kgb_berakhir) return false;
+          const berakhir = p.kgb_berakhir;
+          return berakhir >= todayStr && berakhir <= sixtyDaysStr;
+        }).length;
 
         setStats({
           totalEmployees: total,
@@ -99,6 +125,7 @@ export default function Dashboard() {
           recentEmployees: pegawai.slice(0, 5),
           documentByType: docTypeCount,
           unitDistribution: unitCount,
+          kgbJatuhTempo: kgbJatuhTempo,
         });
 
       } catch (error) {
@@ -134,7 +161,7 @@ export default function Dashboard() {
 
   const kategoriData = KATEGORI.map(kat => {
     const count = pegawaiList.filter(emp => 
-      emp.documents?.some(doc => doc.category === kat.id)
+      dokumenList.some(doc => doc.category === kat.id && doc.employee_id === emp.id)
     ).length;
     return {
       kategori: kat.nama.length > 15 ? kat.nama.substring(0, 12) + '...' : kat.nama,
@@ -157,7 +184,7 @@ export default function Dashboard() {
 
   const radarData = KATEGORI.slice(0, 8).map(kat => {
     const count = pegawaiList.filter(emp => 
-      emp.documents?.some(doc => doc.category === kat.id)
+      dokumenList.some(doc => doc.category === kat.id && doc.employee_id === emp.id)
     ).length;
     return {
       kategori: kat.nama.length > 10 ? kat.nama.substring(0, 8) + '...' : kat.nama,
@@ -169,7 +196,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       
-      {/* HEADER DENGAN SEARCH BAR & TOMBOL KEMBALI */}
+      {/* HEADER */}
       <div className="bg-gradient-to-r from-teal-700 to-teal-800 rounded-xl p-6 text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-lg">
         <div>
           <h1 className="text-2xl font-bold">Selamat Datang, {localStorage.getItem("username") || "Admin"}!</h1>
@@ -177,7 +204,6 @@ export default function Dashboard() {
         </div>
         
         <div className="flex items-center gap-3 flex-wrap">
-          
           <div className="w-full md:w-auto">
             <SearchBar 
               searchTerm={searchTerm} 
@@ -189,7 +215,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Stats Cards dengan Icon lebih menarik */}
+      {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-gradient-to-br from-white to-teal-50 rounded-xl shadow-sm p-5 border border-teal-100 hover:shadow-md transition-all duration-300 transform hover:-translate-y-1">
           <div className="flex items-center justify-between">
@@ -237,7 +263,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-gray-500 text-sm font-medium">KGB jatuh tempo</p>
-              <p className="text-3xl font-bold text-gray-800">18</p>
+              <p className="text-3xl font-bold text-gray-800">{stats.kgbJatuhTempo}</p>
               <p className="text-xs text-rose-600 mt-1 flex items-center gap-1">
                 <TrendingDown className="w-3 h-3" />
                 Dalam 60 hari ke depan
@@ -432,7 +458,7 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {KATEGORI.map((kat) => {
               const count = pegawaiList.filter(emp => 
-                emp.documents?.some(doc => doc.type === kat.nama)
+                dokumenList.some(doc => doc.category === kat.id && doc.employee_id === emp.id)
               ).length;
               const pct = stats.totalEmployees > 0 ? Math.round((count / stats.totalEmployees) * 100) : 0;
               const isComplete = pct >= 80;

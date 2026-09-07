@@ -1,7 +1,7 @@
 // src/pages/EmployeeList.jsx
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Plus, Eye, Edit, Trash2, Users, Loader2, Download, FileSpreadsheet, FileText } from "lucide-react";
+import { Search, Plus, Eye, Edit, Trash2, Users, Loader2, Download, FileSpreadsheet, FileText, Calendar } from "lucide-react";
 import { supabase } from "../supabase";
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
@@ -28,7 +28,7 @@ const KATEGORI = [
 ];
 
 // ============================================
-// KOMPONEN EXPORT BUTTON (TERINTEGRASI)
+// KOMPONEN EXPORT BUTTON
 // ============================================
 function ExportButton({ data, filename = 'laporan-pegawai', className = '' }) {
   const [loading, setLoading] = useState(false);
@@ -44,6 +44,7 @@ function ExportButton({ data, filename = 'laporan-pegawai', className = '' }) {
     { key: 'email', label: 'Email' },
     { key: 'address', label: 'Alamat' },
     { key: 'dokumenCount', label: 'Jumlah Dokumen' },
+    { key: 'kgb_berakhir', label: 'KGB Berakhir' }, // ✅ TAMBAHKAN
   ];
 
   const exportToExcel = () => {
@@ -53,6 +54,9 @@ function ExportButton({ data, filename = 'laporan-pegawai', className = '' }) {
         const obj = {};
         columns.forEach(col => {
           let value = row[col.key] !== undefined && row[col.key] !== null ? row[col.key] : '-';
+          if (col.key === 'kgb_berakhir' && value !== '-') {
+            value = new Date(value).toLocaleDateString('id-ID');
+          }
           obj[col.label] = value;
         });
         return obj;
@@ -90,7 +94,10 @@ function ExportButton({ data, filename = 'laporan-pegawai', className = '' }) {
       
       const tableData = data.map(row => {
         return columns.map(col => {
-          const value = row[col.key] !== undefined && row[col.key] !== null ? row[col.key] : '-';
+          let value = row[col.key] !== undefined && row[col.key] !== null ? row[col.key] : '-';
+          if (col.key === 'kgb_berakhir' && value !== '-') {
+            value = new Date(value).toLocaleDateString('id-ID');
+          }
           return String(value);
         });
       });
@@ -272,6 +279,23 @@ export default function EmployeeList() {
     return <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300">-</span>;
   };
 
+  // ✅ CEK STATUS KGB (jatuh tempo atau tidak)
+  const getKgbStatus = (berakhir) => {
+    if (!berakhir) return { label: '-', class: 'text-gray-400' };
+    
+    const today = new Date();
+    const endDate = new Date(berakhir);
+    const diffDays = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 0) {
+      return { label: '🔴 Lewat', class: 'text-red-600 font-medium' };
+    } else if (diffDays <= 60) {
+      return { label: `🟡 ${diffDays} hari`, class: 'text-yellow-600 font-medium' };
+    } else {
+      return { label: `🟢 ${diffDays} hari`, class: 'text-green-600' };
+    }
+  };
+
   const stats = {
     total: employees.length,
     aktif: employees.filter(e => e.status === "aktif").length,
@@ -403,12 +427,15 @@ export default function EmployeeList() {
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Unit Kerja</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Kelengkapan</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Status</th>
+                  {/* ✅ KOLOM KGB BERAKHIR */}
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">KGB Berakhir</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                 {filteredEmployees.map((emp) => {
                   const filled = emp.kelengkapan?.filter(s => s === "isi").length || 0;
+                  const kgbStatus = getKgbStatus(emp.kgb_berakhir);
                   return (
                     <tr key={emp.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
                       <td className="px-4 py-3">
@@ -426,6 +453,21 @@ export default function EmployeeList() {
                         <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{filled} dari 14 kategori terisi</p>
                       </td>
                       <td className="px-4 py-3">{getStatusBadge(emp.status)}</td>
+                      {/* ✅ KOLOM KGB BERAKHIR */}
+                      <td className="px-4 py-3">
+                        {emp.kgb_berakhir ? (
+                          <div>
+                            <div className="text-sm text-gray-700 dark:text-gray-300">
+                              {new Date(emp.kgb_berakhir).toLocaleDateString('id-ID')}
+                            </div>
+                            <div className={`text-xs ${kgbStatus.class}`}>
+                              {kgbStatus.label}
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-sm text-gray-400">-</span>
+                        )}
+                      </td>
                       <td className="px-4 py-3">
                         <div className="flex gap-2">
                           <button onClick={() => navigate(`/employees/${emp.id}`)} className="p-1 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/30 rounded transition" title="Lihat Detail">
