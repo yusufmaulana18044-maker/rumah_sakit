@@ -133,6 +133,11 @@ export default function Register() {
         return;
       }
 
+      // ========================
+      // 4. SIGN OUT setelah register agar sesi bersih
+      // ========================
+      await supabase.auth.signOut();
+
       setSuccess("Pendaftaran berhasil! Mengarahkan ke halaman login...");
       setUsername("");
       setNama("");
